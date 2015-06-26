@@ -1,22 +1,27 @@
 {
-  "manifest_version": 2,
+    "manifest_version": 2,
 
-  "name": "bookmark",
-  "description": "This tool can help you clean up your useless bookmarks. It selects one bookmark randomly from your bookmark bar and then open the selected bookmark. If you find this bookmark has been out-of-date, you can remove it from bookmark bar.",
-  "version": "1.0",
+    "name": "Bookmark",
+    "description": "This tool can help you clean up your useless bookmarks. It selects one bookmark randomly from your bookmark bar everyday and then open the selected bookmark in a new tab. If you find this bookmark has been out-of-date, you can remove it from your bookmark bar.",
+    "version": "1.0",
 
-  "icons": {
-      "16": "icon-16.png",
-      "48": "icon-48.png",
-      "128": "icon-128.png"
-  },
+    "icons": {
+        "16": "img/icon-16.png",
+        "48": "img/icon-48.png",
+        "128": "img/icon-128.png"
+    },
 
-  "browser_action": {
-    "default_icon": "icon-128.png",
-    "default_popup": "popup.html"
-  },
-  "permissions": [
-    "activeTab",
-    "https://ajax.googleapis.com/"
-  ]
+    "browser_action": {
+        "default_icon": {
+            "19": "img/icon-19.png",
+            "38": "img/icon-38.png"
+        },
+        "default_title": "Bookmark",
+        "default_popup": "popup.html"
+    },
+
+    "permissions": [
+        "activeTab",
+        "https://ajax.gooBgleapis.com/"
+    ]
 }
