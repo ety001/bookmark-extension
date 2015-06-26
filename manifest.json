@@ -22,7 +22,15 @@
         "default_popup": "popup.html"
     },
 
+    "background": {
+      "scripts": ["js/jquery-1.11.2.min.js","js/background.js"],
+      "persistent": true
+    },
+
     "permissions": [
-        "activeTab","bookmarks","tabs"
+        "activeTab",
+        "bookmarks",
+        "tabs",
+        "background"
     ]
 }
