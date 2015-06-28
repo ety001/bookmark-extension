@@ -16,6 +16,10 @@ var ConfigObj = {
     } else {
       return false;
     }
+  },
+  'clearcache': function(){
+    var c = {};
+    window.localStorage.config = JSON.stringify(c);
   }
 }
 

@@ -1,9 +1,10 @@
 var BookmarkObj = {
-  'check': function(tabId, info, tab){
-    //when tab status is not "complete", function return;
-    if(tab.status!='complete')return;
+  'tab_id': 0,
+  'check': function(tab){
+    if(tab.url!='chrome://newtab/')return;
+    BookmarkObj.tab_id    = tab.id;
     //charge whether open the plugin
-    if(ConfigObj.get('isopen')==false)return;
+    if(!ConfigObj.get('isopen'))return;
     //check if today bookmark has been visited
     //if(BookmarkObj.check_today_has_visited())return;
     //get bookmarks tree and run
@@ -54,6 +55,8 @@ var BookmarkObj = {
     }
   },
   'visit': function(url){
+    var updateProperties = {url: url};
+    chrome.tabs.update(BookmarkObj.tab_id, updateProperties);
     console.log( url );
   }
 }
@@ -92,4 +95,4 @@ var BookmarkData  = {
   }
 }
 
-chrome.tabs.onUpdated.addListener(BookmarkObj.check);
+chrome.tabs.onCreated.addListener(BookmarkObj.check);
