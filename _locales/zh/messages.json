@@ -10,5 +10,14 @@
   },
   "clearmsg": {
     "message": "清理成功"
+  },
+  "notificationtitle": {
+    "message": "书签应用正在访问..."
+  },
+  "switch_open_success": {
+    "message": "书签应用打开成功，祝你使用愉快 ~"
+  },
+  "switch_close_success": {
+    "message": "书签应用已关闭"
   }
 }

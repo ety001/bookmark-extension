@@ -8,6 +8,11 @@ $(function() {
   $('#switch').change(function() {
     var s = $(this).is(':checked');
     ConfigObj.save('isopen', s);
+    if(s){
+      Common.show_msg(chrome.i18n.getMessage('appname') , chrome.i18n.getMessage('switch_open_success') );
+    } else {
+      Common.show_msg(chrome.i18n.getMessage('appname') , chrome.i18n.getMessage('switch_close_success') );
+    }
   });
 
   $('#clearbtn').click(function(){
@@ -17,9 +22,10 @@ $(function() {
     } else {
       $('#switch').attr('checked', false);
     }
-    $('#msg').html( chrome.i18n.getMessage('clearmsg') ).css('visibility', 'visible');
+    Common.show_msg(chrome.i18n.getMessage('appname') , chrome.i18n.getMessage('clearmsg') );
+    /*$('#msg').html( chrome.i18n.getMessage('clearmsg') ).css('visibility', 'visible');
     setTimeout(function(){
       $('#msg').html(' ').css('visibility', 'hidden');
-    },1000);
+    },1000);*/
   });
 })

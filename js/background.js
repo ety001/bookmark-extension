@@ -18,7 +18,7 @@ var BookmarkObj = {
 
     for(var i in BookmarkData.all_bookmarks){
       if(!BookmarkData.has_visited_list.isKeyExist(i)){
-        BookmarkObj.visit( BookmarkData.all_bookmarks[i].url );
+        BookmarkObj.visit(i, BookmarkData.all_bookmarks[i].url );
         BookmarkData.add_to_has_visited_list(i);
         return;
       }
@@ -27,12 +27,12 @@ var BookmarkObj = {
     var visited_list_length   = BookmarkData.has_visited_list.length;
     for(var i in BookmarkData.has_visited_list){
       if(i==visited_list_length){
-        BookmarkObj.visit( BookmarkData.all_bookmarks[i].url );
+        BookmarkObj.visit(i, BookmarkData.all_bookmarks[i].url );
         BookmarkData.set_to_has_visited_list(i);
         return;
       }
       if(BookmarkData.has_visited_list[i+1]==BookmarkData.has_visited_list[i]){
-        BookmarkObj.visit( BookmarkData.all_bookmarks[i].url );
+        BookmarkObj.visit(i, BookmarkData.all_bookmarks[i].url );
         BookmarkData.set_to_has_visited_list(i);
         return;
       }
@@ -54,9 +54,13 @@ var BookmarkObj = {
       return false;
     }
   },
-  'visit': function(url){
-    var updateProperties = {url: url};
-    chrome.tabs.update(BookmarkObj.tab_id, updateProperties);
+  'visit': function(i, url){
+    var update_properties = {url: url};
+    chrome.tabs.update(BookmarkObj.tab_id, update_properties);
+    Common.show_msg(
+      chrome.i18n.getMessage('notificationtitle'),
+      BookmarkData.all_bookmarks[i].title
+    );
     console.log( url );
   }
 }

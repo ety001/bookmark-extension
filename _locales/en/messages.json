@@ -10,5 +10,14 @@
   },
   "clearmsg": {
     "message": "Clear Success"
+  },
+  "notificationtitle": {
+    "message": "Bookmark App is visiting..."
+  },
+  "switch_open_success": {
+    "message": "Bookmark App Open Success, Have Fun ~"
+  },
+  "switch_close_success": {
+    "message": "Bookmark App Close Success"
   }
 }
