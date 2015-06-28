@@ -1,9 +1,9 @@
 {
   "appname": {
-    "message": "Bookmark"
+    "message": "Review Bookmarks"
   },
   "appdesc": {
-    "message": "This tool can help you clean up your useless bookmarks. It selects one bookmark randomly from your bookmark bar everyday and then open the selected bookmark in a new tab. If you find this bookmark has been out-of-date, you can remove it from your bookmark bar."
+    "message": "This tool can help you review your bookmarks. It selects one bookmark from your bookmark bar when you create a new tab and then open the selected bookmark in current tab to make you review it."
   },
   "clearbtn": {
     "message": "Clear Cache"
@@ -12,12 +12,12 @@
     "message": "Clear Success"
   },
   "notificationtitle": {
-    "message": "Bookmark App is visiting..."
+    "message": "App is visiting..."
   },
   "switch_open_success": {
-    "message": "Bookmark App Open Success, Have Fun ~"
+    "message": "App Open Success, Have Fun ~"
   },
   "switch_close_success": {
-    "message": "Bookmark App Close Success"
+    "message": "App Close Success"
   }
 }

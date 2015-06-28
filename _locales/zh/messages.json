@@ -1,9 +1,9 @@
 {
   "appname": {
-    "message": "书签"
+    "message": "温故知新"
   },
   "appdesc": {
-    "message": "该工具可以帮你整理你的书签栏，每天会自动随机一个书签在新标签页打开，你可以判断是否过时了，如果过时，你就可以删除掉了。"
+    "message": "该工具可以帮你重读你的书签。每次新开一个标签页的时候，会自动在新标签页中从书签栏中访问一个书签。"
   },
   "clearbtn": {
     "message": "清除缓存"
@@ -12,12 +12,12 @@
     "message": "清理成功"
   },
   "notificationtitle": {
-    "message": "书签应用正在访问..."
+    "message": "应用正在访问..."
   },
   "switch_open_success": {
-    "message": "书签应用打开成功，祝你使用愉快 ~"
+    "message": "应用打开成功，祝你使用愉快 ~"
   },
   "switch_close_success": {
-    "message": "书签应用已关闭"
+    "message": "应用已关闭"
   }
 }
