@@ -17,7 +17,7 @@ var BookmarkObj = {
 
     for(var i in BookmarkData.all_bookmarks){
       if(!BookmarkData.has_visited_list.isKeyExist(i)){
-        BookmarkObj.visit( Bookmark.all_bookmarks[i].url );
+        BookmarkObj.visit( BookmarkData.all_bookmarks[i].url );
         BookmarkData.add_to_has_visited_list(i);
         return;
       }
@@ -26,12 +26,12 @@ var BookmarkObj = {
     var visited_list_length   = BookmarkData.has_visited_list.length;
     for(var i in BookmarkData.has_visited_list){
       if(i==visited_list_length){
-        BookmarkObj.visit( Bookmark.all_bookmarks[i].url );
+        BookmarkObj.visit( BookmarkData.all_bookmarks[i].url );
         BookmarkData.set_to_has_visited_list(i);
         return;
       }
       if(BookmarkData.has_visited_list[i+1]==BookmarkData.has_visited_list[i]){
-        BookmarkObj.visit( Bookmark.all_bookmarks[i].url );
+        BookmarkObj.visit( BookmarkData.all_bookmarks[i].url );
         BookmarkData.set_to_has_visited_list(i);
         return;
       }
@@ -63,7 +63,7 @@ var BookmarkData  = {
   'has_visited_list': [],//id => visited times
   'all_bookmarks': {},
   'change_tree_node_to_list': function(node){
-    if(BookmarkData.all_bookmarks)return;
+    if(BookmarkData.all_bookmarks==={})return;
     for(var i in node){
       if(node[i].children!=null){
         BookmarkData.change_tree_node_to_list(node[i].children);
@@ -73,18 +73,22 @@ var BookmarkData  = {
     }
   },
   'get_has_visited_list': function(){
-    if(BookmarkData.has_visited_list)return;
+    if(BookmarkData.has_visited_list===[])return;
     BookmarkData.has_visited_list = ConfigObj.get('has_visited_list')?
                                       ConfigObj.get('has_visited_list'):
                                       [];
   },
   'add_to_has_visited_list': function(key){
-    BookmarkData.has_visited_list[key]  = 1;
-    ConfigObj.save('has_visited_list', BookmarkData.has_visited_list);
+    if(key){
+      BookmarkData.has_visited_list[key]  = 1;
+      ConfigObj.save('has_visited_list', BookmarkData.has_visited_list);
+    }
   },
   'set_to_has_visited_list': function(key){
-    BookmarkData.has_visited_list[key]++;
-    ConfigObj.save('has_visited_list', BookmarkData.has_visited_list);
+    if(key){
+      BookmarkData.has_visited_list[key]++;
+      ConfigObj.save('has_visited_list', BookmarkData.has_visited_list);
+    }
   }
 }
 
