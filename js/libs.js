@@ -1,29 +1,5 @@
-var ConfigObj = {
-  'save': function(key, val){
-    if(window.localStorage.config){
-      var c = JSON.parse( window.localStorage.config );
-    } else {
-      var c = {};
-    }
-    c[key]  = val;
-    window.localStorage.config  = JSON.stringify( c );
-  },
-  'get': function(key){
-    var c = window.localStorage.config;
-    if(c){
-      c = JSON.parse( c );
-      return c[key];
-    } else {
-      return false;
-    }
-  },
-  'clearcache': function(){
-    var c = {};
-    window.localStorage.config = JSON.stringify(c);
-  }
-}
-
 var Common = {
+  is_debug: true,
   show_msg: function(title, msg){
     var notifications_contents = {
       type: 'basic',
@@ -32,6 +8,36 @@ var Common = {
       message: msg
     };
     chrome.notifications.create('', notifications_contents, function(){});
+  },
+  debug: function(t){
+    if(Common.is_debug){
+      console.log(t);
+    }
+  }
+}
+
+var ConfigObj = {
+  save: function(key, val){
+    if(window.localStorage.config){
+      var c = JSON.parse( window.localStorage.config );
+    } else {
+      var c = {};
+    }
+    c[key]  = val;
+    window.localStorage.config  = JSON.stringify( c );
+  },
+  get: function(key){
+    var c = window.localStorage.config;
+    if(c){
+      c = JSON.parse( c );
+      return c[key];
+    } else {
+      return false;
+    }
+  },
+  clearcache: function(){
+    var c = {};
+    window.localStorage.config = JSON.stringify(c);
   }
 }
 
@@ -63,6 +69,60 @@ Array.prototype.isKeyExist = function (key) {
       return true;
     } else {
       return false;
+    }
+  }
+}
+
+var DB = {
+  db_name: 'bookmarks',
+  db_version: '2.0',
+  db_connect: null,
+  db_obj: window.indexedDB,
+  init: function(tablename){
+    if(DB.db_connect)return;
+    var request   = DB.db_obj.open( DB.db_name, DB.db_version );
+
+    request.onsuccess = function (e) {
+      // Old api: var v = "2-beta";
+      Common.debug("success to open DB: " + DB.db_name);
+      DB.db_connect = e.target.result;
+      var db = DB.db_connect;
+      if (db.setVersion) {
+        Common.debug("in old setVersion: " + db.setVersion);
+        if (db.version != DB.db_version) {
+          var req = db.setVersion(DB.db_version);
+          req.onsuccess = function () {
+            if (db.objectStoreNames.contains(tablename)) {
+              db.deleteObjectStore(tablename);
+            }
+            var store = db.createObjectStore(tablename, { keyPath: "timeStamp" });//keyPath：主键，唯一性
+
+            var trans = req.result;
+            trans.oncomplete = function (e) {
+              console.log("== trans oncomplete ==");
+              H5AppDB.indexedDB.getAllTodoItems();
+            }
+          };
+        }
+        else {
+          H5AppDB.indexedDB.getAllTodoItems();
+        }
+      }
+      else {
+        H5AppDB.indexedDB.getAllTodoItems();
+      }
+    }
+
+    //如果版本不一致，执行版本升级的操作
+    request.onupgradeneeded = function (e) {
+      Common.debug("going to upgrade our DB!");
+      DB.db_connect = e.target.result;
+      var db = DB.db_connect;
+      if (db.objectStoreNames.contains(tablename)) {
+        db.deleteObjectStore(tablename);
+      }
+      var store = db.createObjectStore(tablename, { keyPath: "timeStamp" });//NoSQL类型数据库中必须的主键，唯一性
+      H5AppDB.indexedDB.getAllTodoItems();
     }
   }
 }

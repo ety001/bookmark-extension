@@ -1,3 +1,22 @@
+//init popicon
+var pop_icon  = {
+  "19": "img/icon-19.png",
+  "38": "img/icon-38.png"
+},
+pop_icon_black  = {
+  "19": "img/icon-19-black.png",
+  "38": "img/icon-38-black.png"
+};
+if(ConfigObj.get('isopen')){
+  $('#switch').attr('checked', true);
+  chrome.browserAction.setIcon({path:pop_icon});
+} else {
+  $('#switch').attr('checked', false);
+  chrome.browserAction.setIcon({path:pop_icon_black});
+}
+//init db
+DB.init('has_visited_list');
+//bookmark object
 var BookmarkObj = {
   'tab_id': 0,
   'check': function(tab){
@@ -17,6 +36,7 @@ var BookmarkObj = {
     BookmarkData.get_has_visited_list();
 
     for(var i in BookmarkData.all_bookmarks){
+      console.log('all', i);
       if(!BookmarkData.has_visited_list.isKeyExist(i)){
         BookmarkObj.visit(i, BookmarkData.all_bookmarks[i].url );
         BookmarkData.add_to_has_visited_list(i);
@@ -64,7 +84,6 @@ var BookmarkObj = {
     console.log( url );
   }
 }
-
 //Data
 var BookmarkData  = {
   'has_visited_list': [],//id => visited times
