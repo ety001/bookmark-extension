@@ -1,8 +1,8 @@
 var db_config   = {
   db_name: 'bookmarks',
-  db_table: 'view_log',
+  db_table: 'visited_log',
   db_keypath: 'bookmark_id',
-  db_version: 2.0
+  db_version: 3.0
 }
 var AppDB           = {
   db: null,
@@ -15,6 +15,10 @@ var AppDB           = {
   },
   success_func: function(e){
     AppDB.db  = e.target.result;
+    var db    = AppDB.db;
+    if(!db.objectStoreNames.contains(db_config.db_table)){
+      var store = db.createObjectStore(db_config.db_table, {keyPath: db_config.db_keypath});
+    }
   },
   upgrade_func: function(e){
     var db    = e.target.result;
