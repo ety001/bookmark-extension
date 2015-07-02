@@ -23,7 +23,7 @@
     },
 
     "background": {
-      "scripts": ["js/jquery-1.11.2.min.js","js/libs.js","js/background.js"],
+      "scripts": ["js/jquery-1.11.2.min.js","js/db.js","js/libs.js","js/background.js"],
       "persistent": true
     },
 
