@@ -14,8 +14,6 @@ if(ConfigObj.get('isopen')){
   $('#switch').attr('checked', false);
   chrome.browserAction.setIcon({path:pop_icon_black});
 }
-//init db
-DB.init('has_visited_list');
 //bookmark object
 var BookmarkObj = {
   'tab_id': 0,
@@ -30,35 +28,47 @@ var BookmarkObj = {
     chrome.bookmarks.getTree(BookmarkObj.process);
   },
   'process': function(bookmarks){
-    //transefer the bookmarks tree to list
-    BookmarkData.change_tree_node_to_list(bookmarks);
-    //get has_visited_list
-    BookmarkData.get_has_visited_list();
+    //get data from indexedDB
 
-    for(var i in BookmarkData.all_bookmarks){
-      console.log('all', i);
-      if(!BookmarkData.has_visited_list.isKeyExist(i)){
-        BookmarkObj.visit(i, BookmarkData.all_bookmarks[i].url );
-        BookmarkData.add_to_has_visited_list(i);
-        return;
-      }
-    }
+      //transefer the bookmarks tree to list
+      BookmarkData.change_tree_node_to_list(bookmarks);
+      //get has_visited_list
+      BookmarkData.get_has_visited_list();
 
+
+    var all_length            = BookmarkData.all_bookmarks.length;
     var visited_list_length   = BookmarkData.has_visited_list.length;
-    for(var i in BookmarkData.has_visited_list){
-      if(i==visited_list_length){
-        BookmarkObj.visit(i, BookmarkData.all_bookmarks[i].url );
-        BookmarkData.set_to_has_visited_list(i);
-        return;
+
+    if(all_length!=visited_list_length){
+      for(var i in BookmarkData.all_bookmarks){
+        if(!BookmarkData.has_visited_list.isKeyExist(i)){
+          BookmarkObj.visit(i, BookmarkData.all_bookmarks[i].url );
+          BookmarkData.add_to_has_visited_list(i);
+          return;
+        }
       }
-      if(BookmarkData.has_visited_list[i+1]==BookmarkData.has_visited_list[i]){
-        BookmarkObj.visit(i, BookmarkData.all_bookmarks[i].url );
-        BookmarkData.set_to_has_visited_list(i);
-        return;
+    } else {
+      var tmp = null;
+      for(var i = BookmarkData.last_visited_index; i<visited_list_length; i++){
+        if(i+1==visited_list_length){
+          var key = BookmarkData.visited_index[i];
+          BookmarkObj.visit(
+            key,
+            BookmarkData.has_visited_list[key].bookmark_url
+          );
+          BookmarkData.set_to_has_visited_list(key);
+          BookmarkData.last_visited_index = 0;
+        }
+        var aKey  = BookmarkData.visited_index[i];
+        var bKey  = BookmarkData.visited_index[i+1];
+        if(BookmarkData.has_visited_list[aKey]==BookmarkData.has_visited_list[bKey]){
+          BookmarkObj.visit(aKey, BookmarkData.all_bookmarks[aKey].url );
+          BookmarkData.set_to_has_visited_list(aKey);
+        }
       }
     }
   },
-  'check_today_has_visited': function(){
+  'check_today_has_visited': function(){//unuse
     var tmp_nowdate     = new Date().Format('yyyy-MM-dd');
     var last_visited_date   = ConfigObj.get('last_visited_date');
     //last_visited_date is empty.
@@ -88,32 +98,51 @@ var BookmarkObj = {
 var BookmarkData  = {
   'has_visited_list': [],//id => visited times
   'all_bookmarks': {},
+  'all_index':[],
+  'visited_index': [],
+  'last_visited_index':0,
+  'data_tmpl': function(id, count, url){
+    return {bookmark_id: id, bookmark_count: count, bookmark_url: url};
+  },
   'change_tree_node_to_list': function(node){
-    if(BookmarkData.all_bookmarks==={})return;
     for(var i in node){
       if(node[i].children!=null){
         BookmarkData.change_tree_node_to_list(node[i].children);
       } else {
         BookmarkData.all_bookmarks[node[i].id] = node[i];
+        BookmarkData.all_index.push(node[i].id);
       }
     }
   },
   'get_has_visited_list': function(){
     if(BookmarkData.has_visited_list===[])return;
-    BookmarkData.has_visited_list = ConfigObj.get('has_visited_list')?
-                                      ConfigObj.get('has_visited_list'):
-                                      [];
+    AppDB.read('all', null, function(res){
+      if(res){
+        BookmarkData.has_visited_list = res;
+        for(var i in res){
+          BookmarkData.visited_index.push(res[i].bookmark_id);
+        }
+      } else {
+        BookmarkData.has_visited_list = [];
+      }
+    });
   },
   'add_to_has_visited_list': function(key){
     if(key){
-      BookmarkData.has_visited_list[key]  = 1;
-      ConfigObj.save('has_visited_list', BookmarkData.has_visited_list);
+      var t = BookmarkData.data_tmpl(key, 1, BookmarkData.all_bookmarks[key].url);
+      AppDB.add( t, function(){
+        BookmarkData.has_visited_list[key]  = t;
+        BookmarkData.visited_index.push(key);
+      });
     }
   },
   'set_to_has_visited_list': function(key){
     if(key){
-      BookmarkData.has_visited_list[key]++;
-      ConfigObj.save('has_visited_list', BookmarkData.has_visited_list);
+      var num = BookmarkData.has_visited_list[key].bookmark_count + 1;
+      var t = BookmarkData.data_tmpl(key, num, BookmarkData.has_visited_list[key].bookmark_url);
+      AppDB.update(key, t, function(){
+        BookmarkData.has_visited_list[key]  = t;
+      });
     }
   }
 }
