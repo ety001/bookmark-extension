@@ -50,6 +50,7 @@ var AppDB           = {
   },
   delAll: function(callback){
     AppDB.read('all', null, function(res){
+      if(res.length==0)return;
       for(var i in res){
         AppDB.del(res[i].bookmark_id, callback);
       }

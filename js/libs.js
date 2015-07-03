@@ -13,6 +13,11 @@ var Common = {
     if(Common.is_debug){
       console.log(t);
     }
+  },
+  get_query_str: function (name) {
+     var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)","i");
+     var r = window.location.search.substr(1).match(reg);
+     if (r!=null) return (r[2]); return null;
   }
 }
 

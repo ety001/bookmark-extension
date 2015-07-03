@@ -90,6 +90,11 @@ section {
   -webkit-writing-mode: horizontal-tb;
 }
 
+.btn_grey{
+  background-color: #777;
+  border-color: #777;
+}
+
 /*=====================*/
 .checkbox {
   position: relative;
