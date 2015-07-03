@@ -74,13 +74,15 @@ var BookmarkObj = {
     );
   },
   'remove_func': function(id, removeInfo){
-    console.log('remove', id, removeInfo);
+    if(id){
+      BookmarkData.rm_has_visited_item(id);
+    }
   },
   'update_func': function(id, changeInfo){
-    console.log('update', id, changeInfo);
+    BookmarkData.update_has_visited_item(id, changeInfo.title, changeInfo.url);
   },
-  'move_func': function(id, moveInfo){
-    console.log('move', id, moveInfo);
+  'move_func': function(newid, moveInfo){
+    BookmarkData.move_has_visited_item(newid, changeInfo);
   }
 }
 //Data
@@ -141,6 +143,30 @@ var BookmarkData  = {
         }
       });
     }
+  },
+  'rm_has_visited_item': function(bookmark_id){
+    if(bookmark_id){
+      AppDB.del(bookmark_id, function(){});
+    }
+  },
+  'move_has_visited_item': function(newid, changeInfo){
+    AppDB.read(changeInfo.oldIndex, null ,function(res){
+      if(res.length){
+        var new_data  = res[0];
+        new_data.bookmark_id  = newid;
+        AppDB.del(changeInfo.oldIndex, function(){
+          AppDB.add( new_data , function(){});
+        });
+      }
+    });
+  },
+  'update_has_visited_item': function(bookmark_id, title, url){
+    AppDB.read(bookmark_id, null, function(res){
+      if(res[0]){
+        res[0].url  = url;
+        AppDB.update(bookmark_id, res[0], function(){});
+      }
+    });
   }
 }
 
