@@ -34,15 +34,16 @@ var BookmarkObj = {
     BookmarkData.change_tree_node_to_list(bookmarks);
     BookmarkData.all_length     = BookmarkData.all_bookmarks.length;
 
-    if(BookmarkData.last_visited_index < BookmarkData.all_length){
+    var last_visited_index  = BookmarkData.get_last_visited_index();
+    if(last_visited_index < BookmarkData.all_length){
       AppDB.read(
-        BookmarkData.all_bookmarks[BookmarkData.last_visited_index].id,
+        BookmarkData.all_bookmarks[last_visited_index].id,
         null,
         BookmarkData.get_has_visited_item
       );
       BookmarkObj.visit(
-        BookmarkData.last_visited_index,
-        BookmarkData.all_bookmarks[BookmarkData.last_visited_index].url
+        last_visited_index,
+        BookmarkData.all_bookmarks[last_visited_index].url
       );
     }
 
@@ -68,17 +69,32 @@ var BookmarkObj = {
     chrome.tabs.update(BookmarkObj.tab_id, update_properties);
     Common.show_msg(
       chrome.i18n.getMessage('notificationtitle'),
-      BookmarkData.all_bookmarks[i].title
+      BookmarkData.all_bookmarks[i].title?
+        BookmarkData.all_bookmarks[i].title:BookmarkData.all_bookmarks[i].url
     );
+  },
+  'remove_func': function(id, removeInfo){
+    console.log('remove', id, removeInfo);
+  },
+  'update_func': function(id, changeInfo){
+    console.log('update', id, changeInfo);
+  },
+  'move_func': function(id, moveInfo){
+    console.log('move', id, moveInfo);
   }
 }
 //Data
 var BookmarkData  = {
   'all_bookmarks': {},
   'all_length':0,
-  'last_visited_index':0,
   'data_tmpl': function(id, count, url){
     return {bookmark_id: id, bookmark_count: count, bookmark_url: url};
+  },
+  'set_last_visited_index':function(id){
+    ConfigObj.save('last_visited_index', id);
+  },
+  'get_last_visited_index':function(){
+    return ConfigObj.get('last_visited_index')?ConfigObj.get('last_visited_index'):0;
   },
   'change_tree_node_to_list': function(node){
     for(var i in node){
@@ -93,19 +109,22 @@ var BookmarkData  = {
   },
   'get_has_visited_item': function(res){
     if(res.length==0){
-      BookmarkData.add_to_has_visited_list(BookmarkData.all_bookmarks[BookmarkData.last_visited_index].id);
+      var last_visited_index  = BookmarkData.get_last_visited_index();
+      BookmarkData.add_to_has_visited_list(BookmarkData.all_bookmarks[last_visited_index].id);
     } else {
       BookmarkData.set_to_has_visited_list(res);
     }
   },
   'add_to_has_visited_list': function(key){
     if(key){
-      var t = BookmarkData.data_tmpl(key, 1, BookmarkData.all_bookmarks[BookmarkData.last_visited_index].url);
+      var last_visited_index  = BookmarkData.get_last_visited_index();
+      var t = BookmarkData.data_tmpl(key, 1, BookmarkData.all_bookmarks[last_visited_index].url);
       AppDB.add( t, function(){
-        if( (BookmarkData.last_visited_index+1) == BookmarkData.all_bookmarks.length ){
-          BookmarkData.last_visited_index = 0;
+        var last_visited_index  = BookmarkData.get_last_visited_index();
+        if( (last_visited_index+1) == BookmarkData.all_bookmarks.length ){
+          BookmarkData.set_last_visited_index(0);
         } else {
-          BookmarkData.last_visited_index++;
+          BookmarkData.set_last_visited_index( last_visited_index+1 );
         }
       });
     }
@@ -114,10 +133,11 @@ var BookmarkData  = {
     if(res.length){
       res[0].bookmark_count++;
       AppDB.update(res[0].bookmark_id, res[0], function(){
-        if( (BookmarkData.last_visited_index+1) == BookmarkData.all_bookmarks.length ){
-          BookmarkData.last_visited_index = 0;
+        var last_visited_index  = BookmarkData.get_last_visited_index();
+        if( (last_visited_index+1) == BookmarkData.all_bookmarks.length ){
+          BookmarkData.set_last_visited_index(0);
         } else {
-          BookmarkData.last_visited_index++;
+          BookmarkData.set_last_visited_index( last_visited_index+1 );
         }
       });
     }
@@ -125,3 +145,6 @@ var BookmarkData  = {
 }
 
 chrome.tabs.onCreated.addListener(BookmarkObj.check);
+chrome.bookmarks.onRemoved.addListener(BookmarkObj.remove_func);
+chrome.bookmarks.onChanged.addListener(BookmarkObj.update_func);
+chrome.bookmarks.onMoved.addListener(BookmarkObj.move_func);
