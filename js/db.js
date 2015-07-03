@@ -48,6 +48,13 @@ var AppDB           = {
     var request = store.delete(data_id);
     request.onsuccess = callback;
   },
+  delAll: function(callback){
+    AppDB.read('all', null, function(res){
+      for(var i in res){
+        AppDB.del(res[i].bookmark_id, callback);
+      }
+    });
+  },
   update: function(key, data, callback){
     var db  = AppDB.db;
     //create transaction

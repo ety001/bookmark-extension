@@ -32,6 +32,7 @@ $(function() {
 
   $('#clearbtn').click(function(){
     ConfigObj.clearcache();
+    AppDB.delAll(function(){});
     if(ConfigObj.get('isopen')){
       $('#switch').attr('checked', true);
       chrome.browserAction.setIcon({path:pop_icon});
