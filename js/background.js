@@ -89,8 +89,7 @@ var BookmarkObj = {
         cpa_obj.sendEvent('Bookmarks', 'Visit_'+update_properties.url);
         break;
       case 1:
-        chrome.notifications.clear(notification_id);
-        cpa_obj.sendEvent('Bookmarks', 'Ignore_'+update_properties.url);
+        cpa_obj.sendEvent('Bookmarks', 'Ignore_'+BookmarkData.all_bookmarks[BookmarkData.current_index].url);
         break;
     }
   },

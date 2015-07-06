@@ -24,7 +24,7 @@ $(function() {
   $('#switch').change(function() {
     var s = $(this).is(':checked');
     ConfigObj.save('isopen', s);
-    $('#clearbtn').click(clear_func);
+    //$('#clearbtn').click(clear_func);
     if(s){
       cpa_obj.sendEvent('Bookmarks', 'switch_on');
       chrome.browserAction.setIcon({path:pop_icon});
@@ -37,11 +37,12 @@ $(function() {
     }
   });
 
-  if(ConfigObj.get('last_visited_index')){
-    $('#clearbtn').click(clear_func);
+  if(!ConfigObj.get('last_visited_index')){
+    $('#clearbtn').addClass('btn_grey');
   }
 
   var clear_func = function(){
+    console.log(12);
     ConfigObj.clearcache();
     AppDB.delAll(function(){});
     if(ConfigObj.get('isopen')){
@@ -56,4 +57,6 @@ $(function() {
     Common.show_msg(chrome.i18n.getMessage('appname') , chrome.i18n.getMessage('clearmsg') );
     $(this).off();
   };
+
+  $('#clearbtn').click(clear_func);
 })
