@@ -7,8 +7,8 @@ body{
     overflow: hidden;
 }
 .bookmark-title {
-  height: 40px;
-  background-color: #333;
+  height: 46px;
+  background-color: #fff;
 }
 .bookmark-body {
   height: 100%;

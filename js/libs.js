@@ -1,12 +1,15 @@
 var Common = {
   is_debug: true,
-  show_msg: function(title, msg){
+  show_msg: function(title, msg, btn){
     var notifications_contents = {
       type: 'basic',
       iconUrl: "img/icon-48.png",
       title: title,
       message: msg
     };
+    if(btn){
+      notifications_contents.buttons = btn;
+    }
     chrome.notifications.create('', notifications_contents, function(){});
   },
   debug: function(t){

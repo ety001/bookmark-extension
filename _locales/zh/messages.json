@@ -12,12 +12,18 @@
     "message": "清理成功"
   },
   "notificationtitle": {
-    "message": "应用正在访问..."
+    "message": "是否访问该书签？"
   },
   "switch_open_success": {
     "message": "应用打开成功，祝你使用愉快 ~"
   },
   "switch_close_success": {
     "message": "应用已关闭"
+  },
+  "notification_button_confirm": {
+    "message": " 访问 "
+  },
+  "notification_button_ignore": {
+    "message": " 忽略 "
   }
 }

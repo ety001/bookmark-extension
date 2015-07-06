@@ -65,13 +65,28 @@ var BookmarkObj = {
     }
   },
   'visit': function(i, url){
-    var update_properties = {url: 'bk.html?id='+BookmarkData.all_bookmarks[i].id};
-    chrome.tabs.update(BookmarkObj.tab_id, update_properties);
+    BookmarkData.current_index  = i;
     Common.show_msg(
       chrome.i18n.getMessage('notificationtitle'),
       BookmarkData.all_bookmarks[i].title?
-        BookmarkData.all_bookmarks[i].title:BookmarkData.all_bookmarks[i].url
+        BookmarkData.all_bookmarks[i].title:BookmarkData.all_bookmarks[i].url,
+      [
+        {'title':chrome.i18n.getMessage('notification_button_confirm')},
+        {'title':chrome.i18n.getMessage('notification_button_ignore')}
+      ]
     );
+  },
+  'notification_click_func': function(notification_id, button_index){
+    if(BookmarkData.current_index==0)return;
+    switch (button_index) {
+      case 0:
+        var update_properties = {url: BookmarkData.all_bookmarks[BookmarkData.current_index].url};
+        chrome.tabs.update(BookmarkObj.tab_id, update_properties);
+        break;
+      case 1:
+        chrome.notifications.clear(notification_id);
+        break;
+    }
   },
   'remove_func': function(id, removeInfo){
     if(id){
@@ -87,6 +102,7 @@ var BookmarkObj = {
 }
 //Data
 var BookmarkData  = {
+  'current_index': 0,
   'all_bookmarks': {},
   'all_length':0,
   'data_tmpl': function(id, count, url){
@@ -174,3 +190,4 @@ chrome.tabs.onCreated.addListener(BookmarkObj.check);
 chrome.bookmarks.onRemoved.addListener(BookmarkObj.remove_func);
 chrome.bookmarks.onChanged.addListener(BookmarkObj.update_func);
 chrome.bookmarks.onMoved.addListener(BookmarkObj.move_func);
+chrome.notifications.onButtonClicked.addListener(BookmarkObj.notification_click_func);

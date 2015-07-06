@@ -12,12 +12,18 @@
     "message": "Clear Success"
   },
   "notificationtitle": {
-    "message": "App is visiting..."
+    "message": "Whether to Visit ? "
   },
   "switch_open_success": {
     "message": "App Open Success, Have Fun ~"
   },
   "switch_close_success": {
     "message": "App Close Success"
+  },
+  "notification_button_confirm": {
+    "message": " To Visit "
+  },
+  "notification_button_ignore": {
+    "message": " Ignore Now "
   }
 }
