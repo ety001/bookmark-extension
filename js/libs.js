@@ -1,3 +1,10 @@
+//google-analytics
+var Cpa = function(){
+  var service = analytics.getService('review-bookmarks');
+  var tracker = service.getTracker('UA-64832923-1');
+  return tracker;
+}
+
 var Common = {
   is_debug: true,
   show_msg: function(title, msg, btn){
@@ -21,6 +28,29 @@ var Common = {
      var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)","i");
      var r = window.location.search.substr(1).match(reg);
      if (r!=null) return (r[2]); return null;
+  },
+  random_str: function (len) {
+  　　len = len || 32;
+  　　var $chars = 'ABCDEFGHJKLMNPQRSTWXYZabcdefhijklmnoprstwxyz012345678';
+  　　var maxPos = $chars.length;
+  　　var pwd = '';
+  　　for (i = 0; i < len; i++) {
+  　　　　pwd += $chars.charAt(Math.floor(Math.random() * maxPos));
+  　　}
+  　　return pwd;
+  }
+}
+
+var GetUid = {
+  get: function(){
+    if(window.localStorage.uid){
+      var uid = window.localStorage.uid;
+    } else {
+      var d   = new Date();
+      var uid = Common.random_str() + d.getSeconds() + d.getMinutes() + d.getMilliseconds();
+      window.localStorage.uid = uid;
+    }
+    return uid;
   }
 }
 

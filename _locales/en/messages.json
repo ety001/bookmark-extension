@@ -3,7 +3,7 @@
     "message": "Review Bookmarks"
   },
   "appdesc": {
-    "message": "This tool can help you review your bookmarks. It selects one bookmark from your bookmark bar when you create a new tab and then open the selected bookmark in current tab to make you review it."
+    "message": "This tool can help you review your bookmarks. "
   },
   "clearbtn": {
     "message": "Clear Cache"

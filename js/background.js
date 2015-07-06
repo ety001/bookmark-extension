@@ -1,3 +1,6 @@
+var cpa_obj = new Cpa();
+var uid = GetUid.get();
+cpa_obj.sendAppView(uid);
 //init popicon
 var pop_icon  = {
   "19": "img/icon-19.png",
@@ -14,6 +17,7 @@ if(ConfigObj.get('isopen')){
   $('#switch').attr('checked', false);
   chrome.browserAction.setIcon({path:pop_icon_black});
 }
+
 //bookmark object
 var BookmarkObj = {
   'tab_id': 0,
@@ -82,10 +86,18 @@ var BookmarkObj = {
       case 0:
         var update_properties = {url: BookmarkData.all_bookmarks[BookmarkData.current_index].url};
         chrome.tabs.update(BookmarkObj.tab_id, update_properties);
+        cpa_obj.sendEvent('Bookmarks', 'Visit_'+update_properties.url);
         break;
       case 1:
         chrome.notifications.clear(notification_id);
+        cpa_obj.sendEvent('Bookmarks', 'Ignore_'+update_properties.url);
         break;
+    }
+  },
+  'notification_onclose_func': function(notification_id, by_user){
+    console.log(notification_id, by_user);
+    if(by_user){
+      cpa_obj.sendEvent('Bookmarks', 'click_x');
     }
   },
   'remove_func': function(id, removeInfo){
@@ -191,3 +203,4 @@ chrome.bookmarks.onRemoved.addListener(BookmarkObj.remove_func);
 chrome.bookmarks.onChanged.addListener(BookmarkObj.update_func);
 chrome.bookmarks.onMoved.addListener(BookmarkObj.move_func);
 chrome.notifications.onButtonClicked.addListener(BookmarkObj.notification_click_func);
+chrome.notifications.onClosed.addListener(BookmarkObj.notification_onclose_func);

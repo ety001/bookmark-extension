@@ -1,4 +1,5 @@
 $(function() {
+  var cpa_obj = new Cpa();
   var pop_icon  = {
     "19": "img/icon-19.png",
     "38": "img/icon-38.png"
@@ -25,10 +26,12 @@ $(function() {
     ConfigObj.save('isopen', s);
     $('#clearbtn').click(clear_func);
     if(s){
+      cpa_obj.sendEvent('Bookmarks', 'switch_on');
       chrome.browserAction.setIcon({path:pop_icon});
       $('#clearbtn').removeClass('btn_grey');
       Common.show_msg(chrome.i18n.getMessage('appname') , chrome.i18n.getMessage('switch_open_success') );
     } else {
+      cpa_obj.sendEvent('Bookmarks', 'switch_off');
       chrome.browserAction.setIcon({path:pop_icon_black});
       Common.show_msg(chrome.i18n.getMessage('appname') , chrome.i18n.getMessage('switch_close_success') );
     }
@@ -37,7 +40,7 @@ $(function() {
   if(ConfigObj.get('last_visited_index')){
     $('#clearbtn').click(clear_func);
   }
-  
+
   var clear_func = function(){
     ConfigObj.clearcache();
     AppDB.delAll(function(){});
