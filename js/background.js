@@ -95,7 +95,6 @@ var BookmarkObj = {
     }
   },
   'notification_onclose_func': function(notification_id, by_user){
-    console.log(notification_id, by_user);
     if(by_user){
       cpa_obj.sendEvent('Bookmarks', 'click_x');
     }
