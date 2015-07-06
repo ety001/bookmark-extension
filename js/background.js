@@ -65,7 +65,7 @@ var BookmarkObj = {
     }
   },
   'visit': function(i, url){
-    var update_properties = {url: url};
+    var update_properties = {url: 'bk.html?id='+BookmarkData.all_bookmarks[i].id};
     chrome.tabs.update(BookmarkObj.tab_id, update_properties);
     Common.show_msg(
       chrome.i18n.getMessage('notificationtitle'),

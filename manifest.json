@@ -32,6 +32,8 @@
         "notifications",
         "bookmarks",
         "tabs",
-        "background"
+        "background",
+        "https://*",
+        "http://*"
     ]
 }
