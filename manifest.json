@@ -5,7 +5,7 @@
 
     "name": "__MSG_appname__",
     "description": "__MSG_appdesc__",
-    "version": "1.5",
+    "version": "1.6",
 
     "icons": {
         "16": "img/icon-16.png",

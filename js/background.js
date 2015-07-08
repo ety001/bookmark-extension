@@ -100,13 +100,16 @@ var BookmarkObj = {
   },
   'remove_func': function(id, removeInfo){
     if(id){
+      cpa_obj.sendEvent('Bookmarks', 'Remove');
       BookmarkData.rm_has_visited_item(id);
     }
   },
   'update_func': function(id, changeInfo){
+    cpa_obj.sendEvent('Bookmarks', 'Update');
     BookmarkData.update_has_visited_item(id, changeInfo.title, changeInfo.url);
   },
   'move_func': function(newid, moveInfo){
+    cpa_obj.sendEvent('Bookmarks', 'Move');
     BookmarkData.move_has_visited_item(newid, changeInfo);
   }
 }
