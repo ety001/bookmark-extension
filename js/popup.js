@@ -42,8 +42,8 @@ $(function() {
   }
 
   var clear_func = function(){
-    console.log(12);
     ConfigObj.clearcache();
+    NotificationObj.clearcache();
     AppDB.delAll(function(){});
     if(ConfigObj.get('isopen')){
       $('#switch').attr('checked', true);

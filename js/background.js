@@ -69,29 +69,37 @@ var BookmarkObj = {
     }
   },
   'visit': function(i, url){
-    BookmarkData.current_index  = i;
     Common.show_msg(
       chrome.i18n.getMessage('notificationtitle'),
+
       BookmarkData.all_bookmarks[i].title?
         BookmarkData.all_bookmarks[i].title:BookmarkData.all_bookmarks[i].url,
+
       [
         {'title':chrome.i18n.getMessage('notification_button_confirm')},
         {'title':chrome.i18n.getMessage('notification_button_delete')}
-      ]
+      ],
+
+      i.toString()
     );
   },
   'notification_click_func': function(notification_id, button_index){
-    if(BookmarkData.current_index==0)return;
     switch (button_index) {
       case 0:
-        var update_properties = {url: BookmarkData.all_bookmarks[BookmarkData.current_index].url};
-        chrome.tabs.update(BookmarkObj.tab_id, update_properties);
+        var update_properties = {url: BookmarkData.all_bookmarks[notification_id].url};
+        chrome.tabs.get(BookmarkObj.tab_id, function(tab_obj){
+          if(tab_obj==undefined){
+            chrome.tabs.create(update_properties);
+          } else {
+            chrome.tabs.update(BookmarkObj.tab_id, update_properties);
+          }
+        });
         cpa_obj.sendEvent('Bookmarks', 'Visit_'+update_properties.url);
         break;
       case 1:
-        chrome.bookmarks.remove(BookmarkData.all_bookmarks[BookmarkData.current_index].id, function(){
+        chrome.bookmarks.remove(BookmarkData.all_bookmarks[notification_id].id, function(){
           Common.show_msg(
-            BookmarkData.all_bookmarks[BookmarkData.current_index].title,
+            BookmarkData.all_bookmarks[notification_id].title,
             chrome.i18n.getMessage('deletesuccess')
           );
         });

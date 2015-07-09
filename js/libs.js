@@ -5,9 +5,34 @@ var Cpa = function(){
   return tracker;
 }
 
+var NotificationObj = {
+  get: function(notification_id){
+    var n = window.localStorage.notification_list;
+    if(n){
+      n = JSON.parse( n );
+      return n[notification_id];
+    } else {
+      return false;
+    }
+  },
+  save: function(notification_id, bookmark_data_index){
+    if(window.localStorage.notification_list){
+      var n = JSON.parse( window.localStorage.notification_list );
+    } else {
+      var n = {};
+    }
+    n[notification_id]  = bookmark_data_index;
+    window.localStorage.notification_list  = JSON.stringify( n );
+  },
+  clearcache: function(){
+    var n = {};
+    window.localStorage.notification_list = JSON.stringify(n);
+  }
+};
+
 var Common = {
   is_debug: true,
-  show_msg: function(title, msg, btn){
+  show_msg: function(title, msg, btn, notification_id, callback){
     var notifications_contents = {
       type: 'basic',
       iconUrl: "img/icon-48.png",
@@ -17,7 +42,13 @@ var Common = {
     if(btn){
       notifications_contents.buttons = btn;
     }
-    chrome.notifications.create('', notifications_contents, function(){});
+    if(typeof callback != 'function'){
+      callback = function(){};
+    }
+    if(!notification_id){
+      notification_id = '';
+    }
+    chrome.notifications.create(notification_id, notifications_contents, callback);
   },
   debug: function(t){
     if(Common.is_debug){
