@@ -10,7 +10,9 @@ var NotificationObj = {
     var n = window.localStorage.notification_list;
     if(n){
       n = JSON.parse( n );
-      return n[notification_id];
+      var r = n[notification_id];
+      delete(n[notification_id]);
+      return r;
     } else {
       return false;
     }

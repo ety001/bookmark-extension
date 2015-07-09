@@ -69,6 +69,7 @@ var BookmarkObj = {
     }
   },
   'visit': function(i, url){
+    NotificationObj.save(i.toString(), BookmarkObj.tab_id);
     Common.show_msg(
       chrome.i18n.getMessage('notificationtitle'),
 
@@ -86,12 +87,13 @@ var BookmarkObj = {
   'notification_click_func': function(notification_id, button_index){
     switch (button_index) {
       case 0:
+        var tab_id  = NotificationObj.get(notification_id);
         var update_properties = {url: BookmarkData.all_bookmarks[notification_id].url};
-        chrome.tabs.get(BookmarkObj.tab_id, function(tab_obj){
+        chrome.tabs.get(tab_id, function(tab_obj){
           if(tab_obj==undefined){
             chrome.tabs.create(update_properties);
           } else {
-            chrome.tabs.update(BookmarkObj.tab_id, update_properties);
+            chrome.tabs.update(tab_id, update_properties);
           }
         });
         cpa_obj.sendEvent('Bookmarks', 'Visit_'+update_properties.url);
