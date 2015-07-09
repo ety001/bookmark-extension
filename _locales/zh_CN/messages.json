@@ -25,5 +25,11 @@
   },
   "notification_button_ignore": {
     "message": " 忽略 "
+  },
+  "notification_button_delete": {
+    "message": " 删除 "
+  },
+  "deletesuccess": {
+    "message": "书签删除成功"
   }
 }

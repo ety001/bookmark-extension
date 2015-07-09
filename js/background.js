@@ -76,7 +76,7 @@ var BookmarkObj = {
         BookmarkData.all_bookmarks[i].title:BookmarkData.all_bookmarks[i].url,
       [
         {'title':chrome.i18n.getMessage('notification_button_confirm')},
-        {'title':chrome.i18n.getMessage('notification_button_ignore')}
+        {'title':chrome.i18n.getMessage('notification_button_delete')}
       ]
     );
   },
@@ -89,7 +89,12 @@ var BookmarkObj = {
         cpa_obj.sendEvent('Bookmarks', 'Visit_'+update_properties.url);
         break;
       case 1:
-        cpa_obj.sendEvent('Bookmarks', 'Ignore_'+BookmarkData.all_bookmarks[BookmarkData.current_index].url);
+        chrome.bookmarks.remove(BookmarkData.all_bookmarks[BookmarkData.current_index].id, function(){
+          Common.show_msg(
+            BookmarkData.all_bookmarks[BookmarkData.current_index].title,
+            chrome.i18n.getMessage('deletesuccess')
+          );
+        });
         break;
     }
   },

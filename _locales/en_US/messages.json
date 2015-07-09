@@ -25,5 +25,11 @@
   },
   "notification_button_ignore": {
     "message": " Ignore Now "
+  },
+  "notification_button_delete": {
+    "message": " Delete This "
+  },
+  "deletesuccess": {
+    "message": "Bookmark deletes success"
   }
 }
