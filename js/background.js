@@ -1,6 +1,7 @@
 var cpa_obj = new Cpa();
 var uid = GetUid.get();
 cpa_obj.sendAppView(uid);
+
 //init popicon
 var pop_icon  = {
   "19": "img/icon-19.png",
@@ -11,10 +12,8 @@ pop_icon_black  = {
   "38": "img/icon-38-black.png"
 };
 if(ConfigObj.get('isopen')){
-  $('#switch').attr('checked', true);
   chrome.browserAction.setIcon({path:pop_icon});
 } else {
-  $('#switch').attr('checked', false);
   chrome.browserAction.setIcon({path:pop_icon_black});
 }
 
@@ -28,15 +27,19 @@ var BookmarkObj = {
     if(!ConfigObj.get('isopen'))return;
     //check if today bookmark has been visited
     //if(BookmarkObj.check_today_has_visited())return;
+
     //get bookmarks tree and run
     chrome.bookmarks.getTree(BookmarkObj.process);
   },
   'process': function(bookmarks){
-    //transefer the bookmarks tree to list
-    BookmarkData.all_bookmarks  = [];
-    BookmarkData.all_length     = 0;
-    BookmarkData.change_tree_node_to_list(bookmarks);
-    BookmarkData.all_length     = BookmarkData.all_bookmarks.length;
+    if(BookmarkData.has_updated){
+      //transefer the bookmarks tree to list
+      BookmarkData.all_bookmarks  = [];
+      BookmarkData.all_length     = 0;
+      BookmarkData.change_tree_node_to_list(bookmarks);
+      BookmarkData.all_length     = BookmarkData.all_bookmarks.length;
+      BookmarkData.has_updated    = 0;
+    }
 
     var last_visited_index  = BookmarkData.get_last_visited_index();
     if(last_visited_index < BookmarkData.all_length){
@@ -45,28 +48,13 @@ var BookmarkObj = {
         null,
         BookmarkData.get_has_visited_item
       );
+      //visit
       BookmarkObj.visit(
         last_visited_index,
         BookmarkData.all_bookmarks[last_visited_index].url
       );
     }
 
-  },
-  'check_today_has_visited': function(){//unuse
-    var tmp_nowdate     = new Date().Format('yyyy-MM-dd');
-    var last_visited_date   = ConfigObj.get('last_visited_date');
-    //last_visited_date is empty.
-    //It means that bookmark is not opened today
-    if(!last_visited_date){
-      ConfigObj.save('last_visited_date', tmp_nowdate);
-      return false;
-    }
-    //check if bookmark is open today
-    if(tmp_nowdate==last_visited_date){
-      return true;
-    } else {
-      return false;
-    }
   },
   'visit': function(i, url){
     NotificationObj.save(i.toString(), BookmarkObj.tab_id);
@@ -87,19 +75,13 @@ var BookmarkObj = {
   'notification_click_func': function(notification_id, button_index){
     switch (button_index) {
       case 0:
-        var tab_id  = NotificationObj.get(notification_id);
         var update_properties = {url: BookmarkData.all_bookmarks[notification_id].url};
-        chrome.tabs.get(tab_id, function(tab_obj){
-          if(tab_obj==undefined){
-            chrome.tabs.create(update_properties);
-          } else {
-            chrome.tabs.update(tab_id, update_properties);
-          }
-        });
-        cpa_obj.sendEvent('Bookmarks', 'Visit_'+update_properties.url);
+        chrome.tabs.create(update_properties);
+        cpa_obj.sendEvent('Bookmarks', uid + '_Visit_'+update_properties.url);
         break;
       case 1:
         chrome.bookmarks.remove(BookmarkData.all_bookmarks[notification_id].id, function(){
+          cpa_obj.sendEvent('Bookmarks', uid + '_Deletefromnotification');
           Common.show_msg(
             BookmarkData.all_bookmarks[notification_id].title,
             chrome.i18n.getMessage('deletesuccess')
@@ -110,27 +92,30 @@ var BookmarkObj = {
   },
   'notification_onclose_func': function(notification_id, by_user){
     if(by_user){
-      cpa_obj.sendEvent('Bookmarks', 'click_x');
+      cpa_obj.sendEvent('Bookmarks', uid+'_Clickx');
     }
   },
   'remove_func': function(id, removeInfo){
     if(id){
-      cpa_obj.sendEvent('Bookmarks', 'Remove');
+      BookmarkData.has_updated    = 1;
+      cpa_obj.sendEvent('Bookmarks', uid+'_Remove');
       BookmarkData.rm_has_visited_item(id);
     }
   },
   'update_func': function(id, changeInfo){
-    cpa_obj.sendEvent('Bookmarks', 'Update');
+    BookmarkData.has_updated    = 1;
+    cpa_obj.sendEvent('Bookmarks', uid+'_Update');
     BookmarkData.update_has_visited_item(id, changeInfo.title, changeInfo.url);
   },
   'move_func': function(newid, moveInfo){
-    cpa_obj.sendEvent('Bookmarks', 'Move');
+    BookmarkData.has_updated    = 1;
+    cpa_obj.sendEvent('Bookmarks', uid+'_Move');
     BookmarkData.move_has_visited_item(newid, changeInfo);
   }
 }
 //Data
 var BookmarkData  = {
-  'current_index': 0,
+  'has_updated': 1,
   'all_bookmarks': {},
   'all_length':0,
   'data_tmpl': function(id, count, url){
@@ -215,8 +200,10 @@ var BookmarkData  = {
 }
 
 chrome.tabs.onCreated.addListener(BookmarkObj.check);
+
 chrome.bookmarks.onRemoved.addListener(BookmarkObj.remove_func);
 chrome.bookmarks.onChanged.addListener(BookmarkObj.update_func);
 chrome.bookmarks.onMoved.addListener(BookmarkObj.move_func);
+
 chrome.notifications.onButtonClicked.addListener(BookmarkObj.notification_click_func);
 chrome.notifications.onClosed.addListener(BookmarkObj.notification_onclose_func);

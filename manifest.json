@@ -5,7 +5,7 @@
 
     "name": "__MSG_appname__",
     "description": "__MSG_appdesc__",
-    "version": "1.9",
+    "version": "2.0",
 
     "icons": {
         "16": "img/icon-16.png",
@@ -23,7 +23,7 @@
     },
 
     "background": {
-      "scripts": ["js/jquery-1.11.2.min.js","js/google-analytics-bundle.js","js/db.js","js/libs.js","js/background.js"],
+      "scripts": ["js/google-analytics-bundle.js","js/db.js","js/libs.js","js/background.js"],
       "persistent": true
     },
 
