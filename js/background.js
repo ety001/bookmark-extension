@@ -110,7 +110,7 @@ var BookmarkObj = {
   'move_func': function(newid, moveInfo){
     BookmarkData.has_updated    = 1;
     cpa_obj.sendEvent('Bookmarks', uid+'_Move');
-    BookmarkData.move_has_visited_item(newid, changeInfo);
+    BookmarkData.move_has_visited_item(newid, moveInfo);
   }
 }
 //Data
