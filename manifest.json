@@ -3,9 +3,12 @@
 
     "default_locale": "en_US",
 
+    "author": "ETY001",
+    "homepage_url": "http://bm.to0l.cn/",
+
     "name": "__MSG_appname__",
     "description": "__MSG_appdesc__",
-    "version": "2.1",
+    "version": "2.2",
 
     "icons": {
         "16": "img/icon-16.png",
@@ -23,8 +26,12 @@
     },
 
     "background": {
-      "scripts": ["js/google-analytics-bundle.js","js/db.js","js/libs.js","js/background.js"],
-      "persistent": true
+      "scripts": ["js/bookmark.js","js/background.js"],
+      "persistent": false
+    },
+
+    "chrome_url_overrides" : {
+      "newtab": "show.html"
     },
 
     "permissions": [
