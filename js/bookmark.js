@@ -99,8 +99,18 @@ var Bookmark = {
       }
     }
   },
+  //通过tab_id找index
+  find_index_by_tab_id: function(tab_id){
+    for(var i in Bookmark.list){
+      if(Bookmark.list[i]==tab_id){
+        return i;
+      }
+    }
+    return false;
+  },
   //设置一个书签跳过
   set_jump: function(tab_id, val){
+    if(!Bookmark.find_index_by_tab_id(tab_id))return;
     if(val==undefined)val=1;
     if(val==1){
       Bookmark.jump[tab_id] = val;
