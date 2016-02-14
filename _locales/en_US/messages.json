@@ -31,5 +31,32 @@
   },
   "deletesuccess": {
     "message": "Bookmark deletes success"
+  },
+  "previewtext": {
+    "message": "You are visiting "
+  },
+  "closepreivew": {
+    "message": "Close Preview"
+  },
+  "openpreview": {
+    "message": "Open Preview"
+  },
+  "donate": {
+    "message": "Donate"
+  },
+  "openinnewtab": {
+    "message": "Open In a New Tab"
+  },
+  "block": {
+    "message": "Block"
+  },
+  "blocklist": {
+    "message": "Block List"
+  },
+  "blockmsg": {
+    "message": "Success!"
+  },
+  "nouse": {
+    "message": "No use,Delete it"
   }
 }

@@ -78,7 +78,7 @@ var Bookmark = {
     if(Bookmark.total==0)return false;
     //get next index
     Bookmark.curt_index = Bookmark.find_next_index();
-    console.log('index',Bookmark.curt_index);
+    //console.log('index',Bookmark.curt_index);
     //get bookmark
     chrome.bookmarks.get(Bookmark.list[Bookmark.curt_index], callback);
     //persist
@@ -100,8 +100,13 @@ var Bookmark = {
     }
   },
   //设置一个书签跳过
-  set_jump: function(tab_id){
-    Bookmark.jump[tab_id] = 1;
+  set_jump: function(tab_id, val){
+    if(val==undefined)val=1;
+    if(val==1){
+      Bookmark.jump[tab_id] = val;
+    } else {
+      delete(Bookmark.jump[tab_id]);
+    }
     Bookmark.persist_jump();
   },
   //添加一个书签
@@ -125,6 +130,9 @@ var Bookmark = {
       Bookmark.rm_folder(remove_info.node.children);
     }
     Bookmark.get_bookmark();
+  },
+  rm_bookmark_by_id: function(id, callback){
+    chrome.bookmarks.remove(id, callback);
   },
   //删除书签目录
   rm_folder: function(node){

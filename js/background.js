@@ -1,27 +1,18 @@
-//init popicon
-/*var pop_icon  = {
-  "19": "img/icon-19.png",
-  "38": "img/icon-38.png"
-},
-pop_icon_black  = {
-  "19": "img/icon-19-black.png",
-  "38": "img/icon-38-black.png"
-};
-if(ConfigObj.get('isopen')){
-  chrome.browserAction.setIcon({path:pop_icon});
-} else {
-  chrome.browserAction.setIcon({path:pop_icon_black});
+//清空之前版本的数据
+if(window.localStorage.curt_index==undefined){
+  window.localStorage.clear();
+  indexedDB.deleteDatabase('bookmarks');
 }
+//google analytics
+var cpa_obj = new Cpa();
+var uid = GetUid.get();
 
-
-chrome.bookmarks.onRemoved.addListener(function(){});
-chrome.bookmarks.onChanged.addListener(function(){});
-chrome.bookmarks.onMoved.addListener(function(){});
-
-chrome.notifications.onButtonClicked.addListener(function(){});
-chrome.notifications.onClosed.addListener(function(){});*/
-Bookmark.init();//数据初始化
-
+//数据初始化
+Bookmark.init();
+if(window.localStorage.preview_switch==undefined){
+  window.localStorage.preview_switch = 'on';
+}
+//与前端页面通讯
 chrome.runtime.onConnect.addListener(function(port) {
   console.assert(port.name == "bookmark_manager_ety001");
   port.onMessage.addListener(function(msg) {
@@ -29,16 +20,33 @@ chrome.runtime.onConnect.addListener(function(port) {
     var cdata = msg.cdata;
     switch (ctype) {
       case 'lang':
-        port.postMessage({ctype:ctype, cdata:chrome.i18n.getMessage(cdata)});
+        var res_lang = {};
+        for(var i in cdata){
+          res_lang[cdata[i]] = chrome.i18n.getMessage(cdata[i]);
+        }
+        port.postMessage({ctype:ctype, cdata:res_lang});
         break;
       case 'getbookmark':
         Bookmark.get_from_local(function(bm){
-          console.log('get_bookmark_ok',bm);
+          //console.log('get_bookmark_ok',bm);
+          cpa_obj.sendAppView("openbookmark_"+bm.title);
           port.postMessage({ctype:ctype, cdata: bm});
+        });
+        break;
+      case 'block':
+        cpa_obj.sendEvent('Block', uid);
+        Bookmark.set_jump(cdata);
+        port.postMessage({ctype:ctype, cdata: true});
+        break;
+      case 'remove_bookmark':
+        cpa_obj.sendEvent('rm_bookmark', uid);
+        Bookmark.rm_bookmark_by_id(cdata, function(){
+          port.postMessage({ctype:ctype, cdata: true});
         });
         break;
     };
   });
 });
+//绑定书签事件
 chrome.bookmarks.onCreated.addListener(Bookmark.add_bookmark);
 chrome.bookmarks.onRemoved.addListener(Bookmark.rm_bookmark);

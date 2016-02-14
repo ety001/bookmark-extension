@@ -4,10 +4,57 @@
     <meta charset="utf-8">
     <title></title>
     <meta name="author" content="ety001">
+    <link rel="stylesheet" href="css/pure-min.css">
+    <link rel="stylesheet" href="css/default.css">
     <script type="text/javascript" src="js/jquery-1.11.2.min.js"></script>
     <script type="text/javascript" src="js/show.js"></script>
   </head>
   <body>
-    hello world
+    <div class="pure-g bigbox">
+      <div id="screen" class="pure-u-1-1">
+        <div class="pure-g title">
+          <div class="appname">
+            <h1 id="appname"></h1>
+          </div>
+          <div class="bookmark_info">
+            <span id="previewtext"></span><span id="bookmark_title"></span><hr>
+            <button id="nouse" class="button-error pure-button"></button>
+            <a id="openinnewtab" class="pure-button-primary pure-button" target="_blank"></a>
+            <button id="closepreivew" class="button-error pure-button"></button>
+            <button id="openpreview" class="button-success pure-button"></button>
+            <button id="block" class="button-warning pure-button"></button>
+            <a id="donate" class="button-secondary pure-button" target="_blank" href="http://www.domyself.me/donate"></a>
+            <span id="blockmsg" style="display:none;"></span>
+          </div>
+        </div>
+        <div id="frame">
+          <iframe src=""></iframe>
+        </div>
+      </div>
+      <!--<div id="blocklist" class="pure-u-1-6">
+        <style>
+        .custom-restricted-width {
+          /* To limit the menu width to the content of the menu: */
+          display: inline-block;
+          /* Or set the width explicitly: */
+          /* width: 10em; */
+        }
+        </style>
+        <div class="pure-menu custom-restricted-width">
+          <span class="pure-menu-heading">Yahoo Sites</span>
+
+          <ul class="pure-menu-list">
+              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Flickr</a></li>
+              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Messenger</a></li>
+              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Sports</a></li>
+              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Finance</a></li>
+              <li class="pure-menu-heading">More Sites</li>
+              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Games</a></li>
+              <li class="pure-menu-item"><a href="#" class="pure-menu-link">News</a></li>
+              <li class="pure-menu-item"><a href="#" class="pure-menu-link">OMG!</a></li>
+          </ul>
+        </div>
+      </div>-->
+    </div>
   </body>
 </html>

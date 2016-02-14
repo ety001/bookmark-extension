@@ -1,36 +1,9 @@
 //google-analytics
 var Cpa = function(){
   var service = analytics.getService('review-bookmarks');
-  var tracker = service.getTracker('UA-64832923-1');
+  var tracker = service.getTracker('UA-64832923-4');
   return tracker;
 }
-
-var NotificationObj = {
-  get: function(notification_id){
-    var n = window.localStorage.notification_list;
-    if(n){
-      n = JSON.parse( n );
-      var r = n[notification_id];
-      delete(n[notification_id]);
-      return r;
-    } else {
-      return false;
-    }
-  },
-  save: function(notification_id, bookmark_data_index){
-    if(window.localStorage.notification_list){
-      var n = JSON.parse( window.localStorage.notification_list );
-    } else {
-      var n = {};
-    }
-    n[notification_id]  = bookmark_data_index;
-    window.localStorage.notification_list  = JSON.stringify( n );
-  },
-  clearcache: function(){
-    var n = {};
-    window.localStorage.notification_list = JSON.stringify(n);
-  }
-};
 
 var Common = {
   is_debug: true,
@@ -82,33 +55,10 @@ var GetUid = {
       var d   = new Date();
       var uid = Common.random_str() + d.getSeconds() + d.getMinutes() + d.getMilliseconds();
       window.localStorage.uid = uid;
+      var cpa_obj = new Cpa();
+      cpa_obj.sendEvent('Users', uid);
     }
     return uid;
-  }
-}
-
-var ConfigObj = {
-  save: function(key, val){
-    if(window.localStorage.config){
-      var c = JSON.parse( window.localStorage.config );
-    } else {
-      var c = {};
-    }
-    c[key]  = val;
-    window.localStorage.config  = JSON.stringify( c );
-  },
-  get: function(key){
-    var c = window.localStorage.config;
-    if(c){
-      c = JSON.parse( c );
-      return c[key];
-    } else {
-      return false;
-    }
-  },
-  clearcache: function(){
-    var c = {};
-    window.localStorage.config = JSON.stringify(c);
   }
 }
 

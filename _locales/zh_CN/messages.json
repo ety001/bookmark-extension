@@ -31,5 +31,32 @@
   },
   "deletesuccess": {
     "message": "书签删除成功"
+  },
+  "previewtext": {
+    "message": "您正在访问 "
+  },
+  "closepreivew": {
+    "message": "关闭预览"
+  },
+  "openpreview": {
+    "message": "打开预览"
+  },
+  "donate": {
+    "message": "捐助"
+  },
+  "openinnewtab": {
+    "message": "在新标签页打开"
+  },
+  "block": {
+    "message": "不再提醒"
+  },
+  "blocklist": {
+    "message": "不再提醒列表"
+  },
+  "blockmsg": {
+    "message": "操作成功"
+  },
+  "nouse": {
+    "message": "没用了，删掉它"
   }
 }
