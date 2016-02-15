@@ -48,7 +48,7 @@
     "message": "Open In a New Tab"
   },
   "block": {
-    "message": "Block"
+    "message": "Block this"
   },
   "blocklist": {
     "message": "Block List"
@@ -58,5 +58,8 @@
   },
   "nouse": {
     "message": "No use,Delete it"
+  },
+  "chat": {
+    "message": "Chat on Gitter"
   }
 }

@@ -4,7 +4,8 @@ hr{
 .button-success,
 .button-error,
 .button-warning,
-.button-secondary {
+.button-secondary,
+.button-yellow {
   color: white;
   border-radius: 4px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
@@ -25,6 +26,11 @@ hr{
 .button-secondary {
   background: rgb(66, 184, 221); /* this is a light blue */
 }
+
+.button-yellow {
+	background: rgb(250, 210, 50);
+}
+
 .bigbox{
 	top: 0;
 	bottom: 0;

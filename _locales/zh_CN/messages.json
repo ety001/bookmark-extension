@@ -48,7 +48,7 @@
     "message": "在新标签页打开"
   },
   "block": {
-    "message": "不再提醒"
+    "message": "不再提醒该条书签"
   },
   "blocklist": {
     "message": "不再提醒列表"
@@ -58,5 +58,8 @@
   },
   "nouse": {
     "message": "没用了，删掉它"
+  },
+  "chat": {
+    "message": "Chat on Gitter"
   }
 }
