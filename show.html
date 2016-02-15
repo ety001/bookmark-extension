@@ -24,39 +24,32 @@
             <button id="closepreivew" class="button-yellow pure-button"></button>
             <button id="openpreview" class="button-success pure-button"></button>
             &nbsp;
-            <a id="chat" href="https://gitter.im/ety001/bookmark-extension" target="_blank" class="button-secondary pure-button"></a>
-            <a id="donate" class="pure-button" target="_blank" href="http://www.domyself.me/donate"></a>
+            <button id="blockmanager" class="button-secondary pure-button"></button>
             <span id="blockmsg" style="display:none;"></span>
+            <!--&nbsp;
+            <a id="weibo" href=""+ class="pure-button">
+              <img src="img/publish_button_24.gif">
+            </a>-->
           </div>
         </div>
         <div id="frame">
-          <iframe src=""></iframe>
+          <iframe src="" sandbox=""></iframe>
         </div>
       </div>
-      <!--<div id="blocklist" class="pure-u-1-6">
-        <style>
-        .custom-restricted-width {
-          /* To limit the menu width to the content of the menu: */
-          display: inline-block;
-          /* Or set the width explicitly: */
-          /* width: 10em; */
-        }
-        </style>
+      <div id="blocklist">
         <div class="pure-menu custom-restricted-width">
-          <span class="pure-menu-heading">Yahoo Sites</span>
-
+          <span id="blockmanager_title" class="pure-menu-heading"></span>
           <ul class="pure-menu-list">
-              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Flickr</a></li>
-              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Messenger</a></li>
-              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Sports</a></li>
-              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Finance</a></li>
-              <li class="pure-menu-heading">More Sites</li>
-              <li class="pure-menu-item"><a href="#" class="pure-menu-link">Games</a></li>
-              <li class="pure-menu-item"><a href="#" class="pure-menu-link">News</a></li>
-              <li class="pure-menu-item"><a href="#" class="pure-menu-link">OMG!</a></li>
           </ul>
         </div>
-      </div>-->
+        <div id="about">
+          <a id="chat" href="https://gitter.im/ety001/bookmark-extension" target="_blank" class="button-secondary pure-button"></a>
+          &nbsp;
+          <a id="donate" class="pure-button" target="_blank" href="http://www.domyself.me/donate"></a><hr>
+          Powered by <a href="http://www.domyself.me" target="_blank">ETY001</a>
+        </div>
+      </div>
     </div>
+    <input type="hidden" id="notitle_text" value="">
   </body>
 </html>

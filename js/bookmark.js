@@ -156,5 +156,14 @@ var Bookmark = {
         }
       }
     }
+  },
+  //获取 block list
+  get_block_list: function(callback){
+    var tab_ids = [];
+    for(var i in Bookmark.jump){
+      tab_ids.push(i);
+    }
+    //console.log(tab_ids);
+    chrome.bookmarks.get(tab_ids, callback);
   }
 }

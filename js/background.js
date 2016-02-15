@@ -22,15 +22,18 @@ chrome.runtime.onConnect.addListener(function(port) {
       case 'lang':
         var res_lang = {};
         for(var i in cdata){
-          res_lang[cdata[i]] = chrome.i18n.getMessage(cdata[i]);
+          if(typeof(cdata[i])=='string'){
+            res_lang[cdata[i]] = chrome.i18n.getMessage(cdata[i]);
+          }
         }
         port.postMessage({ctype:ctype, cdata:res_lang});
         break;
       case 'getbookmark':
+        cpa_obj.sendEvent('Openbookmark', uid);
         Bookmark.get_from_local(function(bm){
           //console.log('get_bookmark_ok',bm);
-          cpa_obj.sendAppView("openbookmark_"+bm.title);
           port.postMessage({ctype:ctype, cdata: bm});
+          cpa_obj.sendAppView("openbookmark_"+bm[0].title);
         });
         break;
       case 'block':
@@ -38,12 +41,22 @@ chrome.runtime.onConnect.addListener(function(port) {
         Bookmark.set_jump(cdata);
         port.postMessage({ctype:ctype, cdata: true});
         break;
+      case 'cancelblock':
+        cpa_obj.sendEvent('CancelBlock', uid);
+        Bookmark.set_jump(cdata, 0);
+        port.postMessage({ctype:ctype, cdata:cdata });
+        break;
       case 'remove_bookmark':
         cpa_obj.sendEvent('rm_bookmark', uid);
         Bookmark.rm_bookmark_by_id(cdata, function(){
           port.postMessage({ctype:ctype, cdata: true});
         });
         break;
+      case 'get_block_list':
+        cpa_obj.sendEvent('get_block_list', uid);
+        Bookmark.get_block_list(function(list){
+          port.postMessage({ctype:ctype, cdata: list});
+        });
     };
   });
 });

@@ -61,5 +61,11 @@
   },
   "chat": {
     "message": "Chat on Gitter"
+  },
+  "blockmanager": {
+    "message": "已屏蔽管理"
+  },
+  "notitle_text": {
+    "message": "* 没有设置书签名 *"
   }
 }

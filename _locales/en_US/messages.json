@@ -61,5 +61,11 @@
   },
   "chat": {
     "message": "Chat on Gitter"
+  },
+  "blockmanager": {
+    "message": "Block Manager"
+  },
+  "notitle_text": {
+    "message": "* No Title *"
   }
 }

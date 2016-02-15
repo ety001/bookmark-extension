@@ -52,6 +52,15 @@ hr{
 	height: 100%;
 	overflow-y: scroll;
 	overflow-x: hidden;
+	width: 300px;
+	position: absolute;
+	top: 0;
+	right: -300px;
+	letter-spacing: .1em;
+	background-color: #eee;
+}
+.custom-restricted-width {
+	width: 100%;
 }
 .appname{
 	padding: 0 30px 0 20px;
@@ -60,6 +69,7 @@ hr{
 .bookmark_info{
 	letter-spacing: .1em;
 	padding: 10px;
+	width: 680px;
 }
 #frame{
 	top: 0;
@@ -74,6 +84,21 @@ hr{
 	height:100%;
 	border: 0;
 }
-#bookmark_title{
+#blockmanager_title{
 	font-weight: bolder;
+	font-size: 16px;
+	padding-left: 10px;
+	border-bottom: 1px solid #ddd;
+}
+#about{
+	margin: 0 auto;
+	padding: 15px 0px;
+  text-align: center;
+}
+.pure-menu-link{
+	padding: 0;
+}
+.pure-menu-item{
+	padding: 8px 12px;
+	border-bottom: 1px solid #ddd;
 }
