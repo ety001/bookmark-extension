@@ -1,4 +1,4 @@
-.bookmark_tip {
+.bookmark_tip_ety001 {
   position: fixed;
   top: 0;
   right: -360px;
@@ -12,7 +12,7 @@
   font-size: 14px;
 }
 
-.bookmark_tip .title {
+.bookmark_tip_ety001 .bookmark_tip_ety001_title {
   font-weight: bolder;
   font-size: 18px;
   line-height: 24px;
@@ -20,41 +20,52 @@
   overflow: hidden;
 }
 
-.bookmark_tip .url, .bookmark_tip #btn_box, .bookmark_tip #blockmsg {
+.bookmark_tip_ety001 #bookmark_tip_ety001_close {
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  font-size: 16px;
+  top: 2px;
+  left: 4px;
+  position: absolute;
+  cursor: pointer;
+}
+
+.bookmark_tip_ety001 .bookmark_tip_ety001_url, .bookmark_tip_ety001 #bookmark_tip_ety001_btn_box, .bookmark_tip_ety001 #blockmsg {
   margin-top: 10px;
 }
 
-.bookmark_tip .button-success,
-.bookmark_tip .button-error,
-.bookmark_tip .button-warning,
-.bookmark_tip .button-secondary,
-.bookmark_tip .button-yellow {
+.bookmark_tip_ety001 .button-success,
+.bookmark_tip_ety001 .button-error,
+.bookmark_tip_ety001 .button-warning,
+.bookmark_tip_ety001 .button-secondary,
+.bookmark_tip_ety001 .button-yellow {
   color: white;
   border-radius: 4px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
-.bookmark_tip .button-success {
+.bookmark_tip_ety001 .button-success {
   background: rgb(28, 184, 65); /* this is a green */
 }
 
-.bookmark_tip .button-error {
+.bookmark_tip_ety001 .button-error {
   background: rgb(202, 60, 60); /* this is a maroon */
 }
 
-.bookmark_tip .button-warning {
+.bookmark_tip_ety001 .button-warning {
   background: rgb(223, 117, 20); /* this is an orange */
 }
 
-.bookmark_tip .button-secondary {
+.bookmark_tip_ety001 .button-secondary {
   background: rgb(66, 184, 221); /* this is a light blue */
 }
 
-.bookmark_tip .button-yellow {
+.bookmark_tip_ety001 .button-yellow {
 	background: rgb(250, 210, 50);
 }
 
-.bookmark_tip .pure-button {
+.bookmark_tip_ety001 .pure-button {
   display: block;
   margin-top: 6px;
   width: 100%;

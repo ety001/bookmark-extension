@@ -76,7 +76,7 @@ var Mini = {
     window.localStorage.mini_max = parseInt(num);
   },
   charge: function(){
-    if(window.localStorage.mini_count>=window.localStorage.mini_max){
+    if(parseInt(window.localStorage.mini_count)>=parseInt(window.localStorage.mini_max)){
       window.localStorage.mini_count=0;
       return true;
     } else {

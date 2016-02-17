@@ -8,7 +8,7 @@
 
     "name": "__MSG_appname__",
     "description": "__MSG_appdesc__",
-    "version": "2.2.5",
+    "version": "2.2.6",
 
     "icons": {
         "16": "img/icon-16.png",
@@ -20,9 +20,12 @@
       {
         "matches": ["*://*/*"],
         "css": ["css/pure-min.css","css/mini.css"],
-        "js": ["js/jquery-1.11.2.min.js", "js/mini.js"]
+        "js": ["js/jquery-1.11.2.min.js", "js/mini.js"],
+        "run_at":     "document_end"
       }
     ],
+
+    "web_accessible_resources": ["show.html"],
 
     "options_page": "show.html",
 

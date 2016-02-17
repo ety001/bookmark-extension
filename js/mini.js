@@ -36,11 +36,11 @@ $(function(){
         //console.log(cdata);
         break;
       case 'lang':
-        $('#openinnewtab').html(cdata.openinnewtab);
-        $('#block').html(cdata.block);
-        $('#nouse').html(cdata.nouse);
-        $('#blockmsg').html(cdata.blockmsg);
-        $('#setting').html(cdata.setting);
+        $('#bookmark_tip_ety001_openinnewtab').html(cdata.openinnewtab);
+        $('#bookmark_tip_ety001_block').html(cdata.block);
+        $('#bookmark_tip_ety001_nouse').html(cdata.nouse);
+        $('#bookmark_tip_ety001_blockmsg').html(cdata.blockmsg);
+        $('#bookmark_tip_ety001_setting').html(cdata.setting);
         break;
       case 'block':
         if(cdata){
@@ -58,45 +58,53 @@ $(function(){
           },2000);
         }
         break;
-      case 'getsettingpage':
-        $('#setting').attr('href', cdata);
-        break;
     }
   });
   function tip_dom(title, url){
-    var tip_html = $('<div class="bookmark_tip"></div>');
+    var tip_html = $('<div class="bookmark_tip_ety001"></div>');
     $('body').append($(tip_html));
-    $('.bookmark_tip').append($('<div id="box" class="pure-g"></div>'));
-    $('#box').append($('<div class="pure-u-1 title">'+title+'</div>'));
-    $('#box').append($('<div class="pure-u-1 url">'+url+'</div>'));
-    $('#box').append($('<div class="pure-u-1" id="btn_box"></div>'));
+    $('.bookmark_tip_ety001').append($('<div id="bookmark_tip_ety001_close">X</div>'));
+    $('.bookmark_tip_ety001').append($('<div id="bookmark_tip_ety001_box" class="pure-g"></div>'));
+    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1 bookmark_tip_ety001_title">'+title+'</div>'));
+    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1 bookmark_tip_ety001_url">'+url+'</div>'));
+    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1" id="bookmark_tip_ety001_btn_box"></div>'));
     if(url.match(/javascript\:/)==null){
       url = url;
     } else {
       url = '#';
     }
-    $('#btn_box').append($('<button id="openinnewtab" data-url="'+url+'" class="pure-button-primary pure-button"></button>'));
-    $('#btn_box').append($('<button id="block" class="button-warning pure-button"></button>'));
-    $('#btn_box').append($('<button id="nouse" class="button-error pure-button"></button>'));
-    $('#btn_box').append($('<a id="setting" class="pure-button" target="_blank"></a>'));
-    $('#box').append($('<div class="pure-u-1"><div id="blockmsg" style="display:none;"></div></div>'));
-    $('#openinnewtab').click(function(){
+    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_openinnewtab" data-url="'+url+'" class="pure-button-primary pure-button"></button>'));
+    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_block" class="button-warning pure-button"></button>'));
+    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_nouse" class="button-error pure-button"></button>'));
+    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_setting" class="pure-button"></button>'));
+    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1"><div id="blockmsg" style="display:none;"></div></div>'));
+    $('#bookmark_tip_ety001_openinnewtab').click(function(){
       var url = $(this).attr('data-url');
       if(url!='#'){
         window.open(url);
       }
     });
-    $('#block').click(function(){
+    $('#bookmark_tip_ety001_block').click(function(){
       port.postMessage({ctype:"block",cdata:tab_id});
     });
-    $('#nouse').click(function(){
+    $('#bookmark_tip_ety001_nouse').click(function(){
       port.postMessage({ctype:"remove_bookmark",cdata:tab_id});
     });
-    $('.bookmark_tip').animate({right:'0'});
+    $('#bookmark_tip_ety001_setting').click(function(){
+      window.open(chrome.extension.getURL("show.html"));
+    })
+    $('.bookmark_tip_ety001').animate({right:'0'});
+    $('#bookmark_tip_ety001_close').click(function(){
+      close_tip();
+    });
     setTimeout(function(){
-      $('.bookmark_tip').animate({right:'-360px'});
+      close_tip();
     },5000);
-    port.postMessage({ctype:"getsettingpage",cdata:false});
     port.postMessage({ctype:"lang", cdata:lang_req});
+  }
+  function close_tip(){
+    $('.bookmark_tip_ety001').animate({right:'-360px'}, function(){
+      $('.bookmark_tip_ety001').remove();
+    });
   }
 })
