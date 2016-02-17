@@ -1,0 +1,61 @@
+.bookmark_tip {
+  position: fixed;
+  top: 0;
+  right: -360px;
+  width: 300px;
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #eee;
+  z-index: 1000000;
+  margin: 12px 10px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.title {
+  font-weight: bolder;
+  font-size: 18px;
+  line-height: 24px;
+  max-height: 48px;
+  overflow: hidden;
+}
+
+.url, #btn_box, #blockmsg {
+  margin-top: 10px;
+}
+
+.button-success,
+.button-error,
+.button-warning,
+.button-secondary,
+.button-yellow {
+  color: white;
+  border-radius: 4px;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.button-success {
+  background: rgb(28, 184, 65); /* this is a green */
+}
+
+.button-error {
+  background: rgb(202, 60, 60); /* this is a maroon */
+}
+
+.button-warning {
+  background: rgb(223, 117, 20); /* this is an orange */
+}
+
+.button-secondary {
+  background: rgb(66, 184, 221); /* this is a light blue */
+}
+
+.button-yellow {
+	background: rgb(250, 210, 50);
+}
+
+.pure-button {
+  display: block;
+  margin-top: 6px;
+  width: 100%;
+}

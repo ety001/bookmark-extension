@@ -102,3 +102,7 @@ hr{
 	padding: 8px 12px;
 	border-bottom: 1px solid #ddd;
 }
+#mini_max{
+	width: 90px;
+	text-align: right;
+}

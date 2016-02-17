@@ -3,6 +3,17 @@ if(window.localStorage.curt_index==undefined){
   window.localStorage.clear();
   indexedDB.deleteDatabase('bookmarks');
 }
+//初始化mini模式配置
+if(window.localStorage.mini_switch==undefined){
+  Mini.init();
+}
+
+chrome.tabs.onCreated.addListener(function(tab){
+  if(Mini.get_status()=='off'&&(tab.url=="chrome://newtab/"||tab.url=="chrome://newtab")){
+    chrome.tabs.update(tab.id, {url:chrome.runtime.getURL('show.html')});
+  }
+});
+
 //google analytics
 var cpa_obj = new Cpa();
 var uid = GetUid.get();
@@ -36,6 +47,18 @@ chrome.runtime.onConnect.addListener(function(port) {
           cpa_obj.sendAppView("openbookmark_"+bm[0].title);
         });
         break;
+      case 'getbookmark_from_mini':
+        if(Mini.get_status()=='off'||Mini.charge()==false){
+          port.postMessage({ctype:ctype, cdata: false});
+        } else {
+          cpa_obj.sendEvent('Openbookmark', uid, 'mini');
+          Bookmark.get_from_local(function(bm){
+            //console.log('get_bookmark_ok',bm);
+            port.postMessage({ctype:ctype, cdata: bm});
+            cpa_obj.sendAppView("openbookmark_"+bm[0].title);
+          });
+        }
+        break;
       case 'block':
         cpa_obj.sendEvent('Block', uid);
         Bookmark.set_jump(cdata);
@@ -57,6 +80,22 @@ chrome.runtime.onConnect.addListener(function(port) {
         Bookmark.get_block_list(function(list){
           port.postMessage({ctype:ctype, cdata: list});
         });
+        break;
+      case 'mini_switch':
+        cpa_obj.sendEvent('mini_switch', uid, cdata);
+        Mini.switch_mini(cdata);
+        port.postMessage({ctype:ctype, cdata: true});
+        break;
+      case 'getminimax':
+        port.postMessage({ctype:ctype, cdata: Mini.get_max()});
+        break;
+      case 'setminimax':
+        cpa_obj.sendEvent('set_mini_max', uid, cdata);
+        Mini.set_max(cdata);
+        port.postMessage({ctype:ctype, cdata: true});
+        break;
+      case 'getsettingpage':
+        port.postMessage({ctype:ctype, cdata: chrome.runtime.getURL('show.html')});
     };
   });
 });

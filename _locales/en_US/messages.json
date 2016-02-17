@@ -67,5 +67,23 @@
   },
   "notitle_text": {
     "message": "* No Title *"
+  },
+  "mini_switch": {
+    "message": "Mini Model"
+  },
+  "open_text": {
+    "message": "Open"
+  },
+  "close_text": {
+    "message": "Close"
+  },
+  "pages_review": {
+    "message": "Pages/Review"
+  },
+  "newtab": {
+    "message": "New Tab"
+  },
+  "setting": {
+    "message": "Settings"
   }
 }

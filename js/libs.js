@@ -62,6 +62,36 @@ var GetUid = {
   }
 }
 
+var Mini = {
+  init: function(){
+    window.localStorage.mini_switch = 'off';
+    window.localStorage.mini_count = 0;
+    window.localStorage.mini_max = 10;
+  },
+  switch_mini: function(txt){
+    if(txt!='on' && txt!='off'){txt = 'off';}
+    window.localStorage.mini_switch = txt;
+  },
+  set_max: function(num){
+    window.localStorage.mini_max = parseInt(num);
+  },
+  charge: function(){
+    if(window.localStorage.mini_count>=window.localStorage.mini_max){
+      window.localStorage.mini_count=0;
+      return true;
+    } else {
+      window.localStorage.mini_count++;
+      return false;
+    }
+  },
+  get_status: function(){
+    return window.localStorage.mini_switch;
+  },
+  get_max: function(){
+    return window.localStorage.mini_max;
+  }
+}
+
 // 对Date的扩展，将 Date 转化为指定格式的String
 // 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
 // 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)

@@ -67,5 +67,23 @@
   },
   "notitle_text": {
     "message": "* 没有设置书签名 *"
+  },
+  "mini_switch": {
+    "message": "迷你模式"
+  },
+  "open_text": {
+    "message": "打开"
+  },
+  "close_text": {
+    "message": "关闭"
+  },
+  "pages_review": {
+    "message": "页面/提醒"
+  },
+  "newtab": {
+    "message": "打开新的标签页"
+  },
+  "setting": {
+    "message": "设置"
   }
 }

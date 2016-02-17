@@ -24,7 +24,12 @@ $(function(){
     "nouse",
     "chat",
     "blockmanager",
-    "notitle_text"
+    "notitle_text",
+    "mini_switch",
+    "open_text",
+    "close_text",
+    "pages_review",
+    "newtab"
   ];
 
   var port = chrome.runtime.connect({name: "bookmark_manager_ety001"});
@@ -63,8 +68,25 @@ $(function(){
     $('#blocklist').animate({right: "-"+$('#blocklist').width()+"px"});
   });
 
+  $('#mini_switch').click(function(){
+    if(window.localStorage.mini_switch=='on'){
+      port.postMessage({ctype:"mini_switch",cdata:'off'});
+      $('#mini_switch').html($('#open_text').val()+" "+$('#mini_switch_text').val());
+    } else {
+      port.postMessage({ctype:"mini_switch",cdata:'on'});
+      $('#mini_switch').html($('#close_text').val()+" "+$('#mini_switch_text').val());
+    }
+  });
+
+  $('#mini_max').change(function(e){
+    var input_val = parseInt( $(this).val() )?parseInt( $(this).val() ):0;
+    port.postMessage({ctype:"setminimax",cdata:input_val});
+    $(this).val(input_val);
+  });
+
   port.postMessage({ctype:"getbookmark",cdata:false});
   port.postMessage({ctype:"lang", cdata:lang_req});
+  port.postMessage({ctype:"getminimax", cdata:false});
   port.onMessage.addListener(function(msg) {
     //console.log(msg);
     var ctype = msg.ctype;
@@ -72,7 +94,7 @@ $(function(){
     switch (ctype) {
       case 'getbookmark':
         var title = cdata[0].title;
-        url = cdata[0].url + "#review_bookmark";
+        url = cdata[0].url;
         tab_id = cdata[0].id;
         $('#bookmark_title').html(title+" | "+url);
         if(window.localStorage.preview_switch=='on'){
@@ -94,6 +116,16 @@ $(function(){
         $('#blockmanager').html(cdata.blockmanager);
         $('#blockmanager_title').html(cdata.blockmanager);
         $('#notitle_text').val(cdata.notitle_text);
+        $('#open_text').val(cdata.open_text);
+        $('#close_text').val(cdata.close_text);
+        $('#mini_switch_text').val(cdata.mini_switch);
+        if(window.localStorage.mini_switch=='on'){
+          $('#mini_switch').html(cdata.close_text+" "+cdata.mini_switch);
+        } else {
+          $('#mini_switch').html(cdata.open_text+" "+cdata.mini_switch);
+        }
+        $('#mini_max').after(cdata.pages_review);
+        $('title').html(cdata.newtab);
         break;
       case 'block':
         if(cdata){
@@ -118,7 +150,7 @@ $(function(){
           for(var i in cdata){
             tmpl += '<li id="blockitem_'+cdata[i].id+'" class="pure-menu-item">';
             if(cdata[i].url.match(/javascript\:/)==null){
-              var list_url = cdata[i].url + "#review_bookmark";
+              var list_url = cdata[i].url;
             } else {
               var list_url = '#';
             }
@@ -142,6 +174,15 @@ $(function(){
         }
         break;
       case 'cancelblock':
+        break;
+      case 'getminimax':
+        $('#mini_max').val(cdata);
+        break;
+      case 'setminimax':
+        $('#blockmsg').show();
+        setTimeout(function(){
+          $('#blockmsg').hide();
+        },2000);
         break;
     }
   });

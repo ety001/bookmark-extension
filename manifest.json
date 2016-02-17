@@ -8,7 +8,7 @@
 
     "name": "__MSG_appname__",
     "description": "__MSG_appdesc__",
-    "version": "2.2.3",
+    "version": "2.2.4",
 
     "icons": {
         "16": "img/icon-16.png",
@@ -16,13 +16,19 @@
         "128": "img/icon-128.png"
     },
 
+    "content_scripts": [
+      {
+        "matches": ["*://*/*"],
+        "css": ["css/pure-min.css","css/mini.css"],
+        "js": ["js/jquery-1.11.2.min.js", "js/mini.js"]
+      }
+    ],
+
+    "options_page": "show.html",
+
     "background": {
       "scripts": ["js/google-analytics-bundle.js","js/libs.js","js/bookmark.js","js/background.js"],
       "persistent": false
-    },
-
-    "chrome_url_overrides" : {
-      "newtab": "show.html"
     },
 
     "permissions": [
