@@ -12,7 +12,7 @@
   font-size: 14px;
 }
 
-.title {
+.bookmark_tip .title {
   font-weight: bolder;
   font-size: 18px;
   line-height: 24px;
@@ -20,41 +20,41 @@
   overflow: hidden;
 }
 
-.url, #btn_box, #blockmsg {
+.bookmark_tip .url, .bookmark_tip #btn_box, .bookmark_tip #blockmsg {
   margin-top: 10px;
 }
 
-.button-success,
-.button-error,
-.button-warning,
-.button-secondary,
-.button-yellow {
+.bookmark_tip .button-success,
+.bookmark_tip .button-error,
+.bookmark_tip .button-warning,
+.bookmark_tip .button-secondary,
+.bookmark_tip .button-yellow {
   color: white;
   border-radius: 4px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
-.button-success {
+.bookmark_tip .button-success {
   background: rgb(28, 184, 65); /* this is a green */
 }
 
-.button-error {
+.bookmark_tip .button-error {
   background: rgb(202, 60, 60); /* this is a maroon */
 }
 
-.button-warning {
+.bookmark_tip .button-warning {
   background: rgb(223, 117, 20); /* this is an orange */
 }
 
-.button-secondary {
+.bookmark_tip .button-secondary {
   background: rgb(66, 184, 221); /* this is a light blue */
 }
 
-.button-yellow {
+.bookmark_tip .button-yellow {
 	background: rgb(250, 210, 50);
 }
 
-.pure-button {
+.bookmark_tip .pure-button {
   display: block;
   margin-top: 6px;
   width: 100%;
