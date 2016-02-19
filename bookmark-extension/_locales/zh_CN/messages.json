@@ -85,5 +85,14 @@
   },
   "setting": {
     "message": "设置"
+  },
+  "update_reminder": {
+    "message": "版本现在可以升级，是否升级？"
+  },
+  "update_button": {
+    "message": "立即升级"
+  },
+  "update_ok": {
+    "message": "升级成功！"
   }
 }

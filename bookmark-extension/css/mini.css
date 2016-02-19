@@ -35,6 +35,10 @@
   margin-top: 10px;
 }
 
+.bookmark_tip_ety001 .bookmark_tip_ety001_url {
+  overflow: hidden;
+}
+
 .bookmark_tip_ety001 .button-success,
 .bookmark_tip_ety001 .button-error,
 .bookmark_tip_ety001 .button-warning,

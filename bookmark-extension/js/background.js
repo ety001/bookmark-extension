@@ -102,3 +102,33 @@ chrome.runtime.onConnect.addListener(function(port) {
 //绑定书签事件
 chrome.bookmarks.onCreated.addListener(Bookmark.add_bookmark);
 chrome.bookmarks.onRemoved.addListener(Bookmark.rm_bookmark);
+
+//升级检测
+chrome.runtime.onInstalled.addListener(function(detail,previousVersion){
+  if(detail.reason=='update'){
+    chrome.notifications.create({
+      type: 'basic',
+      iconUrl: 'img/icon-128.png',
+      title: chrome.i18n.getMessage('appname'),
+      message: chrome.i18n.getMessage('update_ok')
+    }, function(notification_id){});
+  }
+});
+chrome.runtime.onUpdateAvailable.addListener(function(detail){
+  console.log(detail.version);
+  //chrome.runtime.getManifest();
+  notifications(detail.version?('v'+detail.version):'New version');
+});
+function notifications(version){
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: 'img/icon-128.png',
+    title: chrome.i18n.getMessage('appname'),
+    message: version + chrome.i18n.getMessage('update_reminder'),
+    buttons: [{'title':chrome.i18n.getMessage('update_button')}]
+  }, function(){
+    chrome.notifications.onButtonClicked.addListener(function(buttonIndex){
+      chrome.runtime.reload();
+    });
+  });
+}

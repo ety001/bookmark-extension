@@ -48,10 +48,10 @@
     "message": "Open In a New Tab"
   },
   "block": {
-    "message": "Block this"
+    "message": "No Longer Review"
   },
   "blocklist": {
-    "message": "Block List"
+    "message": "No Longer Review List"
   },
   "blockmsg": {
     "message": "Success!"
@@ -63,7 +63,7 @@
     "message": "Chat on Gitter"
   },
   "blockmanager": {
-    "message": "Block Manager"
+    "message": "No Longer Review Manager"
   },
   "notitle_text": {
     "message": "* No Title *"
@@ -72,10 +72,10 @@
     "message": "Mini Model"
   },
   "open_text": {
-    "message": "Open"
+    "message": "Enable"
   },
   "close_text": {
-    "message": "Close"
+    "message": "Disable"
   },
   "pages_review": {
     "message": "Pages/Review"
@@ -85,5 +85,14 @@
   },
   "setting": {
     "message": "Settings"
+  },
+  "update_reminder": {
+    "message": " is avaliable, Please update."
+  },
+  "update_button": {
+    "message": "Update Now"
+  },
+  "update_ok": {
+    "message": "Update success."
   }
 }

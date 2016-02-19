@@ -1,5 +1,6 @@
 $(function(){
   var url;
+  var timeout_id;
   var lang_req = [
     "appname",
     "previewtext",
@@ -97,9 +98,16 @@ $(function(){
     $('#bookmark_tip_ety001_close').click(function(){
       close_tip();
     });
-    setTimeout(function(){
+    timeout_id = setTimeout(function(){
       close_tip();
-    },5000);
+    },3000);
+    $('.bookmark_tip_ety001').mouseover(function(){
+      clearTimeout(timeout_id);
+    }).mouseout(function(){
+      timeout_id = setTimeout(function(){
+        close_tip();
+      },3000);
+    });
     port.postMessage({ctype:"lang", cdata:lang_req});
   }
   function close_tip(){
