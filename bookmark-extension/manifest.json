@@ -8,7 +8,7 @@
 
     "name": "__MSG_appname__",
     "description": "__MSG_appdesc__",
-    "version": "2.2.8",
+    "version": "2.2.9",
 
     "icons": {
         "16": "img/icon-16.png",
