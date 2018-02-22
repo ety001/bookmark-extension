@@ -96,7 +96,7 @@ $(function(){
         var title = cdata[0].title;
         url = cdata[0].url;
         tab_id = cdata[0].id;
-        $('#bookmark_title').html(title+" | "+url);
+        $('#bookmark_title').html(" [" + title + "]" + " ("+ url + ")");
         if(window.localStorage.preview_switch=='on'){
           $('iframe').attr('src', url);
         }
