@@ -37,10 +37,11 @@ $(function(){
         //console.log(cdata);
         break;
       case 'lang':
+        // console.log('lang', cdata);
         $('#bookmark_tip_ety001_openinnewtab').html(cdata.openinnewtab);
         $('#bookmark_tip_ety001_block').html(cdata.block);
         $('#bookmark_tip_ety001_nouse').html(cdata.nouse);
-        $('#bookmark_tip_ety001_blockmsg').html(cdata.blockmsg);
+        $('#blockmsg').html(cdata.blockmsg);
         $('#bookmark_tip_ety001_setting').html(cdata.setting);
         break;
       case 'block':
@@ -65,20 +66,20 @@ $(function(){
     var tip_html = $('<div class="bookmark_tip_ety001"></div>');
     $('body').append($(tip_html));
     $('.bookmark_tip_ety001').append($('<div id="bookmark_tip_ety001_close">X</div>'));
-    $('.bookmark_tip_ety001').append($('<div id="bookmark_tip_ety001_box" class="pure-g"></div>'));
-    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1 bookmark_tip_ety001_title">'+title+'</div>'));
-    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1 bookmark_tip_ety001_url">'+url+'</div>'));
-    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1" id="bookmark_tip_ety001_btn_box"></div>'));
+    $('.bookmark_tip_ety001').append($('<div id="bookmark_tip_ety001_box" class="pure-g-ety001"></div>'));
+    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1-ety001 bookmark_tip_ety001_title">'+title+'</div>'));
+    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1-ety001 bookmark_tip_ety001_url">'+url+'</div>'));
+    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1-ety001" id="bookmark_tip_ety001_btn_box"></div>'));
     if(url.match(/javascript\:/)==null){
       url = url;
     } else {
       url = '#';
     }
-    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_openinnewtab" data-url="'+url+'" class="pure-button-primary pure-button"></button>'));
-    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_block" class="button-warning pure-button"></button>'));
-    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_nouse" class="button-error pure-button"></button>'));
-    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_setting" class="pure-button"></button>'));
-    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1"><div id="blockmsg" style="display:none;"></div></div>'));
+    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_openinnewtab" data-url="'+url+'" class="button-primary pure-button-ety001"></button>'));
+    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_block" class="button-warning pure-button-ety001"></button>'));
+    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_nouse" class="button-error pure-button-ety001"></button>'));
+    $('#bookmark_tip_ety001_btn_box').append($('<button id="bookmark_tip_ety001_setting" class="pure-button-ety001"></button>'));
+    $('#bookmark_tip_ety001_box').append($('<div class="pure-u-1-ety001"><div id="blockmsg" style="display:none;"></div></div>'));
     $('#bookmark_tip_ety001_openinnewtab').click(function(){
       var url = $(this).attr('data-url');
       if(url!='#'){
@@ -111,6 +112,7 @@ $(function(){
     port.postMessage({ctype:"lang", cdata:lang_req});
   }
   function close_tip(){
+    // return;
     $('.bookmark_tip_ety001').animate({right:'-360px'}, function(){
       $('.bookmark_tip_ety001').remove();
     });

@@ -1,3 +1,51 @@
+.pure-g-ety001 {
+  letter-spacing: -0.31em;
+  text-rendering: optimizeSpeed;
+  font-family: FreeSans, Arimo, "Droid Sans", Helvetica, Arial, sans-serif;
+  display: -webkit-flex;
+  align-content: flex-start;
+  flex-flow: row wrap;
+}
+
+.pure-u-1-ety001 {
+  width: 100%;
+  display: inline-block;
+  zoom: 1;
+  letter-spacing: normal;
+  word-spacing: normal;
+  vertical-align: top;
+  text-rendering: auto;
+}
+
+.pure-button-ety001 {
+  width: 100%;
+  margin-bottom: 10px;
+  font-family: inherit;
+  font-size: 100%;
+  color: rgba(0, 0, 0, 0.8);
+  background-color: rgb(230, 230, 230);
+  padding: 0.5em 1em;
+  border-width: 0px;
+  border-style: initial;
+  border-color: rgba(0, 0, 0, 0);
+  border-image: initial;
+  text-decoration: none;
+  border-radius: 2px;
+}
+
+.pure-button-ety001 {
+  display: inline-block;
+  zoom: 1;
+  line-height: normal;
+  white-space: nowrap;
+  vertical-align: middle;
+  text-align: center;
+  cursor: pointer;
+  -webkit-user-drag: none;
+  user-select: none;
+  box-sizing: border-box;
+}
+
 .bookmark_tip_ety001 {
   position: fixed;
   top: 0;
@@ -39,6 +87,7 @@
   overflow: hidden;
 }
 
+.bookmark_tip_ety001 .button-primary,
 .bookmark_tip_ety001 .button-success,
 .bookmark_tip_ety001 .button-error,
 .bookmark_tip_ety001 .button-warning,
@@ -47,6 +96,10 @@
   color: white;
   border-radius: 4px;
   text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.bookmark_tip_ety001 .button-primary {
+  background-color: rgb(0, 120, 231);
 }
 
 .bookmark_tip_ety001 .button-success {
