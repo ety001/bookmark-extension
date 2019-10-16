@@ -9,7 +9,7 @@ if(window.localStorage.mini_switch==undefined){
 }
 
 chrome.tabs.onCreated.addListener(function(tab){
-  if(Mini.get_status()=='off'&&(tab.url=="chrome://newtab/"||tab.url=="chrome://newtab"||tab.url=='')){
+  if(Mini.get_status()=='off'){
     chrome.tabs.update(tab.id, {url:chrome.runtime.getURL('show.html')});
   }
 });
