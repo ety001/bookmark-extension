@@ -8,12 +8,16 @@
 
     "name": "__MSG_appname__",
     "description": "__MSG_appdesc__",
-    "version": "2.3.2",
+    "version": "2.3.3",
 
     "icons": {
         "16": "img/icon-16.png",
         "48": "img/icon-48.png",
         "128": "img/icon-128.png"
+    },
+
+    "chrome_url_overrides" : {
+      "newtab": "show.html"
     },
     
     "browser_action": {

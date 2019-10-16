@@ -8,11 +8,11 @@ if(window.localStorage.mini_switch==undefined){
   Mini.init();
 }
 
-chrome.tabs.onCreated.addListener(function(tab){
-  if(Mini.get_status()=='off'&&(tab.url=="chrome://newtab/"||tab.url=="chrome://newtab")){
-    chrome.tabs.update(tab.id, {url:chrome.runtime.getURL('show.html')});
-  }
-});
+// chrome.tabs.onCreated.addListener(function(tab){
+//   if(Mini.get_status()=='off'&&(tab.url=="chrome://newtab/"||tab.url=="chrome://newtab")){
+//     chrome.tabs.update(tab.id, {url:chrome.runtime.getURL('show.html')});
+//   }
+// });
 
 //google analytics
 var cpa_obj = new Cpa();
