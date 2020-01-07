@@ -13,18 +13,16 @@ export default {
   },
   methods: {
     open1() {
+      console.log(chrome.runtime.getURL('fonts'));
       const h = this.$createElement;
       this.$notify({
         title: '标题名称',
-        message: h('i', { style: 'color: teal' }, '这是提示文案这是提示'),
+        dangerouslyUseHTMLString: true,
+        message: '<i style="color: red;">这是提示文案这是提示</i>',
       });
     },
   },
 };
 </script>
 
-<style lang="scss" scoped>
-p {
-  font-size: 20px;
-}
-</style>
+<style lang="scss" scoped></style>
