@@ -13,7 +13,6 @@ export default {
   },
   methods: {
     open1() {
-      console.log(chrome.runtime.getURL('fonts'));
       const h = this.$createElement;
       this.$notify({
         title: '标题名称',
