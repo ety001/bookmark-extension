@@ -13,7 +13,7 @@ const config = {
     background: './background.js',
     'popup/popup': './popup/popup.js',
     'tab/tab': './tab/tab.js',
-    'content-scripts': './content-scripts/content-scripts.js',
+    'content-script/content-script': './content-script/content-script.js',
   },
   output: {
     path: __dirname + '/dist',
@@ -76,7 +76,7 @@ const config = {
     new CopyPlugin([
       { from: 'icons', to: 'icons' },
       { from: '_locales', to: '_locales' },
-      { from: 'content-scripts/cs-init.js', to: 'cs-init.js' },
+      { from: 'content-script/cs-init.js', to: 'content-script/cs-init.js' },
       { from: 'popup/popup.html', to: 'popup/popup.html', transform: transformHtml },
       { from: 'tab/tab.html', to: 'tab/tab.html', transform: transformHtml },
       {
