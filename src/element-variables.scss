@@ -2,6 +2,6 @@
 $--color-primary: teal;
 
 /* 改变 icon 字体路径变量，必需 */
-$--font-path: 'https://cdnjs.cloudflare.com/ajax/libs/element-ui/2.13.0/theme-chalk/fonts';
+$--font-path: 'chrome-extension://__MSG_@@extension_id__/fonts';
 
 @import '~element-ui/packages/theme-chalk/src/index';
