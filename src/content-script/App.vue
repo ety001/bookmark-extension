@@ -1,25 +1,30 @@
 <template>
-  <div>
-    <el-button plain @click="open1">
-      可自动关闭
-    </el-button>
-  </div>
+  <div></div>
 </template>
 
 <script>
+import MiniComponent from './Mini';
+
 export default {
   data() {
     return {};
   },
   methods: {
-    open1() {
-      const h = this.$createElement;
+    show(bookmark) {
+      const el = this.$createElement(MiniComponent, {
+        props: {
+          bookmark,
+        },
+      });
       this.$notify({
         title: '标题名称',
-        dangerouslyUseHTMLString: true,
-        message: '<i style="color: red;">这是提示文案这是提示</i>',
+        message: el,
+        duration: 0,
       });
     },
+  },
+  created() {
+    this.show({ name: 'test name', url: 'test url' });
   },
 };
 </script>
