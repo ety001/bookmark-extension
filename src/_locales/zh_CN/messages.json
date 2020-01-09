@@ -4,5 +4,23 @@
   },
   "appdesc": {
     "message": "俗话说，温故知新，该工具可以帮你重读你的书签。"
+  },
+  "confirm_btn": {
+    "message": "确定"
+  },
+  "cancel_btn": {
+    "message": "取消"
+  },
+  "confirm_info": {
+    "message": "此操作将永久删除该书签, 是否继续?"
+  },
+  "notification": {
+    "message": "提示"
+  },
+  "success": {
+    "message": "成功"
+  },
+  "cancel_success": {
+    "message": "取消成功"
   }
 }

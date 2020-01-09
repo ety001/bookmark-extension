@@ -4,5 +4,23 @@
   },
   "appdesc": {
     "message": "This tool can help you review your bookmarks."
+  },
+  "confirm_btn": {
+    "message": "Confirm"
+  },
+  "cancel_btn": {
+    "message": "Cancel"
+  },
+  "confirm_info": {
+    "message": "This operation will DELETE this bookmark. Do you CONFIRM?"
+  },
+  "notification": {
+    "message": "Notification"
+  },
+  "success": {
+    "message": "Success"
+  },
+  "cancel_success": {
+    "message": "Cancel success"
   }
 }
