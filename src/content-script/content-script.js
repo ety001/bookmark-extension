@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import App from './App';
 import store from '../store';
-import ElementUI from 'element-ui';
+import ElementUI from 'element-ui-custom';
 import '../element-variables.scss';
 
 global.browser = require('webextension-polyfill');

@@ -25,7 +25,7 @@ export default {
       this.notifyObj = this.$notify({
         title: bookmark.title,
         message: el,
-        duration: 8000,
+        duration: 0,
       });
     },
   },

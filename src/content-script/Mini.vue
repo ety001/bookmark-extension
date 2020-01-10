@@ -57,12 +57,6 @@ export default {
 </script>
 
 <style lang="scss">
-.el-notification h2 {
-  border: 0 !important;
-}
-.el-notification button {
-  width: auto !important;
-}
 .review-bookmark-url {
   line-height: 14px;
 }
