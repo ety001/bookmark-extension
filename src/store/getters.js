@@ -1,1 +1,3 @@
-export const foo = state => state.foo;
+export const status = state => state.status;
+export const random = state => state.random;
+export const waitingBookmarks = state => state.waitingBookmarks;

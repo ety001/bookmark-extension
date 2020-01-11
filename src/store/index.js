@@ -9,7 +9,9 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    foo: 'bar',
+    random: true, // 随机展示
+    status: true, // 是否开启扩展
+    waitingBookmarks: [], // 所有待提醒书签
   },
   getters,
   mutations,
