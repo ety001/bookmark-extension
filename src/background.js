@@ -4,9 +4,6 @@ import * as BookmarkLib from './libs/BookmarkLib';
 
 global.browser = require('webextension-polyfill');
 
-// global config
-const config = store.getters.config;
-
 //清空之前版本的数据
 if (window.localStorage.curt_index === undefined) {
   window.localStorage.clear();
@@ -58,7 +55,17 @@ chrome.runtime.onConnect.addListener(function(port) {
         });
         break;
       case 'get_config':
-        port.postMessage({ ctype, cdata: config });
+        port.postMessage({ ctype, cdata: store.getters.config });
+        break;
+      case 'save_config':
+        store.commit(types.UPDATE_CONFIG, {
+          status: cdata.status,
+          mini: cdata.mini,
+          random: cdata.random,
+          frequency: cdata.frequency,
+          currentNotifyLocation: cdata.currentNotifyLocation,
+        });
+        port.postMessage({ ctype, cdata: true });
         break;
       case 'get_block_list':
         break;
