@@ -12,7 +12,7 @@ if (window.localStorage.curt_index === undefined) {
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (tab.url === 'chrome://newtab/') {
-    if (store.getters.config.mini === false) {
+    if (store.getters.config.mini === true) {
       chrome.tabs.update(tabId, { url: 'chrome-search://local-ntp/local-ntp.html' });
     }
   }
