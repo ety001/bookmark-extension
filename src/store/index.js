@@ -16,8 +16,9 @@ export default new Vuex.Store({
   state: {
     config: {
       status: true, // 是否开启扩展
+      mini: true, // Mini模式: true
       random: true, // 随机展示
-      frequency: 5, // mini 模式展示频度
+      frequency: 15, // mini 模式展示频度
       currentNotifyLocation: 'top-right', // 当前 Mini 提醒框位置
     },
     frequencyCounter: 0, // mini模式展示频度计数器

@@ -15,7 +15,7 @@ export default {
   },
   [types.UPDATE_FREQUENCY_COUNTER](state) {
     const config = state.config;
-    if (state.frequencyCounter === config.frequency) {
+    if (state.frequencyCounter === config.frequency - 1) {
       state.frequencyCounter = 0;
     } else {
       state.frequencyCounter = state.frequencyCounter + 1;
@@ -24,6 +24,11 @@ export default {
   [types.UPDATE_STATUS](state, status) {
     const config = state.config;
     config.status = status;
+    state.config = config;
+  },
+  [types.UPDATE_MINI](state, mini) {
+    const config = state.config;
+    config.mini = mini;
     state.config = config;
   },
   [types.UPDATE_RANDOM](state, random) {

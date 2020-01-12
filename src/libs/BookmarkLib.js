@@ -21,9 +21,23 @@ export const getBookmark = () => {
   if (bookmarks.length === 0) {
     return null;
   }
+  // 判断开关
+  if (store.getters.config.status === false) {
+    console.log('plugin closed');
+    return null;
+  }
+  // 判断频度
+  const frequencyCounter = store.getters.frequencyCounter;
+  if (frequencyCounter !== 0) {
+    console.log('frequency not fit');
+    store.commit(types.UPDATE_FREQUENCY_COUNTER);
+    return null;
+  }
+  // 判断随机还是顺次展示
   if (config.random === false) {
     const bm = bookmarks.shift();
     store.commit(types.UPDATE_WAITING_BOOKMARKS, bookmarks);
+    store.commit(types.UPDATE_FREQUENCY_COUNTER);
     return bm;
   } else {
     const min = 0;
@@ -32,10 +46,12 @@ export const getBookmark = () => {
     const bm = bookmarks[num];
     bookmarks.splice(num, 1);
     store.commit(types.UPDATE_WAITING_BOOKMARKS, bookmarks);
+    store.commit(types.UPDATE_FREQUENCY_COUNTER);
     return bm;
   }
 };
 
+// 从 chrome 中删除书签
 export const removeBookmark = (bm, cb) => {
   if (bm.id !== undefined) {
     chrome.bookmarks.remove(bm.id, cb);
