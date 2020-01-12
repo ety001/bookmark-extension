@@ -23,12 +23,14 @@ export const getBookmark = () => {
     console.log('plugin closed');
     return null;
   }
-  // 判断频度
-  const frequencyCounter = store.getters.frequencyCounter;
-  if (frequencyCounter !== 0) {
-    console.log('frequency not fit');
-    store.commit(types.UPDATE_FREQUENCY_COUNTER);
-    return null;
+  // 如果是mini模式，则判断频度
+  if (store.getters.config.mini === true) {
+    const frequencyCounter = store.getters.frequencyCounter;
+    if (frequencyCounter !== 0) {
+      console.log('frequency not fit');
+      store.commit(types.UPDATE_FREQUENCY_COUNTER);
+      return null;
+    }
   }
   // 判断随机还是顺次展示
   if (store.getters.config.random === false) {
