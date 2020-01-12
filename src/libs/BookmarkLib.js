@@ -3,9 +3,6 @@ import * as types from '../store/mutation-types';
 
 let tmpBookmarks = [];
 
-// 全局配置
-const config = store.getters.config;
-
 // 初始化
 export const init = () => {
   const bookmarks = store.getters.waitingBookmarks;
@@ -34,7 +31,7 @@ export const getBookmark = () => {
     return null;
   }
   // 判断随机还是顺次展示
-  if (config.random === false) {
+  if (store.getters.config.random === false) {
     const bm = bookmarks.shift();
     store.commit(types.UPDATE_WAITING_BOOKMARKS, bookmarks);
     store.commit(types.UPDATE_FREQUENCY_COUNTER);

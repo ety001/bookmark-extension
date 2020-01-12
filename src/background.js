@@ -38,7 +38,13 @@ chrome.runtime.onConnect.addListener(function(port) {
           return;
         }
         const bmForMini = BookmarkLib.getBookmark();
-        port.postMessage({ ctype, cdata: bmForMini });
+        port.postMessage({
+          ctype,
+          cdata: {
+            bookmark: bmForMini,
+            config: store.getters.config,
+          },
+        });
         break;
       case 'block':
         BookmarkLib.addBlockedBookmark(cdata);

@@ -42,7 +42,7 @@ export default {
       switch (msg.ctype) {
         case 'getbookmark_from_mini':
           if (msg.cdata === null) return;
-          this.show(msg.cdata);
+          this.show(msg.cdata.bookmark, msg.cdata.config.currentNotifyLocation);
           break;
         case 'remove_bookmark':
           this.notifyObj.close();

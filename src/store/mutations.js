@@ -15,7 +15,7 @@ export default {
   },
   [types.UPDATE_FREQUENCY_COUNTER](state) {
     const config = state.config;
-    if (state.frequencyCounter === config.frequency - 1) {
+    if (state.frequencyCounter >= config.frequency - 1) {
       state.frequencyCounter = 0;
     } else {
       state.frequencyCounter = state.frequencyCounter + 1;
