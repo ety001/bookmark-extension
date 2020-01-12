@@ -11,8 +11,11 @@
   "cancel_btn": {
     "message": "取消"
   },
-  "confirm_info": {
+  "confirm_remove_info": {
     "message": "此操作将永久删除该书签, 是否继续?"
+  },
+  "confirm_block_info": {
+    "message": "是否不再提醒该书签?"
   },
   "notification": {
     "message": "提示"
@@ -22,5 +25,14 @@
   },
   "cancel_success": {
     "message": "取消成功"
+  },
+  "update_ok": {
+    "message": "升级成功"
+  },
+  "update_reminder": {
+    "message": "版本现在可以升级，是否升级？"
+  },
+  "update_button": {
+    "message": "立即升级"
   }
 }

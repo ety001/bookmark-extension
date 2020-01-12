@@ -11,8 +11,11 @@
   "cancel_btn": {
     "message": "Cancel"
   },
-  "confirm_info": {
+  "confirm_remove_info": {
     "message": "This operation will DELETE this bookmark. Do you CONFIRM?"
+  },
+  "confirm_block_info": {
+    "message": "Confirm whether to remind this bookmark next time?"
   },
   "notification": {
     "message": "Notification"
@@ -22,5 +25,14 @@
   },
   "cancel_success": {
     "message": "Cancel success"
+  },
+  "update_ok": {
+    "message": "Update success"
+  },
+  "update_reminder": {
+    "message": " is avaliable, Please update."
+  },
+  "update_button": {
+    "message": "Update Now"
   }
 }
