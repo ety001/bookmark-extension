@@ -6,7 +6,7 @@
           <el-form-item :label="'switch' | lang" prop="status">
             <el-switch v-model="formData.status"></el-switch>
           </el-form-item>
-          <el-form-item v-if="formData.status === true" :label="'mini_model' | lang" prop="mini">
+          <el-form-item v-if="formData.status === true" :label="'mini_mode' | lang" prop="mini">
             <el-switch v-model="formData.mini"></el-switch>
           </el-form-item>
           <el-form-item v-if="formData.status === true" :label="'random_reminder' | lang" prop="random">
