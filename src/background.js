@@ -10,9 +10,6 @@ if (window.localStorage.curt_index === undefined) {
   indexedDB.deleteDatabase('bookmarks');
 }
 
-// chrome.tabs.onCreated.addListener((tab) => {
-// });
-
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (tab.url === 'chrome://newtab/') {
     if (store.getters.config.mini === false) {
