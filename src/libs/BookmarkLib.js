@@ -3,9 +3,13 @@ import * as types from '../store/mutation-types';
 
 let tmpBookmarks = [];
 
+// 全局配置
+const config = store.getters.config;
+
 // 初始化
 export const init = () => {
   const bookmarks = store.getters.waitingBookmarks;
+  console.log('init_num:', bookmarks.length);
   if (bookmarks.length === 0) {
     getBookmarksFromChrome();
   }
@@ -13,12 +17,11 @@ export const init = () => {
 
 // 获取一个书签
 export const getBookmark = () => {
-  const randomSetting = store.getters.random;
   const bookmarks = store.getters.waitingBookmarks;
   if (bookmarks.length === 0) {
     return null;
   }
-  if (randomSetting === false) {
+  if (config.random === false) {
     const bm = bookmarks.shift();
     store.commit(types.UPDATE_WAITING_BOOKMARKS, bookmarks);
     return bm;
@@ -30,6 +33,12 @@ export const getBookmark = () => {
     bookmarks.splice(num, 1);
     store.commit(types.UPDATE_WAITING_BOOKMARKS, bookmarks);
     return bm;
+  }
+};
+
+export const removeBookmark = (bm, cb) => {
+  if (bm.id !== undefined) {
+    chrome.bookmarks.remove(bm.id, cb);
   }
 };
 
@@ -55,6 +64,7 @@ export const removeWaitingBookmark = bm => {
 
 // 添加屏蔽书签
 export const addBlockedBookmark = bm => {
+  console.log('addBlockedBookmark', bm);
   store.commit(types.ADD_BLOCKED_BOOKMARK, bm);
 };
 
