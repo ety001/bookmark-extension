@@ -10,9 +10,16 @@ if (window.localStorage.curt_index === undefined) {
   indexedDB.deleteDatabase('bookmarks');
 }
 
-// 更新频率计数器
 // chrome.tabs.onCreated.addListener((tab) => {
 // });
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (tab.url === 'chrome://newtab/') {
+    if (store.getters.config.mini === false) {
+      chrome.tabs.update(tabId, { url: 'chrome-search://local-ntp/local-ntp.html' });
+    }
+  }
+});
 
 //数据初始化
 BookmarkLib.init();
