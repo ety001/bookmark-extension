@@ -38,7 +38,7 @@
   "switch": {
     "message": "开关"
   },
-  "mini_model": {
+  "mini_mode": {
     "message": "迷你模式"
   },
   "random_reminder": {
@@ -73,5 +73,8 @@
   },
   "save_success": {
     "message": "保存成功"
+  },
+  "no_bookmark": {
+    "message": "暂时没有书签"
   }
 }

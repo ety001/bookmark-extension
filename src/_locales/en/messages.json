@@ -38,8 +38,8 @@
   "switch": {
     "message": "Switch"
   },
-  "mini_model": {
-    "message": "Mini Model"
+  "mini_mode": {
+    "message": "Mini Mode"
   },
   "random_reminder": {
     "message": "Random Reminder"
@@ -73,5 +73,8 @@
   },
   "save_success": {
     "message": "Save success"
+  },
+  "no_bookmark": {
+    "message": "There is no bookmark"
   }
 }
