@@ -16,6 +16,7 @@ export const init = () => {
 export const getBookmark = () => {
   const bookmarks = store.getters.waitingBookmarks;
   if (bookmarks.length === 0) {
+    getBookmarksFromChrome();
     return null;
   }
   // 判断开关
@@ -111,6 +112,26 @@ const changeTreeNodeToList = nodes => {
     } else {
       if (typeof nodes[i] === 'object') {
         tmpBookmarks.push(nodes[i]);
+      }
+    }
+  }
+};
+
+// 获取完整树型书签
+export const getAllBookmarks = cb => {
+  chrome.bookmarks.getTree(bookmarks => {
+    console.log('getAllBookmarks');
+    // treeNode(bookmarks);
+    cb(bookmarks);
+  });
+};
+
+const treeNode = nodes => {
+  for (let i in nodes) {
+    if (nodes[i].children !== undefined) {
+      treeNode(nodes[i].children);
+    } else {
+      if (typeof nodes[i] === 'object') {
       }
     }
   }

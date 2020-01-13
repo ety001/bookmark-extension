@@ -76,5 +76,14 @@
   },
   "no_bookmark": {
     "message": "暂时没有书签"
+  },
+  "donate": {
+    "message": "捐助"
+  },
+  "source_code": {
+    "message": "源码"
+  },
+  "support": {
+    "message": "帮助"
   }
 }

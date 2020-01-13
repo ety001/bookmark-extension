@@ -13,6 +13,7 @@ const config = {
     background: './background.js',
     'popup/popup': './popup/popup.js',
     'tab/tab': './tab/tab.js',
+    'bookmark/bookmark': './bookmark/bookmark.js',
     'content-script/content-script': './content-script/content-script.js',
   },
   output: {
@@ -78,8 +79,9 @@ const config = {
       { from: '_locales', to: '_locales' },
       { from: '../node_modules/element-ui/lib/theme-chalk/fonts', to: 'fonts' },
       { from: 'content-script/cs-init.js', to: 'content-script/cs-init.js' },
-      { from: 'popup/popup.html', to: 'popup/popup.html', transform: transformHtml },
-      { from: 'tab/tab.html', to: 'tab/tab.html', transform: transformHtml },
+      { from: 'popup/popup.html', to: 'popup/popup.html' },
+      { from: 'tab/tab.html', to: 'tab/tab.html' },
+      { from: 'bookmark/bookmark.html', to: 'bookmark/bookmark.html' },
       {
         from: 'manifest.json',
         to: 'manifest.json',

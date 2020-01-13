@@ -5,7 +5,7 @@
         <el-col :span="4" class="capital">
           <span>{{ 'appname' | lang }}</span>
         </el-col>
-        <el-col :span="20">
+        <el-col :span="16">
           <el-row>
             <el-col :span="24">
               <div class="title">{{ bookmark.title }}</div>
@@ -21,6 +21,14 @@
             </el-col>
           </el-row>
         </el-col>
+        <el-col :span="4" style="padding-right: 20px; text-align: right;">
+          <el-link type="info" href="https://akawa.ink/donate" icon="el-icon-thumb" target="_blank">{{ 'donate' | lang }}</el-link
+          ><br />
+          <el-link type="info" href="https://github.com/ety001/bookmark-extension" icon="el-icon-position" target="_blank">{{ 'source_code' | lang }}</el-link
+          ><br />
+          <el-link type="info" href="https://bm.to0l.cn" icon="el-icon-bangzhu" target="_blank">{{ 'support' | lang }}</el-link
+          ><br />
+        </el-col>
       </el-row>
       <el-row ref="box" class="box" @click="visit" v-loading="loading">
         <el-col :span="24">
@@ -31,7 +39,7 @@
     <div v-else>
       <el-row style="margin: 20px;">
         <el-col :span="8">
-          <el-alert :closable="false" :title="'no_bookmark' | lang" type="error"> </el-alert>
+          <el-alert :closable="false" :title="'no_bookmark' | lang" type="error"></el-alert>
         </el-col>
       </el-row>
     </div>

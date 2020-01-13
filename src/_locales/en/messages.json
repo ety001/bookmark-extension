@@ -76,5 +76,14 @@
   },
   "no_bookmark": {
     "message": "There is no bookmark"
+  },
+  "donate": {
+    "message": "Donate"
+  },
+  "source_code": {
+    "message": "Source Code"
+  },
+  "support": {
+    "message": "Support"
   }
 }

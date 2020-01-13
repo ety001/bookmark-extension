@@ -50,6 +50,11 @@ chrome.runtime.onConnect.addListener(function(port) {
           },
         });
         break;
+      case 'getbookmark_tree':
+        BookmarkLib.getAllBookmarks(bookmarks => {
+          port.postMessage({ ctype, cdata: bookmarks });
+        });
+        break;
       case 'block':
         BookmarkLib.addBlockedBookmark(cdata);
         port.postMessage({ ctype, cdata: true });
@@ -118,6 +123,7 @@ chrome.runtime.onInstalled.addListener(detail => {
     );
   }
   if (detail.reason === 'install') {
+    console.log('installed');
     // 初始化数据
     BookmarkLib.init();
     // 弹出推广页面
