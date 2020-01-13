@@ -11,10 +11,10 @@
     </el-row>
     <el-row class="review-bookmark-mt">
       <el-col :span="24">
-        <el-button type="warning" @click="close" icon="el-icon-close" circle size="small"></el-button>
-        <el-button type="info" @click="block" icon="el-icon-close-notification" circle size="small"></el-button>
-        <el-button type="primary" @click="edit" icon="el-icon-edit" circle size="small"></el-button>
-        <el-button type="danger" @click="remove" icon="el-icon-delete" circle size="small"></el-button>
+        <el-button type="warning" @click="close" icon="el-icon-close" circle plain size="small"></el-button>
+        <el-button type="info" @click="block" icon="el-icon-close-notification" circle plain size="small"></el-button>
+        <el-button type="primary" @click="edit" icon="el-icon-edit" circle plain size="small"></el-button>
+        <el-button type="danger" @click="remove" icon="el-icon-delete" circle plain size="small"></el-button>
       </el-col>
     </el-row>
   </div>

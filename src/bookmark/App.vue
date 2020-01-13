@@ -55,9 +55,9 @@
               </el-table-column>
               <el-table-column width="160">
                 <template slot-scope="scope">
-                  <el-button type="success" @click="visit(scope.row)" icon="el-icon-view" circle size="mini"></el-button>
-                  <el-button type="primary" @click="edit(scope.row)" icon="el-icon-edit" circle size="mini"></el-button>
-                  <el-button type="danger" @click="remove(scope.row)" icon="el-icon-delete" circle size="mini"></el-button>
+                  <el-button type="success" @click="visit(scope.row)" icon="el-icon-view" circle plain size="mini"></el-button>
+                  <el-button type="primary" @click="edit(scope.row)" icon="el-icon-edit" circle plain size="mini"></el-button>
+                  <el-button type="danger" @click="remove(scope.row)" icon="el-icon-delete" circle plain size="mini"></el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -168,7 +168,7 @@ export default {
 aside {
   overflow: scroll;
   height: 100%;
-  padding-top: 10px;
+  padding-top: 8px;
 }
 .header {
   background-color: #53a8ff;

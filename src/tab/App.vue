@@ -14,10 +14,10 @@
           </el-row>
           <el-row>
             <el-col :span="24">
-              <el-button type="success" @click="nextBM" icon="el-icon-right" circle size="small"></el-button>
-              <el-button type="info" @click="block" icon="el-icon-close-notification" circle size="small"></el-button>
-              <el-button type="primary" @click="edit" icon="el-icon-edit" circle size="small"></el-button>
-              <el-button type="danger" @click="remove" icon="el-icon-delete" circle size="small"></el-button>
+              <el-button type="success" @click="nextBM" icon="el-icon-right" circle plain size="small"></el-button>
+              <el-button type="info" @click="block" icon="el-icon-close-notification" circle plain size="small"></el-button>
+              <el-button type="primary" @click="edit" icon="el-icon-edit" circle plain size="small"></el-button>
+              <el-button type="danger" @click="remove" icon="el-icon-delete" circle plain size="small"></el-button>
             </el-col>
           </el-row>
         </el-col>
