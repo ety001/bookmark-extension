@@ -35,7 +35,6 @@ export default {
   },
   created() {
     const successMsg = chrome.i18n.getMessage('success');
-
     // 与 background.js 通信
     this.port = chrome.runtime.connect({ name: 'bookmark_manager_ety001' });
     this.port.onMessage.addListener(msg => {
