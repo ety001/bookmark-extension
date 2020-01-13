@@ -117,22 +117,31 @@ const changeTreeNodeToList = nodes => {
   }
 };
 
-// 获取完整树型书签
-export const getAllBookmarks = cb => {
+// 获取所有书签目录
+export const getBookmarkMenu = cb => {
   chrome.bookmarks.getTree(bookmarks => {
-    console.log('getAllBookmarks');
-    // treeNode(bookmarks);
-    cb(bookmarks);
+    console.log('getBookmarkMenu');
+    cb(menuTreeNode(bookmarks));
   });
 };
-
-const treeNode = nodes => {
+const menuTreeNode = nodes => {
+  const tmp = [];
   for (let i in nodes) {
     if (nodes[i].children !== undefined) {
-      treeNode(nodes[i].children);
-    } else {
-      if (typeof nodes[i] === 'object') {
-      }
+      const tmpBM = {
+        id: nodes[i].id,
+        label: nodes[i].id === '0' ? chrome.i18n.getMessage('all_bookmarks') : nodes[i].title,
+        children: menuTreeNode(nodes[i].children),
+      };
+      tmp.push(tmpBM);
     }
   }
+  return tmp;
+};
+
+export const getBookmarkChildren = (id, cb) => {
+  chrome.bookmarks.getChildren(id, bookmarks => {
+    console.log('getBookmarkChildren');
+    cb(bookmarks);
+  });
 };

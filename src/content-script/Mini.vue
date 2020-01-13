@@ -64,6 +64,8 @@ export default {
     },
     edit() {
       console.log('click edit:', this.bookmark);
+      const url = `chrome://bookmarks/?id=${this.bookmark.parentId}`;
+      window.open(url);
     },
     close() {
       this.closeCb();

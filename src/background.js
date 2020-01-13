@@ -50,8 +50,13 @@ chrome.runtime.onConnect.addListener(function(port) {
           },
         });
         break;
-      case 'getbookmark_tree':
-        BookmarkLib.getAllBookmarks(bookmarks => {
+      case 'getbookmark_menu':
+        BookmarkLib.getBookmarkMenu(menu => {
+          port.postMessage({ ctype, cdata: menu });
+        });
+        break;
+      case 'getbookmark_children':
+        BookmarkLib.getBookmarkChildren(cdata, bookmarks => {
           port.postMessage({ ctype, cdata: bookmarks });
         });
         break;

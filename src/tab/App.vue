@@ -21,13 +21,15 @@
             </el-col>
           </el-row>
         </el-col>
-        <el-col :span="4" style="padding-right: 20px; text-align: right;">
-          <el-link type="info" href="https://akawa.ink/donate" icon="el-icon-thumb" target="_blank">{{ 'donate' | lang }}</el-link
-          ><br />
-          <el-link type="info" href="https://github.com/ety001/bookmark-extension" icon="el-icon-position" target="_blank">{{ 'source_code' | lang }}</el-link
-          ><br />
-          <el-link type="info" href="https://bm.to0l.cn" icon="el-icon-bangzhu" target="_blank">{{ 'support' | lang }}</el-link
-          ><br />
+        <el-col :span="4" style="padding-right: 40px; text-align: right;">
+          <a href="https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324?utm_source=vote" target="_blank"
+            ><img src="https://creatorsdaily.com/api/9999e88d-0b00-46dc-8ff1-e1d311695324/vote.svg?theme=dark"/></a
+          ><br /><br />
+          <el-link type="info" href="https://akawa.ink/donate" icon="el-icon-thumb" target="_blank">{{ 'donate' | lang }}</el-link>
+          <el-link type="info" href="https://github.com/ety001/bookmark-extension" icon="el-icon-position" target="_blank">{{ 'source_code' | lang }}</el-link>
+          <el-link type="info" href="https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324#comments" icon="el-icon-bangzhu" target="_blank">{{
+            'support' | lang
+          }}</el-link>
         </el-col>
       </el-row>
       <el-row ref="box" class="box" @click="visit" v-loading="loading">
@@ -169,7 +171,7 @@ export default {
   background-color: #eee;
   color: #444;
   padding: 20px 0;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 2px solid #ccc;
 }
 .top .capital {
   font-size: 24px;

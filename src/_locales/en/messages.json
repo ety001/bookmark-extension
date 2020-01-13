@@ -85,5 +85,8 @@
   },
   "support": {
     "message": "Support"
+  },
+  "all_bookmarks": {
+    "message": "All Bookmarks"
   }
 }

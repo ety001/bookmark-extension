@@ -85,5 +85,8 @@
   },
   "support": {
     "message": "帮助"
+  },
+  "all_bookmarks": {
+    "message": "所有书签"
   }
 }
