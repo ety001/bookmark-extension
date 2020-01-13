@@ -4,7 +4,7 @@
       <el-col :span="24">
         <div class="review-bookmark-content">
           <div class="review-bookmark-url">
-            <el-link type="info" :href="bookmark.url" target="_blank" icon="el-icon-connection">{{ bookmark.url }}</el-link>
+            <el-link :underline="false" type="info" :href="bookmark.url" target="_blank" icon="el-icon-connection">{{ bookmark.url }}</el-link>
           </div>
         </div>
       </el-col>
