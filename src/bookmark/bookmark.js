@@ -10,7 +10,7 @@ Vue.prototype.$browser = global.browser;
 Vue.use(ElementUI);
 Vue.use(VueRouter);
 
-const routeList = [{ path: '/', component: App }];
+const routeList = [{ name: 'index', path: '/', component: App }];
 
 const router = new VueRouter({
   routeList,

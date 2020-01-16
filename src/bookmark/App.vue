@@ -19,12 +19,13 @@
           ref="menuTree"
           :data="menu"
           node-key="id"
-          :default-expand-all="true"
+          :default-expand-all="false"
           :expand-on-click-node="false"
           :highlight-current="true"
           :indent="8"
           @node-click="nodeClick"
           :draggable="false"
+          :accordion="true"
         >
         </el-tree>
       </el-aside>
@@ -36,25 +37,25 @@
                 <template slot-scope="scope">
                   <el-row v-if="scope.row.url === null">
                     <el-col :span="24">
-                      <div class="bm_title">
-                        <el-link icon="el-icon-folder">{{ scope.row.title }}</el-link>
+                      <div class="bm_title" @click="visit(scope.row)">
+                        <i class="el-icon-collection-tag"></i>
+                        {{ scope.row.title }}
                       </div>
                     </el-col>
                   </el-row>
                   <el-row v-else>
                     <el-col :span="24">
-                      <div class="bm_title">
+                      <div class="bm_title" @click="visit(scope.row)">
                         <i class="el-icon-collection-tag"></i>
                         {{ scope.row.title }}
                       </div>
-                      <div class="bm_url">{{ scope.row.url }}</div>
+                      <div class="bm_url" @click="visit(scope.row)">{{ scope.row.url }}</div>
                     </el-col>
                   </el-row>
                 </template>
               </el-table-column>
               <el-table-column width="160">
                 <template slot-scope="scope">
-                  <el-button type="success" @click="visit(scope.row)" icon="el-icon-view" circle plain size="mini"></el-button>
                   <el-button type="primary" @click="edit(scope.row)" icon="el-icon-edit" circle plain size="mini"></el-button>
                   <el-button type="danger" @click="remove(scope.row)" icon="el-icon-delete" circle plain size="mini"></el-button>
                 </template>
@@ -79,8 +80,8 @@ export default {
       },
       loading: false,
       height: 0,
-      pid: null,
-      bid: null,
+      pid: '0',
+      bid: '0',
       bookmarks: null,
       searchKey: null,
     };
@@ -91,18 +92,22 @@ export default {
       return chrome.i18n.getMessage(val);
     },
     nodeClick(node) {
+      console.log('node click:', node);
       this.getBookmarkChildren(node.id);
     },
     getBookmarkMenu() {
       this.port.postMessage({ ctype: 'getbookmark_menu', cdata: false });
     },
     getBookmarkChildren(id) {
+      if (id === null) id = 0;
+      console.log('getBookmarkChildren:', id);
       this.port.postMessage({ ctype: 'getbookmark_children', cdata: id });
     },
     visit(data) {
       if (data.url) {
         window.open(data.url);
       } else {
+        this.$router.push({ name: 'index', query: { pid: data.id } });
       }
     },
     edit(data) {},
@@ -114,23 +119,29 @@ export default {
       return chrome.i18n.getMessage(val);
     },
   },
+  watch: {
+    $route(to, from) {
+      const query = to.query;
+      this.pid = query.pid === undefined ? '0' : query.pid;
+      this.bid = query.bid === undefined ? '0' : query.bid;
+      console.log('router', to);
+      this.$refs.menuTree.setCurrentKey(this.pid);
+      this.getBookmarkChildren(this.pid);
+    },
+  },
   created() {
     const query = this.$route.query;
-    this.pid = query.pid === 'undefined' ? null : query.pid;
-    this.bid = query.bid === 'undefined' ? null : query.bid;
+    this.pid = query.pid === undefined ? '0' : query.pid;
+    this.bid = query.bid === undefined ? '0' : query.bid;
     // 与 background.js 通信
     this.port = chrome.runtime.connect({ name: 'bookmark_manager_ety001' });
     this.port.onMessage.addListener(msg => {
       switch (msg.ctype) {
         case 'getbookmark_menu':
-          console.log('menu:', msg.cdata);
           this.loading = false;
           this.menu = msg.cdata;
-          if (this.pid !== null) {
-            this.$refs.menuTree.setCurrentKey(this.pid);
-          } else {
-            this.$refs.menuTree.setCurrentKey(1);
-          }
+          this.$refs.menuTree.setCurrentKey(this.pid);
+          this.getBookmarkChildren(this.pid);
           break;
         case 'getbookmark_children':
           const tmp = [];
@@ -142,8 +153,6 @@ export default {
             });
           }
           this.bookmarks = tmp;
-          console.log('tmp', tmp);
-          console.log('getbookmark_children', msg.cdata);
           break;
       }
     });
@@ -152,7 +161,6 @@ export default {
     // 获取书签目录
     this.loading = true;
     this.getBookmarkMenu();
-    this.getBookmarkChildren(this.pid);
   },
   updated() {
     // 设置高度
