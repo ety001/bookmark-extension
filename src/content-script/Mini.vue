@@ -64,7 +64,8 @@ export default {
     },
     edit() {
       console.log('click edit:', this.bookmark);
-      const url = `chrome://bookmarks/?id=${this.bookmark.parentId}`;
+      const baseUrl = chrome.runtime.getURL('bookmark/bookmark.html#/');
+      const url = `${baseUrl}?pid=${this.bookmark.parentId}&bid=${this.bookmark.id}`;
       window.open(url);
     },
     close() {

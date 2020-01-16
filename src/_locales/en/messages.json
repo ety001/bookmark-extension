@@ -88,5 +88,8 @@
   },
   "all_bookmarks": {
     "message": "All Bookmarks"
+  },
+  "filter": {
+    "message": "Filter"
   }
 }

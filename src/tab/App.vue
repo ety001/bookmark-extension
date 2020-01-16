@@ -85,7 +85,11 @@ export default {
     visit() {
       window.open(this.src);
     },
-    edit() {},
+    edit() {
+      const baseUrl = chrome.runtime.getURL('bookmark/bookmark.html#/');
+      const url = `${baseUrl}?pid=${this.bookmark.parentId}&bid=${this.bookmark.id}`;
+      window.open(url);
+    },
     remove() {
       const confirmInfoMsg = chrome.i18n.getMessage('confirm_remove_info');
       const confirmTitleMsg = chrome.i18n.getMessage('notification');

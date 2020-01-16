@@ -88,5 +88,8 @@
   },
   "all_bookmarks": {
     "message": "所有书签"
+  },
+  "filter": {
+    "message": "过滤器"
   }
 }

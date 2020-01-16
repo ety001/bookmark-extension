@@ -32,6 +32,6 @@
       "run_at": "document_end"
     }
   ],
-  "web_accessible_resources": ["tab/tab.html", "fonts/*"],
+  "web_accessible_resources": ["tab/tab.html", "fonts/*", "bookmark/bookmark.html"],
   "permissions": ["activeTab", "notifications", "bookmarks", "tabs", "background", "https://www.google-analytics.com/", "storage", "unlimitedStorage"]
 }

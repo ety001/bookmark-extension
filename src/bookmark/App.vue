@@ -31,6 +31,10 @@
       </el-aside>
       <el-main :style="{ height: height + 'px' }">
         <el-row>
+          <el-col :span="20" :offset="2" v-if="search !== null">
+            <span style="font-weight: 600;">{{ 'filter' | lang }}:</span>
+            <el-tag closable type="info" @close="tagClose"> ID: {{ search }} </el-tag>
+          </el-col>
           <el-col :span="20" :offset="2">
             <el-table
               v-if="bookmarks"
@@ -134,6 +138,9 @@ export default {
         .catch(() => {
           // cancel
         });
+    },
+    tagClose() {
+      this.search = null;
     },
   },
   filters: {
