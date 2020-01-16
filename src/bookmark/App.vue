@@ -5,10 +5,17 @@
         <el-col :span="8">
           <div class="header_title">{{ 'appname' | lang }}</div>
         </el-col>
-        <el-col :span="8" :offset="8">
+        <el-col :span="8">
           <!--<el-input placeholder="请输入内容" v-model="searchKey" class="input-with-select">
             <el-button slot="append" icon="el-icon-search"></el-button>
           </el-input>-->
+        </el-col>
+        <el-col :offset="10" :span="6" class="support">
+          <el-link type="info" href="https://akawa.ink/donate" icon="el-icon-thumb" target="_blank">{{ 'donate' | lang }}</el-link>
+          <el-link type="info" href="https://github.com/ety001/bookmark-extension" icon="el-icon-position" target="_blank">{{ 'source_code' | lang }}</el-link>
+          <el-link type="info" href="https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324#comments" icon="el-icon-bangzhu" target="_blank">{{
+            'support' | lang
+          }}</el-link>
         </el-col>
       </el-row>
     </el-header>
@@ -225,7 +232,7 @@ aside {
 .header {
   background-color: #53a8ff;
   color: #fff;
-  padding-top: 10px;
+  padding-top: 8px;
 }
 .header_title {
   font-size: 22px;
@@ -240,5 +247,14 @@ aside {
 .bm_url {
   font-size: 12px;
   font-weight: 200;
+}
+.support {
+  text-align: right;
+  padding-top: 10px;
+}
+.support a,
+.support a:hover {
+  color: #fff;
+  text-decoration: none;
 }
 </style>
