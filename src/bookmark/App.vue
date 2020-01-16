@@ -67,8 +67,8 @@
               </el-table-column>
               <el-table-column width="160">
                 <template slot-scope="scope">
-                  <el-button type="primary" @click="edit(scope.row)" icon="el-icon-edit" circle plain size="mini"></el-button>
-                  <el-button type="danger" @click="remove(scope.row)" icon="el-icon-delete" circle plain size="mini"></el-button>
+                  <el-button v-if="scope.row.url" type="primary" @click="edit(scope.row)" icon="el-icon-edit" circle plain size="mini"></el-button>
+                  <el-button v-if="scope.row.url" type="danger" @click="remove(scope.row)" icon="el-icon-delete" circle plain size="mini"></el-button>
                 </template>
               </el-table-column>
             </el-table>
