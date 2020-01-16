@@ -92,8 +92,7 @@ export default {
       return chrome.i18n.getMessage(val);
     },
     nodeClick(node) {
-      this.$refs.menuTree.setCurrentKey(this.pid);
-      this.getBookmarkChildren(node.id);
+      this.visit(node);
     },
     getBookmarkMenu() {
       this.port.postMessage({ ctype: 'getbookmark_menu', cdata: false });
@@ -106,11 +105,28 @@ export default {
       if (data.url) {
         window.open(data.url);
       } else {
-        this.$router.push({ name: 'index', query: { pid: data.id } });
+        this.$router.push({ name: 'index', query: { pid: data.id } }).catch(e => console.log('router error:', e));
       }
     },
     edit(data) {},
-    remove(data) {},
+    remove(data) {
+      console.log('remove:', data);
+      const confirmInfoMsg = chrome.i18n.getMessage('confirm_remove_info');
+      const confirmTitleMsg = chrome.i18n.getMessage('notification');
+      const confirmBtnMsg = chrome.i18n.getMessage('confirm_btn');
+      const cancelBtnMsg = chrome.i18n.getMessage('cancel_btn');
+      this.$confirm(confirmInfoMsg, confirmTitleMsg, {
+        confirmButtonText: confirmBtnMsg,
+        cancelButtonText: cancelBtnMsg,
+        type: 'warning',
+      })
+        .then(() => {
+          this.port.postMessage({ ctype: 'remove_bookmark', cdata: data });
+        })
+        .catch(() => {
+          // cancel
+        });
+    },
   },
   filters: {
     lang(val) {
@@ -128,6 +144,7 @@ export default {
     },
   },
   created() {
+    const successMsg = chrome.i18n.getMessage('success');
     const query = this.$route.query;
     this.pid = query.pid === undefined ? '0' : query.pid;
     this.bid = query.bid === undefined ? '0' : query.bid;
@@ -151,6 +168,13 @@ export default {
             });
           }
           this.bookmarks = tmp;
+          break;
+        case 'remove_bookmark':
+          this.$message({
+            type: 'success',
+            message: successMsg,
+          });
+          this.getBookmarkChildren(this.pid);
           break;
       }
     });
