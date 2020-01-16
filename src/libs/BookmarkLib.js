@@ -145,3 +145,16 @@ export const getBookmarkChildren = (id, cb) => {
     cb(bookmarks);
   });
 };
+
+let tmpBreadcrumb = [];
+export const getBookmarkBreadcrumb = (id, cb) => {
+  chrome.bookmarks.get(id, bms => {
+    tmpBreadcrumb.push(bms[0]);
+    if (bms[0].parentId === '0') {
+      cb(tmpBreadcrumb);
+      tmpBreadcrumb = [];
+    } else {
+      getBookmarkBreadcrumb(bms[0].parentId, cb);
+    }
+  });
+};

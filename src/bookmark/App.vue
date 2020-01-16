@@ -38,6 +38,12 @@
       </el-aside>
       <el-main :style="{ height: height + 'px' }">
         <el-row>
+          <el-col :span="20" :offset="2" v-if="breadcrumb !== []" style="margin-bottom: 8px;">
+            <el-breadcrumb separator="/">
+              <el-breadcrumb-item :to="{ path: '/' }">{{ 'all_bookmarks' | lang }}</el-breadcrumb-item>
+              <el-breadcrumb-item v-for="(bc, idx) in breadcrumb" :key="idx" :to="{ path: '/', query: { pid: bc.id } }">{{ bc.title }}</el-breadcrumb-item>
+            </el-breadcrumb>
+          </el-col>
           <el-col :span="20" :offset="2" v-if="search !== null">
             <span style="font-weight: 600;">{{ 'filter' | lang }}:</span>
             <el-tag closable type="info" @close="tagClose"> ID: {{ search }} </el-tag>
@@ -103,6 +109,7 @@ export default {
       bookmarks: null,
       searchKey: null,
       search: null,
+      breadcrumb: [],
     };
   },
   methods: {
@@ -148,6 +155,9 @@ export default {
     },
     tagClose() {
       this.search = null;
+    },
+    getBreadcrumb(id) {
+      this.port.postMessage({ ctype: 'getbookmark_breadcrumb', cdata: id });
     },
   },
   filters: {
@@ -195,9 +205,11 @@ export default {
             });
           }
           this.bookmarks = tmp;
+          console.log(msg.cdata);
           if (this.bid !== '0') {
             this.search = this.bid;
           }
+          this.getBreadcrumb(this.pid);
           break;
         case 'remove_bookmark':
           this.$message({
@@ -205,6 +217,9 @@ export default {
             message: successMsg,
           });
           this.getBookmarkChildren(this.pid);
+          break;
+        case 'getbookmark_breadcrumb':
+          this.breadcrumb = msg.cdata;
           break;
       }
     });

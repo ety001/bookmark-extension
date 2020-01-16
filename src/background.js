@@ -1,6 +1,7 @@
 import store from './store';
 import * as types from './store/mutation-types';
 import * as BookmarkLib from './libs/BookmarkLib';
+import { Breadcrumb } from 'element-ui';
 
 global.browser = require('webextension-polyfill');
 
@@ -87,15 +88,15 @@ chrome.runtime.onConnect.addListener(function(port) {
         });
         port.postMessage({ ctype, cdata: true });
         break;
+      case 'getbookmark_breadcrumb':
+        if (cdata === '0') {
+          port.postMessage({ ctype, cdata: [] });
+        }
+        BookmarkLib.getBookmarkBreadcrumb(cdata, breadcrumb => {
+          port.postMessage({ ctype, cdata: breadcrumb.reverse() });
+        });
+        break;
       case 'get_block_list':
-        break;
-      case 'mini_switch':
-        break;
-      case 'getminimax':
-        break;
-      case 'setminimax':
-        break;
-      case 'getsettingpage':
         break;
     }
   });
