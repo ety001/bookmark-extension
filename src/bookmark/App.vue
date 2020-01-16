@@ -32,7 +32,14 @@
       <el-main :style="{ height: height + 'px' }">
         <el-row>
           <el-col :span="20" :offset="2">
-            <el-table v-if="bookmarks" :show-header="false" :empty-text="'no_bookmark' | lang" ref="table1" :data="bookmarks" style="width: 100%">
+            <el-table
+              v-if="bookmarks"
+              :show-header="false"
+              :empty-text="'no_bookmark' | lang"
+              ref="table1"
+              :data="bookmarks.filter(data => !search || data.id.includes(search))"
+              style="width: 100%"
+            >
               <el-table-column property="title">
                 <template slot-scope="scope">
                   <el-row v-if="scope.row.url === null">
@@ -84,6 +91,7 @@ export default {
       bid: '0',
       bookmarks: null,
       searchKey: null,
+      search: null,
     };
   },
   methods: {
@@ -105,7 +113,7 @@ export default {
       if (data.url) {
         window.open(data.url);
       } else {
-        this.$router.push({ name: 'index', query: { pid: data.id } }).catch(e => console.log('router error:', e));
+        this.$router.push({ path: '/', query: { pid: data.id } }).catch(e => console.log('router error:', e));
       }
     },
     edit(data) {},
@@ -142,6 +150,11 @@ export default {
       this.$refs.menuTree.setCurrentKey(this.pid);
       this.getBookmarkChildren(this.pid);
     },
+    bid(val) {
+      if (val === '0') {
+        this.search = null;
+      }
+    },
   },
   created() {
     const successMsg = chrome.i18n.getMessage('success');
@@ -168,6 +181,9 @@ export default {
             });
           }
           this.bookmarks = tmp;
+          if (this.bid !== '0') {
+            this.search = this.bid;
+          }
           break;
         case 'remove_bookmark':
           this.$message({
