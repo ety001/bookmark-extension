@@ -19,13 +19,13 @@
           ref="menuTree"
           :data="menu"
           node-key="id"
-          :default-expand-all="false"
+          :default-expand-all="true"
           :expand-on-click-node="false"
           :highlight-current="true"
           :indent="8"
           @node-click="nodeClick"
           :draggable="false"
-          :accordion="true"
+          :accordion="false"
         >
         </el-tree>
       </el-aside>
@@ -92,7 +92,7 @@ export default {
       return chrome.i18n.getMessage(val);
     },
     nodeClick(node) {
-      console.log('node click:', node);
+      this.$refs.menuTree.setCurrentKey(this.pid);
       this.getBookmarkChildren(node.id);
     },
     getBookmarkMenu() {
@@ -100,7 +100,6 @@ export default {
     },
     getBookmarkChildren(id) {
       if (id === null) id = 0;
-      console.log('getBookmarkChildren:', id);
       this.port.postMessage({ ctype: 'getbookmark_children', cdata: id });
     },
     visit(data) {
@@ -124,7 +123,6 @@ export default {
       const query = to.query;
       this.pid = query.pid === undefined ? '0' : query.pid;
       this.bid = query.bid === undefined ? '0' : query.bid;
-      console.log('router', to);
       this.$refs.menuTree.setCurrentKey(this.pid);
       this.getBookmarkChildren(this.pid);
     },
