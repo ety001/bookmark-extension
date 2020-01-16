@@ -6,9 +6,9 @@
           <div class="header_title">{{ 'appname' | lang }}</div>
         </el-col>
         <el-col :span="8" :offset="8">
-          <el-input placeholder="请输入内容" v-model="searchKey" class="input-with-select">
+          <!--<el-input placeholder="请输入内容" v-model="searchKey" class="input-with-select">
             <el-button slot="append" icon="el-icon-search"></el-button>
-          </el-input>
+          </el-input>-->
         </el-col>
       </el-row>
     </el-header>
@@ -37,8 +37,7 @@
                   <el-row v-if="scope.row.url === null">
                     <el-col :span="24">
                       <div class="bm_title">
-                        <i class="el-icon-folder"></i>
-                        {{ scope.row.title }}
+                        <el-link icon="el-icon-folder">{{ scope.row.title }}</el-link>
                       </div>
                     </el-col>
                   </el-row>
