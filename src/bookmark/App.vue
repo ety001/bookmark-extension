@@ -93,6 +93,8 @@
 </template>
 
 <script>
+import Editor from './Editor';
+
 export default {
   data() {
     return {
@@ -110,6 +112,7 @@ export default {
       searchKey: null,
       search: null,
       breadcrumb: [],
+      saving: false,
     };
   },
   methods: {
@@ -134,7 +137,55 @@ export default {
         this.$router.push({ path: '/', query: { pid: data.id } }).catch(e => console.log('router error:', e));
       }
     },
-    edit(data) {},
+    edit(data) {
+      const confirmBtnMsg = this.getLang('confirm_btn');
+      const cancelBtnMsg = this.getLang('cancel_btn');
+      const savingMsg = this.getLang('saving');
+
+      const el = this.$createElement(Editor, {
+        props: {
+          port: this.port,
+          saving: this.saving,
+          bookmark: data,
+        },
+      });
+
+      this.$msgbox({
+        title: this.getLang('edit_bookmark'),
+        message: el,
+        showCancelButton: true,
+        showClose: false,
+        confirmButtonText: confirmBtnMsg,
+        cancelButtonText: cancelBtnMsg,
+        beforeClose: (action, instance, done) => {
+          if (action === 'confirm') {
+            this.saving = true;
+            console.log('111', this.saving);
+            instance.confirmButtonLoading = true;
+            instance.confirmButtonText = savingMsg;
+            setTimeout(() => {
+              this.saving = false;
+              done();
+              setTimeout(() => {
+                instance.confirmButtonLoading = false;
+              }, 300);
+            }, 3000);
+          } else {
+            if (this.saving === true) return;
+            done();
+          }
+        },
+      })
+        .then(action => {
+          this.$message({
+            type: 'info',
+            message: 'action: ' + action,
+          });
+        })
+        .catch(() => {
+          console.log('cancel');
+        });
+    },
     remove(data) {
       console.log('remove:', data);
       const confirmInfoMsg = chrome.i18n.getMessage('confirm_remove_info');

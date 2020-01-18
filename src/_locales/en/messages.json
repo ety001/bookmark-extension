@@ -91,5 +91,14 @@
   },
   "filter": {
     "message": "Filter"
+  },
+  "name": {
+    "message": "Name"
+  },
+  "edit_bookmark": {
+    "message": "Edit Bookmark"
+  },
+  "saving": {
+    "message": "Saving..."
   }
 }

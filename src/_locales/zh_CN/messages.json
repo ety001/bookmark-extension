@@ -91,5 +91,14 @@
   },
   "filter": {
     "message": "过滤器"
+  },
+  "name": {
+    "message": "名称"
+  },
+  "edit_bookmark": {
+    "message": "修改书签"
+  },
+  "saving": {
+    "message": "保存中..."
   }
 }
