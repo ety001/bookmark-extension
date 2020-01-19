@@ -126,11 +126,22 @@ chrome.runtime.onConnect.addListener(function(port) {
         });
         break;
       case 'get_block_list':
+        BookmarkLib.getBlockList(blockedBookmarks => {
+          port.postMessage({ ctype, cdata: blockedBookmarks });
+        });
         break;
       case 'create_bookmark_folder':
         BookmarkLib.createBookmark(cdata, () => {
           port.postMessage({ ctype, cdata: true });
         });
+        break;
+      case 'remove_block_bookmark':
+        BookmarkLib.removeBlockedBookmark(cdata);
+        port.postMessage({ ctype, cdata: true });
+        break;
+      case 'clear_block_list':
+        BookmarkLib.clearBlockList();
+        port.postMessage({ ctype, cdata: true });
         break;
     }
   });

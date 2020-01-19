@@ -133,10 +133,6 @@ export default {
     return {
       port: null,
       menu: [],
-      defaultProps: {
-        children: 'children',
-        label: 'label',
-      },
       loading: false,
       height: 0,
       pid: '0',

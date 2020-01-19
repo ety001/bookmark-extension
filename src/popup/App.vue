@@ -22,6 +22,7 @@
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="save('form1')">{{ 'save' | lang }}</el-button>
+            <el-button type="warning" @click="blockManager()">{{ 'block_manager' | lang }}</el-button>
           </el-form-item>
         </el-form>
       </el-col>
@@ -86,6 +87,10 @@ export default {
         }
         this.port.postMessage({ ctype: 'save_config', cdata: this.formData });
       });
+    },
+    blockManager() {
+      const baseUrl = chrome.runtime.getURL('block-manager/block-manager.html');
+      window.open(baseUrl);
     },
   },
   filters: {

@@ -121,5 +121,14 @@
   },
   "there_is_no_url": {
     "message": "请输入URL"
+  },
+  "block_manager": {
+    "message": "屏蔽列表管理"
+  },
+  "no_block_list": {
+    "message": "屏蔽列表为空"
+  },
+  "clear_block_list": {
+    "message": "清空列表"
   }
 }

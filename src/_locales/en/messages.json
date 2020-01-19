@@ -121,5 +121,14 @@
   },
   "there_is_no_url": {
     "message": "Please input URL."
+  },
+  "block_manager": {
+    "message": "Block List Manager"
+  },
+  "no_block_list": {
+    "message": "Block list is empty."
+  },
+  "clear_block_list": {
+    "message": "Clear List"
   }
 }

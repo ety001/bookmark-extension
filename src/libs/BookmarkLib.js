@@ -198,3 +198,14 @@ export const getBookmarkById = (id, cb) => {
 export const createBookmark = (data, cb) => {
   chrome.bookmarks.create(data, cb);
 };
+
+// 获取屏蔽列表
+export const getBlockList = cb => {
+  const blockedBookmarks = store.getters.blockedBookmarks;
+  cb(blockedBookmarks);
+};
+
+// 清空屏蔽列表
+export const clearBlockList = () => {
+  store.commit(types.UPDATE_BLOCKED_BOOKMARKS, []);
+};

@@ -14,6 +14,7 @@ const config = {
     'popup/popup': './popup/popup.js',
     'tab/tab': './tab/tab.js',
     'bookmark/bookmark': './bookmark/bookmark.js',
+    'block-manager/block-manager': './block-manager/block-manager.js',
     'content-script/content-script': './content-script/content-script.js',
   },
   output: {
@@ -82,6 +83,7 @@ const config = {
       { from: 'popup/popup.html', to: 'popup/popup.html', transform: transformHtml },
       { from: 'tab/tab.html', to: 'tab/tab.html', transform: transformHtml },
       { from: 'bookmark/bookmark.html', to: 'bookmark/bookmark.html', transform: transformHtml },
+      { from: 'block-manager/block-manager.html', to: 'block-manager/block-manager.html', transform: transformHtml },
       {
         from: 'manifest.json',
         to: 'manifest.json',
