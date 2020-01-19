@@ -1,0 +1,37 @@
+{
+  "name": "__MSG_appname__",
+  "description": "__MSG_appdesc__",
+  "version": null,
+  "manifest_version": 2,
+  "default_locale": "en",
+  "author": "ETY001",
+  "homepage_url": "https://bm.to0l.cn/",
+  "chrome_url_overrides": {
+    "newtab": "tab/tab.html"
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "19": "icons/icon-19.png",
+    "38": "icons/icon-38.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "browser_action": {
+    "default_title": "__MSG_appname__",
+    "default_popup": "popup/popup.html"
+  },
+  "background": {
+    "scripts": ["libs/google-analytics-bundle.js", "background.js"],
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "css": ["content-script/content-script.css"],
+      "js": ["content-script/cs-init.js", "content-script/content-script.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": ["tab/tab.html", "fonts/*", "bookmark/bookmark.html"],
+  "permissions": ["notifications", "bookmarks", "tabs", "background", "https://www.google-analytics.com/", "storage", "unlimitedStorage"]
+}
