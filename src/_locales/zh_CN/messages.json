@@ -118,5 +118,8 @@
   },
   "there_is_no_menu_selector": {
     "message": "请选择要保存的位置"
+  },
+  "there_is_no_url": {
+    "message": "请输入URL"
   }
 }

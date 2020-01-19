@@ -201,6 +201,14 @@ export default {
       //     type: 'error'
       //   });
       // }
+      if (this.bookmarkData.url === '' || this.bookmarkData.url === undefined) {
+        return this.$message({
+          showClose: true,
+          message: this.getLang('there_is_no_url'),
+          type: 'error',
+        });
+      }
+
       this.port.postMessage({
         ctype: 'update_bookmark',
         cdata: {

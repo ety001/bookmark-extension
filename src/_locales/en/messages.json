@@ -118,5 +118,8 @@
   },
   "there_is_no_menu_selector": {
     "message": "Please select where to save."
+  },
+  "there_is_no_url": {
+    "message": "Please input URL."
   }
 }
