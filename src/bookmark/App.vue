@@ -63,16 +63,15 @@
               <el-table-column property="title">
                 <template slot-scope="scope">
                   <el-row v-if="scope.row.url === null">
-                    <el-col :span="24">
+                    <el-col :span="24" style="cursor: pointer;">
                       <div class="bm_title" @click="visit(scope.row)">
-                        <i v-if="scope.row.url" class="el-icon-collection-tag"></i>
-                        <i v-if="scope.row.url === null" class="el-icon-folder"></i>
+                        <i class="el-icon-folder"></i>
                         {{ scope.row.title }}
                       </div>
                     </el-col>
                   </el-row>
                   <el-row v-else>
-                    <el-col :span="24">
+                    <el-col :span="24" style="cursor: pointer;">
                       <div class="bm_title" @click="visit(scope.row)">
                         <i class="el-icon-collection-tag"></i>
                         {{ scope.row.title }}
@@ -418,8 +417,5 @@ aside {
 .menu-selector-path {
   clear: both;
   margin-bottom: 14px;
-}
-.el-table tr {
-  cursor: pointer;
 }
 </style>
