@@ -193,3 +193,8 @@ export const getBookmarkById = (id, cb) => {
     }
   });
 };
+
+// 创建书签
+export const createBookmark = (data, cb) => {
+  chrome.bookmarks.create(data, cb);
+};

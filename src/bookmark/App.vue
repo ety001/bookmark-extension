@@ -45,7 +45,7 @@
             </el-breadcrumb>
           </el-col>
           <el-col :span="20" :offset="2" style="margin-bottom: 10px; text-align: right;">
-            <el-button type="primary" round size="mini">{{ 'add_folder' | lang }}</el-button>
+            <el-button type="primary" round size="mini" @click="openCreateFolder">{{ 'add_folder' | lang }}</el-button>
           </el-col>
           <el-col :span="20" :offset="2" v-if="search !== null">
             <span style="font-weight: 600;">{{ 'filter' | lang }}:</span>
@@ -65,7 +65,8 @@
                   <el-row v-if="scope.row.url === null">
                     <el-col :span="24">
                       <div class="bm_title" @click="visit(scope.row)">
-                        <i class="el-icon-collection-tag"></i>
+                        <i v-if="scope.row.url" class="el-icon-collection-tag"></i>
+                        <i v-if="scope.row.url === null" class="el-icon-folder"></i>
                         {{ scope.row.title }}
                       </div>
                     </el-col>
@@ -83,8 +84,8 @@
               </el-table-column>
               <el-table-column width="160">
                 <template slot-scope="scope">
-                  <el-button v-if="scope.row.url" type="primary" @click="edit(scope.row)" icon="el-icon-edit" circle plain size="mini"></el-button>
-                  <el-button v-if="scope.row.url" type="danger" @click="remove(scope.row)" icon="el-icon-delete" circle plain size="mini"></el-button>
+                  <el-button type="primary" @click="edit(scope.row)" icon="el-icon-edit" circle plain size="mini"></el-button>
+                  <el-button type="danger" @click="remove(scope.row)" icon="el-icon-delete" circle plain size="mini"></el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -112,6 +113,16 @@
       <div slot="footer" class="dialog-footer">
         <el-button @click="cancelDialog">{{ 'cancel_btn' | lang }}</el-button>
         <el-button type="primary" @click="confirmDialog">{{ 'confirm_btn' | lang }}</el-button>
+      </div>
+    </el-dialog>
+    <el-dialog :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false" :title="'add_folder' | lang" :visible.sync="dialogAddFolderFormVisible">
+      <el-form :model="bookmarkFolder">
+        <el-form-item label="目录名">
+          <el-input v-model="bookmarkFolder.title"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="createFolder">创建</el-button>
       </div>
     </el-dialog>
   </el-container>
@@ -143,6 +154,12 @@ export default {
         url: null,
       },
       menuSelector: null,
+      dialogAddFolderFormVisible: false,
+      bookmarkFolder: {
+        parentId: null,
+        title: null,
+        url: null,
+      },
     };
   },
   methods: {
@@ -175,7 +192,6 @@ export default {
       this.port.postMessage({ ctype: 'getbookmark_byid', cdata: { id: data.id, action: 'edit_open' } });
     },
     editOpen(bookmark) {
-      console.log('edit_open:', bookmark);
       this.bookmarkData = bookmark;
       this.dialogFormVisible = true;
       this.menuSelector = {
@@ -201,13 +217,13 @@ export default {
       //     type: 'error'
       //   });
       // }
-      if (this.bookmarkData.url === '' || this.bookmarkData.url === undefined) {
-        return this.$message({
-          showClose: true,
-          message: this.getLang('there_is_no_url'),
-          type: 'error',
-        });
-      }
+      // if (this.bookmarkData.url === '' || this.bookmarkData.url === undefined) {
+      //   return this.$message({
+      //     showClose: true,
+      //     message: this.getLang('there_is_no_url'),
+      //     type: 'error',
+      //   });
+      // }
 
       this.port.postMessage({
         ctype: 'update_bookmark',
@@ -216,12 +232,12 @@ export default {
           title: this.bookmarkData.title,
           url: this.bookmarkData.url,
           parentId: this.menuSelector === null ? null : this.menuSelector.id,
+          index: 0,
         },
       });
       this.saving = true;
     },
     remove(data) {
-      console.log('remove:', data);
       const confirmInfoMsg = chrome.i18n.getMessage('confirm_remove_info');
       const confirmTitleMsg = chrome.i18n.getMessage('notification');
       const confirmBtnMsg = chrome.i18n.getMessage('confirm_btn');
@@ -243,6 +259,13 @@ export default {
     },
     getBreadcrumb(id) {
       this.port.postMessage({ ctype: 'getbookmark_breadcrumb', cdata: id });
+    },
+    openCreateFolder() {
+      this.dialogAddFolderFormVisible = true;
+      this.bookmarkFolder.parentId = this.pid;
+    },
+    createFolder() {
+      this.port.postMessage({ ctype: 'create_bookmark_folder', cdata: this.bookmarkFolder });
     },
   },
   filters: {
@@ -322,6 +345,20 @@ export default {
               break;
           }
           break;
+        case 'create_bookmark_folder':
+          this.$message({
+            type: 'success',
+            message: successMsg,
+          });
+          this.getBookmarkMenu();
+          this.saving = false;
+          this.dialogAddFolderFormVisible = false;
+          this.bookmarkFolder = {
+            parentId: null,
+            title: null,
+            url: null,
+          };
+          break;
       }
     });
     // 设置网页标题
@@ -381,5 +418,8 @@ aside {
 .menu-selector-path {
   clear: both;
   margin-bottom: 14px;
+}
+.el-table tr {
+  cursor: pointer;
 }
 </style>

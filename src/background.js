@@ -127,6 +127,11 @@ chrome.runtime.onConnect.addListener(function(port) {
         break;
       case 'get_block_list':
         break;
+      case 'create_bookmark_folder':
+        BookmarkLib.createBookmark(cdata, () => {
+          port.postMessage({ ctype, cdata: true });
+        });
+        break;
     }
   });
 });
