@@ -100,5 +100,23 @@
   },
   "saving": {
     "message": "Saving..."
+  },
+  "add_folder": {
+    "message": "Add Folder"
+  },
+  "url": {
+    "message": "URL"
+  },
+  "title": {
+    "message": "Title"
+  },
+  "menu": {
+    "message": "Menu"
+  },
+  "save_at": {
+    "message": "Save at"
+  },
+  "there_is_no_menu_selector": {
+    "message": "Please select where to save."
   }
 }

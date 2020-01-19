@@ -100,5 +100,23 @@
   },
   "saving": {
     "message": "保存中..."
+  },
+  "add_folder": {
+    "message": "添加目录"
+  },
+  "url": {
+    "message": "URL"
+  },
+  "title": {
+    "message": "标题"
+  },
+  "menu": {
+    "message": "目录"
+  },
+  "save_at": {
+    "message": "保存在"
+  },
+  "there_is_no_menu_selector": {
+    "message": "请选择要保存的位置"
   }
 }

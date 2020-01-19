@@ -80,7 +80,6 @@ export const removeWaitingBookmark = bm => {
 
 // 添加屏蔽书签
 export const addBlockedBookmark = bm => {
-  console.log('addBlockedBookmark', bm);
   store.commit(types.ADD_BLOCKED_BOOKMARK, bm);
 };
 
@@ -97,7 +96,6 @@ export const removeBlockedBookmark = bm => {
 // 把书签信息存入localStorage
 export const getBookmarksFromChrome = () => {
   chrome.bookmarks.getTree(bookmarks => {
-    console.log('getBookmarksTree');
     changeTreeNodeToList(bookmarks);
     store.commit(types.UPDATE_WAITING_BOOKMARKS, tmpBookmarks);
     tmpBookmarks = [];
@@ -120,7 +118,6 @@ const changeTreeNodeToList = nodes => {
 // 获取所有书签目录
 export const getBookmarkMenu = cb => {
   chrome.bookmarks.getTree(bookmarks => {
-    console.log('getBookmarkMenu');
     cb(menuTreeNode(bookmarks));
   });
 };
@@ -139,13 +136,14 @@ const menuTreeNode = nodes => {
   return tmp;
 };
 
+// 获取书签目录下内容
 export const getBookmarkChildren = (id, cb) => {
   chrome.bookmarks.getChildren(id, bookmarks => {
-    console.log('getBookmarkChildren');
     cb(bookmarks);
   });
 };
 
+// 获取书签目录路径
 let tmpBreadcrumb = [];
 export const getBookmarkBreadcrumb = (id, cb) => {
   chrome.bookmarks.get(id, bms => {
@@ -155,6 +153,43 @@ export const getBookmarkBreadcrumb = (id, cb) => {
       tmpBreadcrumb = [];
     } else {
       getBookmarkBreadcrumb(bms[0].parentId, cb);
+    }
+  });
+};
+
+// 更新书签
+export const updateBookmark = (data, cb) => {
+  chrome.bookmarks.update(
+    data.id,
+    {
+      title: data.title,
+      url: data.url,
+    },
+    () => {
+      if (data.parentId !== null) {
+        chrome.bookmarks.move(
+          data.id,
+          {
+            parentId: data.parentId,
+          },
+          () => {
+            cb('success');
+          }
+        );
+      } else {
+        cb('success');
+      }
+    }
+  );
+};
+
+// 根据id获取书签
+export const getBookmarkById = (id, cb) => {
+  chrome.bookmarks.get(id, bookmarks => {
+    if (bookmarks.length === 0) {
+      cb(null);
+    } else {
+      cb(bookmarks[0]);
     }
   });
 };

@@ -51,6 +51,30 @@ chrome.runtime.onConnect.addListener(function(port) {
           },
         });
         break;
+      case 'getbookmark_byid':
+        BookmarkLib.getBookmarkById(msg.cdata.id, bm => {
+          if (bm) {
+            BookmarkLib.getBookmarkById(bm.parentId, parentBm => {
+              bm.parent = parentBm;
+              return port.postMessage({
+                ctype,
+                cdata: {
+                  bookmark: bm,
+                  action: cdata.action,
+                },
+              });
+            });
+          } else {
+            return port.postMessage({
+              ctype,
+              cdata: {
+                bookmark: bm,
+                action: cdata.action,
+              },
+            });
+          }
+        });
+        break;
       case 'getbookmark_menu':
         BookmarkLib.getBookmarkMenu(menu => {
           port.postMessage({ ctype, cdata: menu });
@@ -72,6 +96,11 @@ chrome.runtime.onConnect.addListener(function(port) {
       case 'remove_bookmark':
         // 从 chrome 删除
         BookmarkLib.removeBookmark(cdata, () => {
+          port.postMessage({ ctype, cdata: true });
+        });
+        break;
+      case 'update_bookmark':
+        BookmarkLib.updateBookmark(cdata, () => {
           port.postMessage({ ctype, cdata: true });
         });
         break;

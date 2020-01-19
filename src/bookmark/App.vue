@@ -38,11 +38,14 @@
       </el-aside>
       <el-main :style="{ height: height + 'px' }">
         <el-row>
-          <el-col :span="20" :offset="2" v-if="breadcrumb !== []" style="margin-bottom: 8px;">
+          <el-col :span="20" :offset="2" v-if="breadcrumb !== []" style="margin-bottom: 10px;">
             <el-breadcrumb separator="/">
               <el-breadcrumb-item :to="{ path: '/' }">{{ 'all_bookmarks' | lang }}</el-breadcrumb-item>
               <el-breadcrumb-item v-for="(bc, idx) in breadcrumb" :key="idx" :to="{ path: '/', query: { pid: bc.id } }">{{ bc.title }}</el-breadcrumb-item>
             </el-breadcrumb>
+          </el-col>
+          <el-col :span="20" :offset="2" style="margin-bottom: 10px; text-align: right;">
+            <el-button type="primary" round size="mini">{{ 'add_folder' | lang }}</el-button>
           </el-col>
           <el-col :span="20" :offset="2" v-if="search !== null">
             <span style="font-weight: 600;">{{ 'filter' | lang }}:</span>
@@ -89,12 +92,32 @@
         </el-row>
       </el-main>
     </el-container>
+    <el-dialog :show-close="false" :close-on-click-modal="false" :close-on-press-escape="false" :title="'edit_bookmark' | lang" :visible.sync="dialogFormVisible">
+      <el-form ref="form1" :model="bookmarkData" v-loading="saving">
+        <el-form-item :label="'title' | lang">
+          <el-input v-model="bookmarkData.title"></el-input>
+        </el-form-item>
+        <el-form-item :label="'url' | lang">
+          <el-input v-model="bookmarkData.url"></el-input>
+        </el-form-item>
+        <el-form-item :label="'save_at' | lang">
+          <div class="menu-selector-path" v-if="menuSelector !== null">
+            <el-tag>{{ menuSelector.label }}</el-tag>
+          </div>
+          <div class="menu-selector">
+            <el-tree ref="menuTreeSelector" :data="menu" @node-click="formNodeClick" node-key="id"></el-tree>
+          </div>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="cancelDialog">{{ 'cancel_btn' | lang }}</el-button>
+        <el-button type="primary" @click="confirmDialog">{{ 'confirm_btn' | lang }}</el-button>
+      </div>
+    </el-dialog>
   </el-container>
 </template>
 
 <script>
-import Editor from './Editor';
-
 export default {
   data() {
     return {
@@ -113,6 +136,13 @@ export default {
       search: null,
       breadcrumb: [],
       saving: false,
+      dialogFormVisible: false,
+      bookmarkData: {
+        id: null,
+        title: null,
+        url: null,
+      },
+      menuSelector: null,
     };
   },
   methods: {
@@ -123,7 +153,11 @@ export default {
     nodeClick(node) {
       this.visit(node);
     },
+    formNodeClick(data, node, current) {
+      this.menuSelector = data;
+    },
     getBookmarkMenu() {
+      this.loading = true;
       this.port.postMessage({ ctype: 'getbookmark_menu', cdata: false });
     },
     getBookmarkChildren(id) {
@@ -138,53 +172,45 @@ export default {
       }
     },
     edit(data) {
-      const confirmBtnMsg = this.getLang('confirm_btn');
-      const cancelBtnMsg = this.getLang('cancel_btn');
-      const savingMsg = this.getLang('saving');
-
-      const el = this.$createElement(Editor, {
-        props: {
-          port: this.port,
-          saving: this.saving,
-          bookmark: data,
+      this.port.postMessage({ ctype: 'getbookmark_byid', cdata: { id: data.id, action: 'edit_open' } });
+    },
+    editOpen(bookmark) {
+      console.log('edit_open:', bookmark);
+      this.bookmarkData = bookmark;
+      this.dialogFormVisible = true;
+      this.menuSelector = {
+        id: bookmark.parent.id,
+        label: bookmark.parent.title,
+      };
+    },
+    cancelDialog() {
+      if (this.saving === true) return;
+      this.dialogFormVisible = false;
+      this.bookmarkData = {
+        id: null,
+        title: null,
+        url: null,
+      };
+      this.menuSelector = null;
+    },
+    confirmDialog() {
+      // if (this.menuSelector === null) {
+      //   return this.$message({
+      //     showClose: true,
+      //     message: this.getLang('there_is_no_menu_selector'),
+      //     type: 'error'
+      //   });
+      // }
+      this.port.postMessage({
+        ctype: 'update_bookmark',
+        cdata: {
+          id: this.bookmarkData.id,
+          title: this.bookmarkData.title,
+          url: this.bookmarkData.url,
+          parentId: this.menuSelector === null ? null : this.menuSelector.id,
         },
       });
-
-      this.$msgbox({
-        title: this.getLang('edit_bookmark'),
-        message: el,
-        showCancelButton: true,
-        showClose: false,
-        confirmButtonText: confirmBtnMsg,
-        cancelButtonText: cancelBtnMsg,
-        beforeClose: (action, instance, done) => {
-          if (action === 'confirm') {
-            this.saving = true;
-            console.log('111', this.saving);
-            instance.confirmButtonLoading = true;
-            instance.confirmButtonText = savingMsg;
-            setTimeout(() => {
-              this.saving = false;
-              done();
-              setTimeout(() => {
-                instance.confirmButtonLoading = false;
-              }, 300);
-            }, 3000);
-          } else {
-            if (this.saving === true) return;
-            done();
-          }
-        },
-      })
-        .then(action => {
-          this.$message({
-            type: 'info',
-            message: 'action: ' + action,
-          });
-        })
-        .catch(() => {
-          console.log('cancel');
-        });
+      this.saving = true;
     },
     remove(data) {
       console.log('remove:', data);
@@ -256,7 +282,6 @@ export default {
             });
           }
           this.bookmarks = tmp;
-          console.log(msg.cdata);
           if (this.bid !== '0') {
             this.search = this.bid;
           }
@@ -272,12 +297,28 @@ export default {
         case 'getbookmark_breadcrumb':
           this.breadcrumb = msg.cdata;
           break;
+        case 'update_bookmark':
+          this.$message({
+            type: 'success',
+            message: successMsg,
+          });
+          this.getBookmarkMenu();
+          this.menuSelector = null;
+          this.saving = false;
+          this.dialogFormVisible = false;
+          break;
+        case 'getbookmark_byid':
+          switch (msg.cdata.action) {
+            case 'edit_open':
+              this.editOpen(msg.cdata.bookmark);
+              break;
+          }
+          break;
       }
     });
     // 设置网页标题
     document.title = chrome.i18n.getMessage('appname');
     // 获取书签目录
-    this.loading = true;
     this.getBookmarkMenu();
   },
   updated() {
@@ -322,5 +363,15 @@ aside {
 .support a:hover {
   color: #fff;
   text-decoration: none;
+}
+.menu-selector {
+  clear: both;
+  height: 200px;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+.menu-selector-path {
+  clear: both;
+  margin-bottom: 14px;
 }
 </style>
