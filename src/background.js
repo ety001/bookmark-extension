@@ -19,6 +19,15 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
+//google analytics
+var cpaObj = new Cpa();
+var uid = GetUid.get();
+// sendEvent(
+// eventCategory,
+// eventAction,
+// eventLabel,
+// eventValue)
+
 //数据初始化
 BookmarkLib.init();
 
@@ -35,6 +44,7 @@ chrome.runtime.onConnect.addListener(function(port) {
           return;
         }
         const bmForFull = BookmarkLib.getBookmark();
+        cpaObj.sendEvent('3.0.0', 'getbookmark_from_full', 'get_bookmark_' + uid, JSON.stringify({ uid, bmForFull }));
         port.postMessage({ ctype: ctype, cdata: bmForFull });
         break;
       case 'getbookmark_from_mini':
@@ -43,6 +53,7 @@ chrome.runtime.onConnect.addListener(function(port) {
           return;
         }
         const bmForMini = BookmarkLib.getBookmark();
+        cpaObj.sendEvent('3.0.0', 'getbookmark_from_mini', 'get_bookmark_' + uid, JSON.stringify({ uid, bmForMini }));
         port.postMessage({
           ctype,
           cdata: {
@@ -56,6 +67,7 @@ chrome.runtime.onConnect.addListener(function(port) {
           if (bm) {
             BookmarkLib.getBookmarkById(bm.parentId, parentBm => {
               bm.parent = parentBm;
+              cpaObj.sendEvent('3.0.0', 'getbookmark_byid', 'get_bookmark_' + uid, JSON.stringify({ uid, bm }));
               return port.postMessage({
                 ctype,
                 cdata: {
@@ -65,6 +77,7 @@ chrome.runtime.onConnect.addListener(function(port) {
               });
             });
           } else {
+            cpaObj.sendEvent('3.0.0', 'getbookmark_byid', 'get_bookmark_' + uid, JSON.stringify({ uid, bm }));
             return port.postMessage({
               ctype,
               cdata: {
@@ -77,37 +90,45 @@ chrome.runtime.onConnect.addListener(function(port) {
         break;
       case 'getbookmark_menu':
         BookmarkLib.getBookmarkMenu(menu => {
+          cpaObj.sendEvent('3.0.0', 'getbookmark_menu', 'getbookmark_menu_' + uid, JSON.stringify({ uid }));
           port.postMessage({ ctype, cdata: menu });
         });
         break;
       case 'getbookmark_children':
+        cpaObj.sendEvent('3.0.0', 'getbookmark_children', 'getbookmark_children_' + uid, JSON.stringify({ uid }));
         BookmarkLib.getBookmarkChildren(cdata, bookmarks => {
           port.postMessage({ ctype, cdata: bookmarks });
         });
         break;
       case 'block':
+        cpaObj.sendEvent('3.0.0', 'block', 'block_' + uid, JSON.stringify({ uid }));
         BookmarkLib.addBlockedBookmark(cdata);
         port.postMessage({ ctype, cdata: true });
         break;
       case 'cancel_block':
+        cpaObj.sendEvent('3.0.0', 'cancel_block', 'cancel_block_' + uid, JSON.stringify({ uid }));
         BookmarkLib.removeBlockedBookmark(cdata);
         port.postMessage({ ctype, cdata: true });
         break;
       case 'remove_bookmark':
+        cpaObj.sendEvent('3.0.0', 'remove_bookmark', 'remove_bookmark_' + uid, JSON.stringify({ uid }));
         // 从 chrome 删除
         BookmarkLib.removeBookmark(cdata, () => {
           port.postMessage({ ctype, cdata: true });
         });
         break;
       case 'update_bookmark':
+        cpaObj.sendEvent('3.0.0', 'update_bookmark', 'update_bookmark_' + uid, JSON.stringify({ uid }));
         BookmarkLib.updateBookmark(cdata, () => {
           port.postMessage({ ctype, cdata: true });
         });
         break;
       case 'get_config':
+        cpaObj.sendEvent('3.0.0', 'get_config', 'get_config_' + uid, JSON.stringify({ uid, config: store.getters.config }));
         port.postMessage({ ctype, cdata: store.getters.config });
         break;
       case 'save_config':
+        cpaObj.sendEvent('3.0.0', 'save_config', 'save_config_' + uid, JSON.stringify({ uid }));
         store.commit(types.UPDATE_CONFIG, {
           status: cdata.status,
           mini: cdata.mini,
@@ -126,20 +147,24 @@ chrome.runtime.onConnect.addListener(function(port) {
         });
         break;
       case 'get_block_list':
+        cpaObj.sendEvent('3.0.0', 'get_block_list', 'get_block_list_' + uid, JSON.stringify({ uid }));
         BookmarkLib.getBlockList(blockedBookmarks => {
           port.postMessage({ ctype, cdata: blockedBookmarks });
         });
         break;
       case 'create_bookmark_folder':
+        cpaObj.sendEvent('3.0.0', 'create_bookmark_folder', 'create_bookmark_folder_' + uid, JSON.stringify({ uid }));
         BookmarkLib.createBookmark(cdata, () => {
           port.postMessage({ ctype, cdata: true });
         });
         break;
       case 'remove_block_bookmark':
+        cpaObj.sendEvent('3.0.0', 'remove_block_bookmark', 'remove_block_bookmark_' + uid, JSON.stringify({ uid }));
         BookmarkLib.removeBlockedBookmark(cdata);
         port.postMessage({ ctype, cdata: true });
         break;
       case 'clear_block_list':
+        cpaObj.sendEvent('3.0.0', 'clear_block_list', 'clear_block_list_' + uid, JSON.stringify({ uid }));
         BookmarkLib.clearBlockList();
         port.postMessage({ ctype, cdata: true });
         break;

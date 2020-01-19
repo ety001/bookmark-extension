@@ -21,7 +21,7 @@
     "default_popup": "popup/popup.html"
   },
   "background": {
-    "scripts": ["background.js"],
+    "scripts": ["libs/google-analytics-bundle.js", "background.js"],
     "persistent": false
   },
   "content_scripts": [
