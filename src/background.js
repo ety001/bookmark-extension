@@ -241,6 +241,8 @@ chrome.runtime.onInstalled.addListener(detail => {
       },
       function(notification_id) {}
     );
+    // 弹出推广页面
+    window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
   }
   if (detail.reason === 'install') {
     sendEvent(currentVersion, 'install_extension', uid, '');
@@ -248,7 +250,7 @@ chrome.runtime.onInstalled.addListener(detail => {
     // 初始化数据
     BookmarkLib.init();
     // 弹出推广页面
-    // TODO
+    window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
   }
 });
 
