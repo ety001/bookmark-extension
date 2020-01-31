@@ -1,7 +1,6 @@
 import store from './store';
 import * as types from './store/mutation-types';
 import * as BookmarkLib from './libs/BookmarkLib';
-import { Breadcrumb } from 'element-ui';
 
 global.browser = require('webextension-polyfill');
 
@@ -12,9 +11,12 @@ if (window.localStorage.curt_index === undefined) {
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (tab.url === 'chrome://newtab/') {
-    if (store.getters.config.mini === true) {
-      chrome.tabs.update(tabId, { url: 'chrome-search://local-ntp/local-ntp.html' });
+  if (changeInfo.status === 'loading') {
+    if (tab.url === 'chrome://newtab/') {
+      if (store.getters.config.mini === false) {
+        const url = chrome.runtime.getURL('tab/tab.html');
+        chrome.tabs.update(tabId, { url });
+      }
     }
   }
 });
