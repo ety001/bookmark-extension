@@ -22,7 +22,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 //google analytics
 var cpaObj = new Cpa();
 var uid = GetUid.get();
-var currentVersion = '3.0.0';
+var currentVersion = '3_0_1';
 // sendEvent(
 // eventCategory,
 // eventAction,
