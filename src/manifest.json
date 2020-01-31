@@ -18,8 +18,7 @@
     "default_popup": "popup/popup.html"
   },
   "background": {
-    "scripts": ["libs/google-analytics-bundle.js", "background.js"],
-    "persistent": false
+    "scripts": ["background.js"]
   },
   "content_scripts": [
     {
@@ -29,6 +28,7 @@
       "run_at": "document_end"
     }
   ],
+  "content_security_policy": "script-src 'self' https://www.google-analytics.com; object-src 'self'",
   "web_accessible_resources": ["tab/tab.html", "fonts/*", "bookmark/bookmark.html"],
-  "permissions": ["notifications", "bookmarks", "tabs", "background", "https://www.google-analytics.com/", "storage", "unlimitedStorage"]
+  "permissions": ["notifications", "bookmarks", "tabs", "background", "storage", "unlimitedStorage"]
 }
