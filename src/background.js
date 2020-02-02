@@ -4,6 +4,9 @@ import * as BookmarkLib from './libs/BookmarkLib';
 
 global.browser = require('webextension-polyfill');
 
+const isFirefox = navigator.userAgent.toUpperCase().indexOf('Firefox') ? true : false;
+const isChrome = window.navigator.userAgent.indexOf('Chrome') !== -1;
+
 //清空之前版本的数据
 if (window.localStorage.curt_index === undefined) {
   window.localStorage.clear();
@@ -12,8 +15,18 @@ if (window.localStorage.curt_index === undefined) {
 
 // 检测新标签页，控制迷你和full版本
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'loading') {
-    if (tab.url === 'chrome://newtab/') {
+  if (isChrome) {
+    if (changeInfo.status === 'loading') {
+      if (tab.url === 'chrome://newtab/') {
+        if (store.getters.config.mini === false) {
+          const url = chrome.runtime.getURL('tab/tab.html');
+          chrome.tabs.update(tabId, { url });
+        }
+      }
+    }
+  }
+  if (isFirefox) {
+    if (tab.url === 'about:newtab') {
       if (store.getters.config.mini === false) {
         const url = chrome.runtime.getURL('tab/tab.html');
         chrome.tabs.update(tabId, { url });
