@@ -6,6 +6,11 @@ const ExtensionReloader = require('webpack-extension-reloader');
 const { VueLoaderPlugin } = require('vue-loader');
 const { version } = require('./package.json');
 
+const protos = {
+  chrome: 'chrome-extension',
+  firefox: 'moz-extension',
+};
+
 const config = {
   mode: process.env.NODE_ENV,
   context: __dirname + '/src',
@@ -41,7 +46,16 @@ const config = {
       },
       {
         test: /\.scss$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader'],
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader',
+          {
+            loader: 'sass-loader',
+            options: {
+              data: '$BROWSER_PROTO: ' + protos[process.env.BROWSER_PROTO] + ';',
+            },
+          },
+        ],
       },
       {
         test: /\.sass$/,
