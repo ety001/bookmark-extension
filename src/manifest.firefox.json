@@ -29,5 +29,5 @@
     }
   ],
   "web_accessible_resources": ["tab/tab.html", "fonts/*", "bookmark/bookmark.html"],
-  "permissions": ["notifications", "bookmarks", "tabs", "background", "storage", "unlimitedStorage", "https://www.google-analytics.com/"]
+  "permissions": ["notifications", "bookmarks", "tabs", "storage", "unlimitedStorage", "https://www.google-analytics.com/"]
 }

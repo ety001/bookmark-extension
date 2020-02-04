@@ -99,7 +99,7 @@ const config = {
       { from: 'bookmark/bookmark.html', to: 'bookmark/bookmark.html', transform: transformHtml },
       { from: 'block-manager/block-manager.html', to: 'block-manager/block-manager.html', transform: transformHtml },
       {
-        from: 'manifest.json',
+        from: process.env.BROWSER_PROTO === 'chrome' ? 'manifest.json' : 'manifest.firefox.json',
         to: 'manifest.json',
         transform: content => {
           const jsonContent = JSON.parse(content);

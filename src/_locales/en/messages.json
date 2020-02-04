@@ -130,5 +130,11 @@
   },
   "clear_block_list": {
     "message": "Clear List"
+  },
+  "ga": {
+    "message": "Whether to enable Data Analyzes? This will help author improve the extension's experience."
+  },
+  "enable": {
+    "message": "Enable"
   }
 }

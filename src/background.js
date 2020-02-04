@@ -1,6 +1,7 @@
 import store from './store';
 import * as types from './store/mutation-types';
 import * as BookmarkLib from './libs/BookmarkLib';
+import { GA } from './libs/GA';
 
 global.browser = require('webextension-polyfill');
 
@@ -35,29 +36,6 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   }
 });
 
-//google analytics
-const currentVersion = '3_0_1';
-const gaID = 'UA-64832923-4';
-(function(i, s, o, g, r, a, m) {
-  i['GoogleAnalyticsObject'] = r;
-  (i[r] =
-    i[r] ||
-    function() {
-      (i[r].q = i[r].q || []).push(arguments);
-    }),
-    (i[r].l = 1 * new Date());
-  (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
-  a.async = 1;
-  a.src = g;
-  m.parentNode.insertBefore(a, m);
-})(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
-ga('create', gaID, 'auto');
-ga('set', 'checkProtocolTask', function() {});
-ga('require', 'displayfeatures');
-function sendEvent(eventCategory, eventAction, eventLabel = '', eventValue = '') {
-  ga('send', 'event', eventCategory, eventAction, eventLabel, eventValue);
-}
-
 // 生成uid
 const RandomStr = function(len) {
   len = len || 32;
@@ -77,12 +55,31 @@ const GetUid = {
       var d = new Date();
       var uid = RandomStr() + d.getSeconds() + d.getMinutes() + d.getMilliseconds();
       window.localStorage.uid = uid;
-      sendEvent(currentVersion, 'create_user', uid);
     }
     return uid;
   },
 };
 const uid = GetUid.get();
+
+//google analytics
+let currentVersion = '3_0_2';
+if (isChrome) {
+  currentVersion = `chrome_${currentVersion}`;
+}
+if (isFirefox) {
+  currentVersion = `firefox_${currentVersion}`;
+}
+const gaID = 'UA-64832923-4';
+const gaObj = new GA(gaID, uid);
+function sendEvent(eventCategory, eventAction, eventLabel = '', eventValue = '') {
+  if (store.getters.config.ga === false) return;
+  gaObj.ga('event', eventCategory, eventAction, eventLabel, eventValue);
+}
+// dh -- Document hostname, dp -- Page, dt -- Title
+function sendPageview(dp, dh = '', dt = '') {
+  if (store.getters.config.ga === false) return;
+  gaObj.ga('pageview', dh, dp, dt);
+}
 
 //数据初始化
 BookmarkLib.init();
@@ -100,6 +97,7 @@ chrome.runtime.onConnect.addListener(function(port) {
           return;
         }
         const bmForFull = BookmarkLib.getBookmark();
+        sendPageview('/full_mode_page');
         sendEvent(currentVersion, 'getbookmark_from_full', 'get_bookmark_' + uid, JSON.stringify({ uid, bmForFull }));
         port.postMessage({ ctype: ctype, cdata: bmForFull });
         break;
@@ -109,6 +107,7 @@ chrome.runtime.onConnect.addListener(function(port) {
           return;
         }
         const bmForMini = BookmarkLib.getBookmark();
+        sendPageview('/mini_mode_notification');
         sendEvent(currentVersion, 'getbookmark_from_mini', 'get_bookmark_' + uid, JSON.stringify({ uid, bmForMini }));
         port.postMessage({
           ctype,
@@ -146,6 +145,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         break;
       case 'getbookmark_menu':
         BookmarkLib.getBookmarkMenu(menu => {
+          sendPageview('/bookmark_manager_page');
           sendEvent(currentVersion, 'getbookmark_menu', 'getbookmark_menu_' + uid, JSON.stringify({ uid }));
           port.postMessage({ ctype, cdata: menu });
         });
@@ -180,6 +180,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         });
         break;
       case 'get_config':
+        sendPageview('/popup');
         sendEvent(currentVersion, 'get_config', 'get_config_' + uid, JSON.stringify({ uid, config: store.getters.config }));
         port.postMessage({ ctype, cdata: store.getters.config });
         break;
@@ -191,6 +192,7 @@ chrome.runtime.onConnect.addListener(function(port) {
           random: cdata.random,
           frequency: cdata.frequency,
           currentNotifyLocation: cdata.currentNotifyLocation,
+          ga: cdata.ga,
         });
         port.postMessage({ ctype, cdata: true });
         break;
@@ -203,6 +205,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         });
         break;
       case 'get_block_list':
+        sendPageview('/block_list_page');
         sendEvent(currentVersion, 'get_block_list', 'get_block_list_' + uid, JSON.stringify({ uid }));
         BookmarkLib.getBlockList(blockedBookmarks => {
           port.postMessage({ ctype, cdata: blockedBookmarks });
@@ -245,6 +248,9 @@ chrome.bookmarks.onRemoved.addListener((id, removeInfo) => {
 chrome.runtime.onInstalled.addListener(detail => {
   if (detail.reason == 'update') {
     sendEvent(currentVersion, 'update_extension', uid, '');
+    // 弹出推广页面
+    window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
+    return;
     chrome.notifications.create(
       {
         type: 'basic',
@@ -254,8 +260,6 @@ chrome.runtime.onInstalled.addListener(detail => {
       },
       function(notification_id) {}
     );
-    // 弹出推广页面
-    window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
   }
   if (detail.reason === 'install') {
     sendEvent(currentVersion, 'install_extension', uid, '');
