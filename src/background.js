@@ -62,14 +62,22 @@ const GetUid = {
 const uid = GetUid.get();
 
 //google analytics
-const currentVersion = '3_0_2';
-const gaID = 'UA-64832923-2';
+let currentVersion = '3_0_2';
+if (isChrome) {
+  currentVersion = `chrome_${currentVersion}`;
+}
+if (isFirefox) {
+  currentVersion = `firefox_${currentVersion}`;
+}
+const gaID = 'UA-64832923-4';
 const gaObj = new GA(gaID, uid);
 function sendEvent(eventCategory, eventAction, eventLabel = '', eventValue = '') {
+  if (store.getters.config.ga === false) return;
   gaObj.ga('event', eventCategory, eventAction, eventLabel, eventValue);
 }
 // dh -- Document hostname, dp -- Page, dt -- Title
 function sendPageview(dp, dh = '', dt = '') {
+  if (store.getters.config.ga === false) return;
   gaObj.ga('pageview', dh, dp, dt);
 }
 
@@ -184,6 +192,7 @@ chrome.runtime.onConnect.addListener(function(port) {
           random: cdata.random,
           frequency: cdata.frequency,
           currentNotifyLocation: cdata.currentNotifyLocation,
+          ga: cdata.ga,
         });
         port.postMessage({ ctype, cdata: true });
         break;
@@ -239,6 +248,9 @@ chrome.bookmarks.onRemoved.addListener((id, removeInfo) => {
 chrome.runtime.onInstalled.addListener(detail => {
   if (detail.reason == 'update') {
     sendEvent(currentVersion, 'update_extension', uid, '');
+    // 弹出推广页面
+    window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
+    return;
     chrome.notifications.create(
       {
         type: 'basic',
@@ -248,8 +260,6 @@ chrome.runtime.onInstalled.addListener(detail => {
       },
       function(notification_id) {}
     );
-    // 弹出推广页面
-    window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
   }
   if (detail.reason === 'install') {
     sendEvent(currentVersion, 'install_extension', uid, '');

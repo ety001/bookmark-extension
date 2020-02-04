@@ -20,6 +20,7 @@ export default new Vuex.Store({
       random: true, // 随机展示
       frequency: 5, // mini 模式展示频度
       currentNotifyLocation: 'top-right', // 当前 Mini 提醒框位置
+      ga: false, // Google Analytics Status
     },
     frequencyCounter: 0, // mini模式展示频度计数器
     waitingBookmarks: [], // 所有待提醒书签

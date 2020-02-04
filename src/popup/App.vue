@@ -1,7 +1,16 @@
 <template>
   <div>
     <el-row class="config-box" v-if="formData !== null">
-      <el-col :span="24">
+      <el-col :span="24" v-if="ga === false">
+        <h4>{{ 'ga' | lang }}</h4>
+        <el-form>
+          <el-form-item>
+            <el-button type="primary" @click="enableGa()">{{ 'confirm_btn' | lang }}</el-button>
+            <el-button type="warning" @click="cancelGa()">{{ 'cancel_btn' | lang }}</el-button>
+          </el-form-item>
+        </el-form>
+      </el-col>
+      <el-col :span="24" v-if="ga === true">
         <el-form ref="form1" :rules="rules" :model="formData" label-position="left" label-width="140px" @submit.native.prevent>
           <el-form-item :label="'switch' | lang" prop="status">
             <el-switch v-model="formData.status"></el-switch>
@@ -20,6 +29,12 @@
               <el-option v-for="(item, idx) in notifyLocation" :key="idx" :label="item.name" :value="item.val"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item label="" prop="ga" size="mini" label-width="0">
+            <el-checkbox-group v-model="formData.ga">
+              <el-checkbox :label="'ga' | lang" name="ga"></el-checkbox>
+            </el-checkbox-group>
+          </el-form-item>
+
           <el-form-item>
             <el-button type="primary" @click="save('form1')">{{ 'save' | lang }}</el-button>
             <el-button type="warning" @click="blockManager()">{{ 'block_manager' | lang }}</el-button>
@@ -43,6 +58,7 @@ export default {
     };
     return {
       formData: null,
+      ga: false,
       notifyLocation: [
         {
           name: this.getLang('top_right'),
@@ -65,6 +81,7 @@ export default {
         status: [{ type: 'boolean', message: 'need boolean', trigger: 'change' }],
         mini: [{ type: 'boolean', message: 'need boolean', trigger: 'change' }],
         random: [{ type: 'boolean', message: 'need boolean', trigger: 'change' }],
+        ga: [{ type: 'boolean', message: 'need boolean', trigger: 'change' }],
         frequency: [{ type: 'integer', message: this.getLang('need_integer'), trigger: 'blur' }],
         currentNotifyLocation: [{ validator: validateNotifyPosition, trigger: 'change' }],
       },
@@ -75,6 +92,13 @@ export default {
     getLang(val) {
       if (!val) return '';
       return chrome.i18n.getMessage(val);
+    },
+    enableGa() {
+      this.formData.ga = true;
+      this.port.postMessage({ ctype: 'save_config', cdata: this.formData });
+    },
+    cancelGa() {
+      this.ga = true;
     },
     save(formName) {
       this.$refs[formName].validate(valid => {
@@ -109,6 +133,7 @@ export default {
             type: 'success',
             message: this.getLang('save_success'),
           });
+          this.ga = true;
           break;
         case 'get_config':
           this.formData = {
@@ -117,7 +142,9 @@ export default {
             random: msg.cdata.random,
             frequency: msg.cdata.frequency,
             currentNotifyLocation: msg.cdata.currentNotifyLocation,
+            ga: msg.cdata.ga,
           };
+          this.ga = msg.cdata.ga;
           break;
       }
     });

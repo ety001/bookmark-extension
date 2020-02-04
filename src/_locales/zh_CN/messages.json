@@ -130,5 +130,11 @@
   },
   "clear_block_list": {
     "message": "清空列表"
+  },
+  "ga": {
+    "message": "是否允许作者统计数据以此提升使用体验"
+  },
+  "enable": {
+    "message": "激活"
   }
 }
