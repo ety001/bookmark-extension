@@ -28,7 +28,6 @@
       "run_at": "document_end"
     }
   ],
-  "content_security_policy": "script-src 'self' https://www.google-analytics.com; object-src 'self'",
   "web_accessible_resources": ["tab/tab.html", "fonts/*", "bookmark/bookmark.html"],
-  "permissions": ["notifications", "bookmarks", "tabs", "background", "storage", "unlimitedStorage"]
+  "permissions": ["notifications", "bookmarks", "tabs", "background", "storage", "unlimitedStorage", "https://www.google-analytics.com/"]
 }
