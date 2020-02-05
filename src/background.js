@@ -34,6 +34,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       }
     }
   }
+  if (tab.url === 'edge://newtab/') {
+    if (store.getters.config.mini === false) {
+      const url = chrome.runtime.getURL('tab/tab.html');
+      chrome.tabs.update(tabId, { url });
+    }
+  }
 });
 
 // 生成uid
