@@ -132,9 +132,15 @@
     "message": "清空列表"
   },
   "ga": {
-    "message": "是否允许作者统计数据以此提升使用体验"
+    "message": "是否允许统计数据"
   },
-  "enable": {
-    "message": "激活"
+  "enable_btn": {
+    "message": "允许"
+  },
+  "disable_btn": {
+    "message": "拒绝"
+  },
+  "privacy_policy": {
+    "message": "如果同意，温故知新将会匿名地收集用户的展示/屏蔽/整理书签的频率，这将帮助作者提升扩展的使用体验。"
   }
 }
