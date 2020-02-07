@@ -68,7 +68,7 @@ const GetUid = {
 const uid = GetUid.get();
 
 //google analytics
-let currentVersion = '3_0_2';
+let currentVersion = '3_0_3';
 if (isChrome) {
   currentVersion = `chrome_${currentVersion}`;
 }
@@ -104,7 +104,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         }
         const bmForFull = BookmarkLib.getBookmark();
         sendPageview('/full_mode_page');
-        sendEvent(currentVersion, 'getbookmark_from_full', 'get_bookmark_' + uid, JSON.stringify({ uid, bmForFull }));
+        sendEvent(currentVersion, 'getbookmark_from_full', uid);
         port.postMessage({ ctype: ctype, cdata: bmForFull });
         break;
       case 'getbookmark_from_mini':
@@ -114,7 +114,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         }
         const bmForMini = BookmarkLib.getBookmark();
         sendPageview('/mini_mode_notification');
-        sendEvent(currentVersion, 'getbookmark_from_mini', 'get_bookmark_' + uid, JSON.stringify({ uid, bmForMini }));
+        sendEvent(currentVersion, 'getbookmark_from_mini', uid);
         port.postMessage({
           ctype,
           cdata: {
@@ -128,7 +128,7 @@ chrome.runtime.onConnect.addListener(function(port) {
           if (bm) {
             BookmarkLib.getBookmarkById(bm.parentId, parentBm => {
               bm.parent = parentBm;
-              sendEvent(currentVersion, 'getbookmark_byid', 'get_bookmark_' + uid, JSON.stringify({ uid, bm }));
+              sendEvent(currentVersion, 'getbookmark_byid', uid);
               return port.postMessage({
                 ctype,
                 cdata: {
@@ -138,7 +138,7 @@ chrome.runtime.onConnect.addListener(function(port) {
               });
             });
           } else {
-            sendEvent(currentVersion, 'getbookmark_byid', 'get_bookmark_' + uid, JSON.stringify({ uid, bm }));
+            sendEvent(currentVersion, 'getbookmark_byid', uid);
             return port.postMessage({
               ctype,
               cdata: {
@@ -152,46 +152,46 @@ chrome.runtime.onConnect.addListener(function(port) {
       case 'getbookmark_menu':
         BookmarkLib.getBookmarkMenu(menu => {
           sendPageview('/bookmark_manager_page');
-          sendEvent(currentVersion, 'getbookmark_menu', 'getbookmark_menu_' + uid, JSON.stringify({ uid }));
+          sendEvent(currentVersion, 'getbookmark_menu', uid);
           port.postMessage({ ctype, cdata: menu });
         });
         break;
       case 'getbookmark_children':
-        sendEvent(currentVersion, 'getbookmark_children', 'getbookmark_children_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'getbookmark_children', uid);
         BookmarkLib.getBookmarkChildren(cdata, bookmarks => {
           port.postMessage({ ctype, cdata: bookmarks });
         });
         break;
       case 'block':
-        sendEvent(currentVersion, 'block', 'block_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'block', uid);
         BookmarkLib.addBlockedBookmark(cdata);
         port.postMessage({ ctype, cdata: true });
         break;
       case 'cancel_block':
-        sendEvent(currentVersion, 'cancel_block', 'cancel_block_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'cancel_block', uid);
         BookmarkLib.removeBlockedBookmark(cdata);
         port.postMessage({ ctype, cdata: true });
         break;
       case 'remove_bookmark':
-        sendEvent(currentVersion, 'remove_bookmark', 'remove_bookmark_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'remove_bookmark', uid);
         // 从 chrome 删除
         BookmarkLib.removeBookmark(cdata, () => {
           port.postMessage({ ctype, cdata: true });
         });
         break;
       case 'update_bookmark':
-        sendEvent(currentVersion, 'update_bookmark', 'update_bookmark_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'update_bookmark', uid);
         BookmarkLib.updateBookmark(cdata, () => {
           port.postMessage({ ctype, cdata: true });
         });
         break;
       case 'get_config':
         sendPageview('/popup');
-        sendEvent(currentVersion, 'get_config', 'get_config_' + uid, JSON.stringify({ uid, config: store.getters.config }));
+        sendEvent(currentVersion, 'get_config', uid);
         port.postMessage({ ctype, cdata: store.getters.config });
         break;
       case 'save_config':
-        sendEvent(currentVersion, 'save_config', 'save_config_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'save_config', uid);
         store.commit(types.UPDATE_CONFIG, {
           status: cdata.status,
           mini: cdata.mini,
@@ -212,24 +212,24 @@ chrome.runtime.onConnect.addListener(function(port) {
         break;
       case 'get_block_list':
         sendPageview('/block_list_page');
-        sendEvent(currentVersion, 'get_block_list', 'get_block_list_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'get_block_list', uid);
         BookmarkLib.getBlockList(blockedBookmarks => {
           port.postMessage({ ctype, cdata: blockedBookmarks });
         });
         break;
       case 'create_bookmark_folder':
-        sendEvent(currentVersion, 'create_bookmark_folder', 'create_bookmark_folder_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'create_bookmark_folder', uid);
         BookmarkLib.createBookmark(cdata, () => {
           port.postMessage({ ctype, cdata: true });
         });
         break;
       case 'remove_block_bookmark':
-        sendEvent(currentVersion, 'remove_block_bookmark', 'remove_block_bookmark_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'remove_block_bookmark', uid);
         BookmarkLib.removeBlockedBookmark(cdata);
         port.postMessage({ ctype, cdata: true });
         break;
       case 'clear_block_list':
-        sendEvent(currentVersion, 'clear_block_list', 'clear_block_list_' + uid, JSON.stringify({ uid }));
+        sendEvent(currentVersion, 'clear_block_list', uid);
         BookmarkLib.clearBlockList();
         port.postMessage({ ctype, cdata: true });
         break;

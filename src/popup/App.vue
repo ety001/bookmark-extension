@@ -1,16 +1,19 @@
 <template>
   <div>
     <el-row class="config-box" v-if="formData !== null">
-      <el-col :span="24" v-if="ga === false">
+      <el-col :span="24" v-if="displayGaReminder === 'display'">
         <h4>{{ 'ga' | lang }}</h4>
+        <div style="margin-bottom: 20px;">
+          <el-alert :title="'privacy_policy' | lang" type="warning" :closable="false"></el-alert>
+        </div>
         <el-form>
           <el-form-item>
-            <el-button type="primary" @click="enableGa()">{{ 'confirm_btn' | lang }}</el-button>
-            <el-button type="warning" @click="cancelGa()">{{ 'cancel_btn' | lang }}</el-button>
+            <el-button type="primary" @click="enableGa()">{{ 'enable_btn' | lang }}</el-button>
+            <el-button type="warning" @click="cancelGa()">{{ 'disable_btn' | lang }}</el-button>
           </el-form-item>
         </el-form>
       </el-col>
-      <el-col :span="24" v-if="ga === true">
+      <el-col :span="24" v-if="displayGaReminder === 'hidden'">
         <el-form ref="form1" :rules="rules" :model="formData" label-position="left" label-width="140px" @submit.native.prevent>
           <el-form-item :label="'switch' | lang" prop="status">
             <el-switch v-model="formData.status"></el-switch>
@@ -33,6 +36,9 @@
             <el-checkbox-group v-model="formData.ga">
               <el-checkbox :label="'ga' | lang" name="ga"></el-checkbox>
             </el-checkbox-group>
+            <div style="margin-bottom: 20px;">
+              <el-alert :title="'privacy_policy' | lang" type="warning" :closable="false"></el-alert>
+            </div>
           </el-form-item>
 
           <el-form-item>
@@ -58,7 +64,7 @@ export default {
     };
     return {
       formData: null,
-      ga: false,
+      displayGaReminder: 'display',
       notifyLocation: [
         {
           name: this.getLang('top_right'),
@@ -98,7 +104,7 @@ export default {
       this.port.postMessage({ ctype: 'save_config', cdata: this.formData });
     },
     cancelGa() {
-      this.ga = true;
+      this.displayGaReminder = 'hidden';
     },
     save(formName) {
       this.$refs[formName].validate(valid => {
@@ -133,7 +139,7 @@ export default {
             type: 'success',
             message: this.getLang('save_success'),
           });
-          this.ga = true;
+          this.displayGaReminder = 'hidden';
           break;
         case 'get_config':
           this.formData = {
@@ -144,7 +150,7 @@ export default {
             currentNotifyLocation: msg.cdata.currentNotifyLocation,
             ga: msg.cdata.ga,
           };
-          this.ga = msg.cdata.ga;
+          this.displayGaReminder = msg.cdata.ga === true ? 'hidden' : 'display';
           break;
       }
     });

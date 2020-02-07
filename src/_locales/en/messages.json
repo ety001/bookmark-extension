@@ -132,9 +132,15 @@
     "message": "Clear List"
   },
   "ga": {
-    "message": "Whether to enable Data Analyzes? This will help author improve the extension's experience."
+    "message": "Whether to enable Data Analyzes?"
   },
-  "enable": {
+  "enable_btn": {
     "message": "Enable"
+  },
+  "disable_btn": {
+    "message": "Disable"
+  },
+  "privacy_policy": {
+    "message": "Review Bookmarks will collect anonymously how freqency to display/block/manage bookmarks, if you have agreed. These data will help author to improve the extension's experience."
   }
 }
