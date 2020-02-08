@@ -8,7 +8,6 @@ global.browser = require('webextension-polyfill');
 const isFirefox = navigator.userAgent.toUpperCase().indexOf('Firefox') ? true : false;
 const isChrome = window.navigator.userAgent.indexOf('Chrome') !== -1;
 const isEdge = navigator.userAgent.indexOf('Edg') !== -1;
-const browserType = isFirefox === true ? 'firefox' : isChrome === true ? 'chrome' : isEdge === true ? 'edge' : 'unknown';
 
 //清空之前版本的数据
 if (window.localStorage.curt_index === undefined) {
@@ -77,9 +76,10 @@ const uid = GetUid.get();
 let currentVersion = '3_0_4';
 if (isChrome) {
   currentVersion = `chrome_${currentVersion}`;
-}
-if (isFirefox) {
+} else if (isFirefox) {
   currentVersion = `firefox_${currentVersion}`;
+} else if (isEdge) {
+  currentVersion = `edge_${currentVersion}`;
 }
 const gaID = 'UA-64832923-4';
 const gaObj = new GA(gaID, uid, debug);
@@ -259,7 +259,7 @@ chrome.bookmarks.onRemoved.addListener((id, removeInfo) => {
 // 安装/升级检测
 chrome.runtime.onInstalled.addListener(detail => {
   if (detail.reason == 'update') {
-    sendEvent(currentVersion, 'update_extension', `${browserType}#${uid}`, 1);
+    sendEvent(currentVersion, 'update_extension', uid, 1);
     // 弹出推广页面
     window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
     return;
@@ -274,7 +274,7 @@ chrome.runtime.onInstalled.addListener(detail => {
     );
   }
   if (detail.reason === 'install') {
-    sendEvent(currentVersion, 'install_extension', `${browserType}#${uid}`, 1);
+    sendEvent(currentVersion, 'install_extension', uid, 1);
     console.log('installed');
     // 初始化数据
     BookmarkLib.init();
