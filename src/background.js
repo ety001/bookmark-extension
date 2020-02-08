@@ -14,6 +14,8 @@ if (window.localStorage.curt_index === undefined) {
   indexedDB.deleteDatabase('bookmarks');
 }
 
+const debug = process.env.NODE_ENV === 'development';
+
 // 检测新标签页，控制迷你和full版本
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (isChrome) {
@@ -68,7 +70,7 @@ const GetUid = {
 const uid = GetUid.get();
 
 //google analytics
-let currentVersion = '3_0_3';
+let currentVersion = '3_0_4';
 if (isChrome) {
   currentVersion = `chrome_${currentVersion}`;
 }
@@ -76,8 +78,8 @@ if (isFirefox) {
   currentVersion = `firefox_${currentVersion}`;
 }
 const gaID = 'UA-64832923-4';
-const gaObj = new GA(gaID, uid);
-function sendEvent(eventCategory, eventAction, eventLabel = '', eventValue = '') {
+const gaObj = new GA(gaID, uid, debug);
+function sendEvent(eventCategory, eventAction, eventLabel = '', eventValue = 1) {
   if (store.getters.config.ga === false) return;
   gaObj.ga('event', eventCategory, eventAction, eventLabel, eventValue);
 }
