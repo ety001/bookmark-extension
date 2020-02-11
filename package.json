@@ -15,7 +15,7 @@
     "build-firefox": "cross-env NODE_ENV=production BROWSER_PROTO=firefox webpack --hide-modules",
     "build:dev": "cross-env NODE_ENV=development BROWSER_PROTO=chrome webpack --hide-modules",
     "build-firefox:dev": "cross-env NODE_ENV=development BROWSER_PROTO=firefox webpack --hide-modules",
-    "build-zip": "node scripts/build-zip.js",
+    "build-zip": "find dist | xargs touch -mt 202002110000 && cd dist && zip -r -X dist.zip . && mv dist.zip ..",
     "watch": "npm run build -- --watch",
     "watch-firefox": "npm run build-firefox -- --watch",
     "watch:dev": "cross-env HMR=true npm run build:dev -- --watch",
