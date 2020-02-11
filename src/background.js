@@ -7,12 +7,15 @@ global.browser = require('webextension-polyfill');
 
 const isFirefox = navigator.userAgent.toUpperCase().indexOf('Firefox') ? true : false;
 const isChrome = window.navigator.userAgent.indexOf('Chrome') !== -1;
+const isEdge = navigator.userAgent.indexOf('Edg') !== -1;
 
 //清空之前版本的数据
 if (window.localStorage.curt_index === undefined) {
   window.localStorage.clear();
   indexedDB.deleteDatabase('bookmarks');
 }
+
+const debug = process.env.NODE_ENV === 'development';
 
 // 检测新标签页，控制迷你和full版本
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -34,10 +37,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       }
     }
   }
-  if (tab.url === 'edge://newtab/') {
-    if (store.getters.config.mini === false) {
-      const url = chrome.runtime.getURL('tab/tab.html');
-      chrome.tabs.update(tabId, { url });
+  if (isEdge) {
+    if (tab.url === 'edge://newtab/') {
+      if (store.getters.config.mini === false) {
+        const url = chrome.runtime.getURL('tab/tab.html');
+        chrome.tabs.update(tabId, { url });
+      }
     }
   }
 });
@@ -68,16 +73,17 @@ const GetUid = {
 const uid = GetUid.get();
 
 //google analytics
-let currentVersion = '3_0_3';
+let currentVersion = '3_0_4';
 if (isChrome) {
   currentVersion = `chrome_${currentVersion}`;
-}
-if (isFirefox) {
+} else if (isFirefox) {
   currentVersion = `firefox_${currentVersion}`;
+} else if (isEdge) {
+  currentVersion = `edge_${currentVersion}`;
 }
 const gaID = 'UA-64832923-4';
-const gaObj = new GA(gaID, uid);
-function sendEvent(eventCategory, eventAction, eventLabel = '', eventValue = '') {
+const gaObj = new GA(gaID, uid, debug);
+function sendEvent(eventCategory, eventAction, eventLabel = '', eventValue = 1) {
   if (store.getters.config.ga === false) return;
   gaObj.ga('event', eventCategory, eventAction, eventLabel, eventValue);
 }
@@ -253,7 +259,7 @@ chrome.bookmarks.onRemoved.addListener((id, removeInfo) => {
 // 安装/升级检测
 chrome.runtime.onInstalled.addListener(detail => {
   if (detail.reason == 'update') {
-    sendEvent(currentVersion, 'update_extension', uid, '');
+    sendEvent(currentVersion, 'update_extension', uid, 1);
     // 弹出推广页面
     window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
     return;
@@ -268,7 +274,7 @@ chrome.runtime.onInstalled.addListener(detail => {
     );
   }
   if (detail.reason === 'install') {
-    sendEvent(currentVersion, 'install_extension', uid, '');
+    sendEvent(currentVersion, 'install_extension', uid, 1);
     console.log('installed');
     // 初始化数据
     BookmarkLib.init();

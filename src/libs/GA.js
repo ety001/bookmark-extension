@@ -1,8 +1,8 @@
 export class GA {
-  constructor(ua, cid) {
+  constructor(ua, cid, debug = false) {
     this.ua = ua;
     this.cid = cid; // client id
-    this.gaApi = 'https://www.google-analytics.com/collect';
+    this.gaApi = debug ? 'https://www.google-analytics.com/debug/collect' : 'https://www.google-analytics.com/collect';
     this.version = '1';
   }
   ga(t, ...items) {
