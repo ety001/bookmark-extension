@@ -159,6 +159,7 @@ export function removeBlockedBookmark(bm: Bookmark): void {
 
 /**
  * 把书签信息存入localStorage
+ * 只获取书签栏（Bookmark Bar）的书签，并过滤屏蔽列表
  */
 export function getBookmarksFromChrome(): void {
   // 只在运行时执行，构建时跳过
@@ -173,9 +174,53 @@ export function getBookmarksFromChrome(): void {
     }
     
     chrome.bookmarks.getTree((bookmarks) => {
-      changeTreeNodeToList(bookmarks);
-      useStore.getState().updateWaitingBookmarks(tmpBookmarks);
-      tmpBookmarks = [];
+      console.log('getBookmarksFromChrome: 获取书签树', bookmarks);
+      // Chrome 书签树结构：
+      // - 根节点 id='0' 包含所有书签
+      // - 第一个子节点 id='1' 是"书签栏"（Bookmark Bar）
+      // - 第二个子节点 id='2' 是"其他书签"（Other Bookmarks）
+      // 我们只获取书签栏的书签
+      if (bookmarks && bookmarks.length > 0 && bookmarks[0].children) {
+        console.log('根节点子节点:', bookmarks[0].children.map((n) => ({ id: n.id, title: n.title })));
+        const bookmarkBar = bookmarks[0].children.find((node) => node.id === '1');
+        if (bookmarkBar) {
+          console.log('找到书签栏，开始处理:', bookmarkBar);
+          changeTreeNodeToList([bookmarkBar]);
+          
+          // 过滤掉屏蔽列表中的书签
+          const store = useStore.getState();
+          const blockedIds = new Set(store.blockedBookmarks.map((b) => b.id));
+          const filteredBookmarks = tmpBookmarks.filter((bm) => !blockedIds.has(bm.id));
+          
+          console.log(`获取到 ${tmpBookmarks.length} 个书签，过滤后剩余 ${filteredBookmarks.length} 个`);
+          if (filteredBookmarks.length > 0) {
+            console.log('前3个书签:', filteredBookmarks.slice(0, 3).map((b) => ({ id: b.id, title: b.title })));
+          }
+          useStore.getState().updateWaitingBookmarks(filteredBookmarks);
+          tmpBookmarks = [];
+        } else {
+          console.warn('未找到书签栏 (id=1)，尝试查找所有子节点');
+          // 如果找不到 id='1'，尝试查找所有子节点（可能是其他浏览器）
+          if (bookmarks[0].children.length > 0) {
+            // 使用第一个子节点（通常是书签栏）
+            const firstChild = bookmarks[0].children[0];
+            console.log('使用第一个子节点作为书签栏:', firstChild);
+            changeTreeNodeToList([firstChild]);
+            const store = useStore.getState();
+            const blockedIds = new Set(store.blockedBookmarks.map((b) => b.id));
+            const filteredBookmarks = tmpBookmarks.filter((bm) => !blockedIds.has(bm.id));
+            console.log(`获取到 ${tmpBookmarks.length} 个书签，过滤后剩余 ${filteredBookmarks.length} 个`);
+            useStore.getState().updateWaitingBookmarks(filteredBookmarks);
+            tmpBookmarks = [];
+          } else {
+            console.warn('书签栏子节点为空');
+            useStore.getState().updateWaitingBookmarks([]);
+          }
+        }
+      } else {
+        console.warn('书签树为空或格式不正确', bookmarks);
+        useStore.getState().updateWaitingBookmarks([]);
+      }
     });
   } catch (error) {
     // 构建时可能会抛出错误，忽略它

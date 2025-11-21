@@ -33,17 +33,40 @@ export default function App() {
     chrome.runtime.sendMessage(
       { ctype: 'get_config', cdata: true },
       (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('Popup error:', chrome.runtime.lastError);
+          // 设置默认值，避免一直 loading
+          setFormData({
+            status: true,
+            mini: false,
+            random: true,
+            frequency: 5,
+            currentNotifyLocation: 'top-right',
+            ga: false,
+          });
+          return;
+        }
         if (response && response.cdata) {
           const config = response.cdata;
           setFormData({
-            status: config.status,
-            mini: config.mini,
-            random: config.random,
-            frequency: config.frequency,
-            currentNotifyLocation: config.currentNotifyLocation,
-            ga: config.ga,
+            status: config.status ?? true,
+            mini: config.mini ?? false,
+            random: config.random ?? true,
+            frequency: config.frequency ?? 5,
+            currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
+            ga: config.ga ?? false,
           });
           setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
+        } else {
+          // 如果没有响应，设置默认值
+          setFormData({
+            status: true,
+            mini: false,
+            random: true,
+            frequency: 5,
+            currentNotifyLocation: 'top-right',
+            ga: false,
+          });
         }
       }
     );

@@ -86,7 +86,7 @@ async function getUid(): Promise<string> {
   });
 }
 
-// Google Analytics
+// Google Analytics 4
 let currentVersion = '4_0_0';
 if (isChrome()) {
   currentVersion = `chrome_${currentVersion}`;
@@ -95,12 +95,13 @@ if (isChrome()) {
 } else if (isEdge()) {
   currentVersion = `edge_${currentVersion}`;
 }
-const gaID = 'UA-64832923-4';
+const gaMeasurementId = 'G-L1CXD1G3GK'; // GA4 测量 ID
+// const gaApiSecret = 'your-api-secret'; // 可选：如果使用 API Secret，取消注释并填入
 let gaObj: GA | null = null;
 
-// 初始化 GA
+// 初始化 GA4
 getUid().then((uid) => {
-  gaObj = new GA(gaID, uid, debug);
+  gaObj = new GA(gaMeasurementId, uid, debug); // 如果使用 API Secret，添加第四个参数
 });
 
 function sendEvent(
@@ -177,12 +178,56 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
         return false;
 
       case 'getbookmark_from_mini':
-        if (store.config.mini === false) {
+        // 确保 store 已初始化
+        const currentStore = useStore.getState();
+        if (currentStore.config.mini === false) {
           console.log('mini model closed');
           sendResponse({ ctype, cdata: null });
           return false;
         }
+        
+        // 如果书签列表为空，先尝试获取
+        if (currentStore.waitingBookmarks.length === 0) {
+          console.log('书签列表为空，尝试重新获取');
+          BookmarkLib.getBookmarksFromChrome();
+          // 等待书签加载完成（使用轮询方式检查）
+          let attempts = 0;
+          const maxAttempts = 10; // 最多尝试 10 次，每次 100ms
+          const checkBookmarks = () => {
+            attempts++;
+            const store = useStore.getState();
+            if (store.waitingBookmarks.length > 0 || attempts >= maxAttempts) {
+              const bmForMini = BookmarkLib.getBookmark();
+              if (!bmForMini) {
+                console.log('no bookmark available after refresh');
+                sendResponse({ ctype, cdata: null });
+              } else {
+                sendPageview('/mini_mode_notification');
+                getUid().then((uid) => {
+                  sendEvent(currentVersion, 'getbookmark_from_mini', uid);
+                });
+                sendResponse({
+                  ctype,
+                  cdata: {
+                    bookmark: bmForMini,
+                    config: store.config,
+                  },
+                });
+              }
+            } else {
+              setTimeout(checkBookmarks, 100);
+            }
+          };
+          setTimeout(checkBookmarks, 100);
+          return true; // 异步响应
+        }
+        
         const bmForMini = BookmarkLib.getBookmark();
+        if (!bmForMini) {
+          console.log('no bookmark available, waitingBookmarks:', currentStore.waitingBookmarks.length);
+          sendResponse({ ctype, cdata: null });
+          return false;
+        }
         sendPageview('/mini_mode_notification');
         getUid().then((uid) => {
           sendEvent(currentVersion, 'getbookmark_from_mini', uid);
@@ -191,7 +236,7 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
           ctype,
           cdata: {
             bookmark: bmForMini,
-            config: store.config,
+            config: currentStore.config,
           },
         });
         return false;
@@ -284,11 +329,13 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
         return true;
 
       case 'get_config':
+        // 确保 store 已初始化
+        const configStore = useStore.getState();
         sendPageview('/popup');
         getUid().then((uid) => {
           sendEvent(currentVersion, 'get_config', uid);
         });
-        sendResponse({ ctype, cdata: store.config });
+        sendResponse({ ctype, cdata: configStore.config });
         return false;
 
       case 'save_config':
@@ -361,17 +408,26 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
 // 绑定书签事件
 // 只在运行时注册监听器，构建时跳过
 if (typeof chrome !== 'undefined' && chrome.bookmarks) {
-  chrome.bookmarks.onCreated.addListener((id, bm) => {
-    console.log('ONcreated', id, bm);
-    // 加入缓存
-    BookmarkLib.addWaitingBookmark(bm as any);
+  chrome.bookmarks.onCreated.addListener((id, bookmark) => {
+    console.log('Bookmark created:', id, bookmark);
+    // 只添加书签栏的书签（parentId === '1'），且必须有 URL（不是文件夹）
+    if (bookmark.url && bookmark.parentId === '1') {
+      const store = useStore.getState();
+      // 检查是否在屏蔽列表中
+      const isBlocked = store.blockedBookmarks.some((b) => b.id === bookmark.id);
+      if (!isBlocked) {
+        BookmarkLib.addWaitingBookmark(bookmark as any);
+      }
+    }
   });
 
   chrome.bookmarks.onRemoved.addListener((id, removeInfo) => {
-    console.log('ONremoved', id, removeInfo);
+    console.log('Bookmark removed:', id, removeInfo);
     // 从缓存中删除
-    BookmarkLib.removeWaitingBookmark(removeInfo.node as any);
-    BookmarkLib.removeBlockedBookmark(removeInfo.node as any);
+    if (removeInfo.node) {
+      BookmarkLib.removeWaitingBookmark(removeInfo.node as any);
+      BookmarkLib.removeBlockedBookmark(removeInfo.node as any);
+    }
   });
 }
 

@@ -76,9 +76,17 @@ function App() {
     chrome.runtime.sendMessage(
       { ctype: 'getbookmark_from_mini', cdata: false },
       (response) => {
-        if (response && response.cdata && response.cdata.bookmark) {
-          setBookmark(response.cdata.bookmark);
-          setPosition(response.cdata.config.currentNotifyLocation);
+        if (chrome.runtime.lastError) {
+          console.error('Content script error:', chrome.runtime.lastError);
+          return;
+        }
+        if (response && response.cdata) {
+          if (response.cdata.bookmark) {
+            setBookmark(response.cdata.bookmark);
+            setPosition(response.cdata.config?.currentNotifyLocation || 'top-right');
+          } else {
+            console.log('No bookmark to show (mini mode may be disabled or no bookmarks available)');
+          }
         }
       }
     );
