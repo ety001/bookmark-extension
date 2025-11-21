@@ -1,4 +1,0 @@
-/* 改变 icon 字体路径变量，必需 */
-$--font-path: $BROWSER_PROTO + '://__MSG_@@extension_id__/fonts';
-
-@import '~element-ui/packages/theme-chalk/src/index';

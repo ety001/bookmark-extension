@@ -1,0 +1,146 @@
+{
+  "appname": {
+    "message": "温故知新"
+  },
+  "appdesc": {
+    "message": "俗话说，温故知新，该工具可以帮你重读你的书签。"
+  },
+  "confirm_btn": {
+    "message": "确定"
+  },
+  "cancel_btn": {
+    "message": "取消"
+  },
+  "confirm_remove_info": {
+    "message": "此操作将永久删除该书签, 是否继续?"
+  },
+  "confirm_block_info": {
+    "message": "是否不再提醒该书签?"
+  },
+  "notification": {
+    "message": "提示"
+  },
+  "success": {
+    "message": "成功"
+  },
+  "cancel_success": {
+    "message": "取消成功"
+  },
+  "update_ok": {
+    "message": "升级成功"
+  },
+  "update_reminder": {
+    "message": "版本现在可以升级，是否升级？"
+  },
+  "update_button": {
+    "message": "立即升级"
+  },
+  "switch": {
+    "message": "开关"
+  },
+  "mini_mode": {
+    "message": "迷你模式"
+  },
+  "random_reminder": {
+    "message": "随机提醒"
+  },
+  "frequency": {
+    "message": "提醒频次"
+  },
+  "notify_position": {
+    "message": "提醒位置"
+  },
+  "top_right": {
+    "message": "右上角"
+  },
+  "top_left": {
+    "message": "左上角"
+  },
+  "bottom_right": {
+    "message": "右下角"
+  },
+  "bottom_left": {
+    "message": "左下角"
+  },
+  "need_integer": {
+    "message": "需要填写整数"
+  },
+  "save": {
+    "message": "保存"
+  },
+  "save_failed": {
+    "message": "保存失败"
+  },
+  "save_success": {
+    "message": "保存成功"
+  },
+  "no_bookmark": {
+    "message": "暂时没有书签"
+  },
+  "donate": {
+    "message": "捐助"
+  },
+  "source_code": {
+    "message": "源码"
+  },
+  "support": {
+    "message": "帮助"
+  },
+  "all_bookmarks": {
+    "message": "所有书签"
+  },
+  "filter": {
+    "message": "过滤器"
+  },
+  "name": {
+    "message": "名称"
+  },
+  "edit_bookmark": {
+    "message": "修改书签"
+  },
+  "saving": {
+    "message": "保存中..."
+  },
+  "add_folder": {
+    "message": "添加目录"
+  },
+  "url": {
+    "message": "URL"
+  },
+  "title": {
+    "message": "标题"
+  },
+  "menu": {
+    "message": "目录"
+  },
+  "save_at": {
+    "message": "保存在"
+  },
+  "there_is_no_menu_selector": {
+    "message": "请选择要保存的位置"
+  },
+  "there_is_no_url": {
+    "message": "请输入URL"
+  },
+  "block_manager": {
+    "message": "屏蔽列表管理"
+  },
+  "no_block_list": {
+    "message": "屏蔽列表为空"
+  },
+  "clear_block_list": {
+    "message": "清空列表"
+  },
+  "ga": {
+    "message": "是否允许统计数据"
+  },
+  "enable_btn": {
+    "message": "允许"
+  },
+  "disable_btn": {
+    "message": "拒绝"
+  },
+  "privacy_policy": {
+    "message": "如果同意，温故知新将会匿名地收集用户的展示/屏蔽/整理书签的频率，这将帮助作者提升扩展的使用体验。"
+  }
+}

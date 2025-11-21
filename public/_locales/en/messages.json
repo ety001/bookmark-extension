@@ -1,0 +1,146 @@
+{
+  "appname": {
+    "message": "Review Bookmarks"
+  },
+  "appdesc": {
+    "message": "This tool can help you review your bookmarks."
+  },
+  "confirm_btn": {
+    "message": "Confirm"
+  },
+  "cancel_btn": {
+    "message": "Cancel"
+  },
+  "confirm_remove_info": {
+    "message": "This operation will DELETE this bookmark. Do you CONFIRM?"
+  },
+  "confirm_block_info": {
+    "message": "Confirm whether to remind this bookmark next time?"
+  },
+  "notification": {
+    "message": "Notification"
+  },
+  "success": {
+    "message": "Success"
+  },
+  "cancel_success": {
+    "message": "Cancel success"
+  },
+  "update_ok": {
+    "message": "Update success"
+  },
+  "update_reminder": {
+    "message": " is avaliable, Please update."
+  },
+  "update_button": {
+    "message": "Update Now"
+  },
+  "switch": {
+    "message": "Switch"
+  },
+  "mini_mode": {
+    "message": "Mini Mode"
+  },
+  "random_reminder": {
+    "message": "Random Reminder"
+  },
+  "frequency": {
+    "message": "Frequency"
+  },
+  "notify_position": {
+    "message": "Notify Position"
+  },
+  "top_right": {
+    "message": "Top Right"
+  },
+  "top_left": {
+    "message": "Top Left"
+  },
+  "bottom_right": {
+    "message": "Bottom Right"
+  },
+  "bottom_left": {
+    "message": "Bottom Left"
+  },
+  "need_integer": {
+    "message": "Need integer"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "save_failed": {
+    "message": "Save failed"
+  },
+  "save_success": {
+    "message": "Save success"
+  },
+  "no_bookmark": {
+    "message": "There is no bookmark"
+  },
+  "donate": {
+    "message": "Donate"
+  },
+  "source_code": {
+    "message": "Source Code"
+  },
+  "support": {
+    "message": "Support"
+  },
+  "all_bookmarks": {
+    "message": "All Bookmarks"
+  },
+  "filter": {
+    "message": "Filter"
+  },
+  "name": {
+    "message": "Name"
+  },
+  "edit_bookmark": {
+    "message": "Edit Bookmark"
+  },
+  "saving": {
+    "message": "Saving..."
+  },
+  "add_folder": {
+    "message": "Add Folder"
+  },
+  "url": {
+    "message": "URL"
+  },
+  "title": {
+    "message": "Title"
+  },
+  "menu": {
+    "message": "Menu"
+  },
+  "save_at": {
+    "message": "Save at"
+  },
+  "there_is_no_menu_selector": {
+    "message": "Please select where to save."
+  },
+  "there_is_no_url": {
+    "message": "Please input URL."
+  },
+  "block_manager": {
+    "message": "Block List Manager"
+  },
+  "no_block_list": {
+    "message": "Block list is empty."
+  },
+  "clear_block_list": {
+    "message": "Clear List"
+  },
+  "ga": {
+    "message": "Whether to enable Data Analyzes?"
+  },
+  "enable_btn": {
+    "message": "Enable"
+  },
+  "disable_btn": {
+    "message": "Disable"
+  },
+  "privacy_policy": {
+    "message": "Review Bookmarks will collect anonymously how freqency to display/block/manage bookmarks, if you have agreed. These data will help author to improve the extension's experience."
+  }
+}
