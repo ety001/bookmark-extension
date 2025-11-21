@@ -15,13 +15,13 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
-    "types": ["chrome", "wxt/client-types"],
+    "types": ["chrome"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }
   },
-  "include": ["./**/*.ts", "./**/*.tsx"],
+  "include": ["./**/*.ts", "./**/*.tsx", ".wxt/wxt.d.ts"],
   "exclude": ["node_modules", "dist", ".output"]
 }
 
