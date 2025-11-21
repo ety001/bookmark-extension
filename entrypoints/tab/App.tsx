@@ -98,7 +98,7 @@ export default function App() {
 
   const handleEdit = () => {
     if (!bookmark) return;
-    const baseUrl = chrome.runtime.getURL('bookmark/bookmark.html#/');
+    const baseUrl = chrome.runtime.getURL('bookmark.html#/');
     const url = `${baseUrl}?pid=${bookmark.parentId}&bid=${bookmark.id}`;
     window.open(url);
   };

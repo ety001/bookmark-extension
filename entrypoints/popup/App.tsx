@@ -95,7 +95,7 @@ export default function App() {
   };
 
   const handleBlockManager = () => {
-    const baseUrl = chrome.runtime.getURL('block-manager/block-manager.html');
+    const baseUrl = chrome.runtime.getURL('block-manager.html');
     window.open(baseUrl);
   };
 

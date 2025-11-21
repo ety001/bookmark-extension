@@ -134,16 +134,16 @@ if (typeof chrome !== 'undefined' && chrome.tabs) {
 
     if (isChrome() && changeInfo.status === 'loading') {
       if (tab.url === 'chrome://newtab/') {
-        const url = chrome.runtime.getURL('tab/tab.html');
+        const url = chrome.runtime.getURL('tab.html');
         chrome.tabs.update(tabId, { url });
       }
     }
     if (isFirefox() && tab.url === 'about:newtab') {
-      const url = chrome.runtime.getURL('tab/tab.html');
+      const url = chrome.runtime.getURL('tab.html');
       chrome.tabs.update(tabId, { url });
     }
     if (isEdge() && tab.url === 'edge://newtab/') {
-      const url = chrome.runtime.getURL('tab/tab.html');
+      const url = chrome.runtime.getURL('tab.html');
       chrome.tabs.update(tabId, { url });
     }
   });

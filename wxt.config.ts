@@ -9,7 +9,7 @@ export default defineConfig({
     default_locale: 'en',
     version: '4.0.0',
     manifest_version: 3,
-    author: 'ETY001',
+    author: { email: 'work@akawa.ink' },
     permissions: [
       'notifications',
       'bookmarks',
@@ -30,13 +30,13 @@ export default defineConfig({
     content_scripts: [
       {
         matches: ['*://*/*'],
-        js: ['content-script/main.tsx'],
+        js: ['content-script.js'],
         run_at: 'document_end',
       },
     ],
     web_accessible_resources: [
       {
-        resources: ['tab/tab.html', 'bookmark/bookmark.html', 'block-manager/block-manager.html', 'fonts/*'],
+        resources: ['tab.html', 'bookmark.html', 'block-manager.html', 'fonts/*'],
         matches: ['<all_urls>'],
       },
     ],
@@ -50,4 +50,3 @@ export default defineConfig({
   },
   modules: ['@wxt-dev/module-react'],
 });
-

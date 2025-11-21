@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useState, useEffect } from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import { Notification } from '../../components/Notification';
-import { getMessage } from '../../utils/i18n';
-import type { Bookmark } from '../../store';
-import '../../styles/globals.css';
+import { Notification } from '../components/Notification';
+import { getMessage } from '../utils/i18n';
+import type { Bookmark } from '../store';
+import '../styles/globals.css';
+import { defineContentScript } from 'wxt/utils/define-content-script';
 
 let notificationRoot: Root | null = null;
 let notificationContainer: HTMLDivElement | null = null;
@@ -193,7 +195,7 @@ function App() {
 
   const handleEdit = () => {
     if (!bookmark) return;
-    const baseUrl = chrome.runtime.getURL('bookmark/bookmark.html#/');
+    const baseUrl = chrome.runtime.getURL('bookmark.html#/');
     const url = `${baseUrl}?pid=${bookmark.parentId}&bid=${bookmark.id}`;
     window.open(url);
   };
@@ -202,13 +204,17 @@ function App() {
 }
 
 // Content Script 入口
-const initDiv = document.createElement('div');
-initDiv.id = 'review-bookmark';
-document.body.appendChild(initDiv);
+export default defineContentScript({
+  matches: ['*://*/*'],
+  runAt: 'document_end',
+  main() {
+    const initDiv = document.createElement('div');
+    initDiv.id = 'review-bookmark';
+    document.body.appendChild(initDiv);
 
-const root = createRoot(initDiv);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+    const root = createRoot(initDiv);
+    root.render(
+      React.createElement(React.StrictMode, null, React.createElement(App, null))
+    );
+  },
+});
