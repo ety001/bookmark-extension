@@ -330,7 +330,7 @@ export default function App() {
 
         <aside
           ref={menuRef}
-          className="w-[300px] overflow-y-auto pt-2"
+          className="w-[300px] overflow-y-auto pt-2 bg-bg-gray"
           style={{ height: `${height}px` }}
         >
           <BookmarkTree
@@ -341,7 +341,7 @@ export default function App() {
         </aside>
 
         <main
-          className="flex-1 overflow-y-auto p-4"
+          className="flex-1 overflow-y-auto p-4 bg-bg-gray"
           style={{ height: `${height}px` }}
         >
           <div className="max-w-5xl mx-auto">

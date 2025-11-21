@@ -146,7 +146,7 @@ export default function App() {
       </div>
 
       <main
-        className="flex-1 overflow-y-auto p-4"
+        className="flex-1 overflow-y-auto p-4 bg-bg-gray"
         style={{ height: `${height}px` }}
       >
         {loading && (

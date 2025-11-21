@@ -127,7 +127,7 @@ export default function App() {
     <div className="h-screen flex flex-col">
       <div
         ref={topRef}
-        className="bg-[#eee] text-[#444] py-5 border-b-2 border-[#ccc]"
+        className="bg-bg-gray text-text-gray py-5 border-b-2 border-border-gray"
       >
         <div className="flex items-start">
           <div className="w-1/6 flex justify-center items-center py-8">

@@ -104,7 +104,7 @@ export default function App() {
   }
 
   return (
-    <div className="p-5 w-[400px]">
+    <div className="p-5 w-[400px] bg-bg-gray">
       {displayGaReminder === 'display' && (
         <div className="space-y-5">
           <h4 className="text-lg font-semibold">{getMessage('ga')}</h4>

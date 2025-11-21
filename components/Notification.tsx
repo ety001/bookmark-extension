@@ -2,6 +2,7 @@ import React from 'react';
 import { Button } from './ui/button';
 import { getMessage } from '../utils/i18n';
 import { X, BellOff, Edit, Trash2, ExternalLink } from 'lucide-react';
+import { cn } from './ui/cn';
 import type { Bookmark } from '../store';
 
 interface NotificationProps {
@@ -30,7 +31,10 @@ export function Notification({
 
   return (
     <div
-      className={`fixed ${positionClasses[position]} z-[999999999] bg-white border border-gray-300 rounded-lg shadow-lg p-4 min-w-[300px] max-w-[400px] pointer-events-auto`}
+      className={cn(
+        `fixed ${positionClasses[position]} z-[999999999] bg-white border border-gray-300 rounded-lg shadow-lg p-4 min-w-[300px] max-w-[400px] pointer-events-auto`,
+        'text-text-gray'
+      )}
       style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
     >
       <div className="mb-3">
@@ -53,7 +57,7 @@ export function Notification({
           circle
           plain
           onClick={onClose}
-          icon={<X className="w-3 h-3" />}
+          icon={<X className="w-3.5 h-3.5 text-gray-800" />}
         />
         <Button
           variant="info"
@@ -61,7 +65,7 @@ export function Notification({
           circle
           plain
           onClick={onBlock}
-          icon={<BellOff className="w-3 h-3" />}
+          icon={<BellOff className="w-3.5 h-3.5 text-gray-800" />}
         />
         <Button
           variant="primary"
@@ -69,7 +73,7 @@ export function Notification({
           circle
           plain
           onClick={onEdit}
-          icon={<Edit className="w-3 h-3" />}
+          icon={<Edit className="w-3.5 h-3.5 text-gray-800" />}
         />
         <Button
           variant="danger"
@@ -77,7 +81,7 @@ export function Notification({
           circle
           plain
           onClick={onRemove}
-          icon={<Trash2 className="w-3 h-3" />}
+          icon={<Trash2 className="w-3.5 h-3.5 text-gray-800" />}
         />
       </div>
     </div>

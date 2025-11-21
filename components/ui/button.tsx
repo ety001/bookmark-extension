@@ -29,7 +29,7 @@ const buttonVariants = cva(
         false: '',
       },
       plain: {
-        true: 'bg-transparent border border-gray-300',
+        true: 'bg-gray-300 border border-gray-400 text-gray-800 hover:bg-gray-400',
         false: '',
       },
     },
