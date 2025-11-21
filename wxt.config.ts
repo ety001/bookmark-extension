@@ -16,7 +16,9 @@ export default defineConfig({
       'tabs',
       'storage',
       'unlimitedStorage',
-      'https://www.google-analytics.com/',
+    ],
+    host_permissions: [
+      'https://www.google-analytics.com/*',
     ],
     action: {
       default_title: '__MSG_appname__',
