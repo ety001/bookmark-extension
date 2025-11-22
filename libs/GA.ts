@@ -78,11 +78,14 @@ export class GA {
     } else if (t === 'event') {
       // event: ec (category), ea (action), el (label), ev (value)
       const [ec = '', ea = '', el = '', ev = ''] = items;
-      this.event(ea || 'custom_event', {
+      const eventParams: Record<string, string | number> = {
         event_category: ec,
         event_label: el,
-        value: ev ? Number(ev) : undefined,
-      });
+      };
+      if (ev) {
+        eventParams.value = Number(ev);
+      }
+      this.event(ea || 'custom_event', eventParams);
     }
   }
 

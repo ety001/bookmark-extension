@@ -1,5 +1,5 @@
 import { defineBackground } from 'wxt/utils/define-background';
-import { useStore } from '../../store';
+import { useStore, type Bookmark } from '../../store';
 import * as BookmarkLib from '../../libs/BookmarkLib';
 import { GA } from '../../libs/GA';
 
@@ -71,7 +71,7 @@ async function getUid(): Promise<string> {
   
   return new Promise((resolve) => {
     chrome.storage.local.get('uid', (result) => {
-      if (result.uid) {
+      if (result.uid && typeof result.uid === 'string') {
         uidCache = result.uid;
         resolve(result.uid);
       } else {
@@ -181,14 +181,12 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
         // 确保 store 已初始化
         const currentStore = useStore.getState();
         if (currentStore.config.mini === false) {
-          console.log('mini model closed');
           sendResponse({ ctype, cdata: null });
           return false;
         }
         
         // 如果书签列表为空，先尝试获取
         if (currentStore.waitingBookmarks.length === 0) {
-          console.log('书签列表为空，尝试重新获取');
           BookmarkLib.getBookmarksFromChrome();
           // 等待书签加载完成（使用轮询方式检查）
           let attempts = 0;
@@ -199,7 +197,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
             if (store.waitingBookmarks.length > 0 || attempts >= maxAttempts) {
               const bmForMini = BookmarkLib.getBookmark();
               if (!bmForMini) {
-                console.log('no bookmark available after refresh');
                 sendResponse({ ctype, cdata: null });
               } else {
                 sendPageview('/mini_mode_notification');
@@ -224,7 +221,6 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
         
         const bmForMini = BookmarkLib.getBookmark();
         if (!bmForMini) {
-          console.log('no bookmark available, waitingBookmarks:', currentStore.waitingBookmarks.length);
           sendResponse({ ctype, cdata: null });
           return false;
         }

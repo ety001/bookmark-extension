@@ -31,6 +31,7 @@ export default defineConfig({
       {
         matches: ['*://*/*'],
         js: ['content-script.js'],
+        css: ['content-script.css'],
         run_at: 'document_end',
       },
     ],

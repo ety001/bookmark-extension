@@ -74,7 +74,6 @@ export function getBookmark(): Bookmark | null {
   if (store.config.mini === true) {
     const frequencyCounter = store.frequencyCounter;
     if (frequencyCounter !== 0) {
-      console.log('frequency not fit');
       useStore.getState().updateFrequencyCounter();
       return null;
     }

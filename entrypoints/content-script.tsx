@@ -1,10 +1,10 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import { Notification } from '../components/Notification';
+import { ContentNotification } from '../components/ContentNotification';
 import { getMessage } from '../utils/i18n';
 import type { Bookmark } from '../store';
-import '../styles/globals.css';
+import '../styles/content-script.css';
 import { defineContentScript } from 'wxt/utils/define-content-script';
 
 let notificationRoot: Root | null = null;
@@ -27,23 +27,29 @@ function DialogPortal({
 }) {
   if (!open) return null;
 
+  // 获取按钮文本，如果 getMessage 失败则使用后备文本
+  const cancelText = getMessage('cancel_btn') || '取消';
+  const confirmText = getMessage('confirm_btn') || '确定';
+
   return (
-    <div className="fixed inset-0 z-[999999998] bg-black/50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-6 max-w-md mx-4 shadow-lg">
-        <h3 className="text-lg font-semibold mb-2">{title}</h3>
-        <p className="text-sm text-gray-600 mb-4">{description}</p>
-        <div className="flex justify-end gap-2">
+    <div className="rb-dialog-overlay">
+      <div className="rb-dialog-container">
+        <h3 className="rb-dialog-title">{title}</h3>
+        <p className="rb-dialog-description">{description}</p>
+        <div className="rb-dialog-buttons">
           <button
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+            className="rb-dialog-button rb-dialog-button-cancel"
+            type="button"
           >
-            {getMessage('cancel_btn')}
+            {cancelText}
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-primary text-white rounded hover:bg-[#4285d6]"
+            className="rb-dialog-button rb-dialog-button-confirm"
+            type="button"
           >
-            {getMessage('confirm_btn')}
+            {confirmText}
           </button>
         </div>
       </div>
@@ -61,14 +67,14 @@ function App() {
     // 创建通知容器
     notificationContainer = document.createElement('div');
     notificationContainer.id = 'review-bookmark-notification';
-    notificationContainer.style.cssText = 'position: fixed; z-index: 999999999; pointer-events: none;';
+    notificationContainer.style.cssText = 'position: fixed; z-index: 999999999; pointer-events: none; display: none;';
     document.body.appendChild(notificationContainer);
     notificationRoot = createRoot(notificationContainer);
 
     // 创建对话框容器
     dialogContainer = document.createElement('div');
     dialogContainer.id = 'review-bookmark-dialog';
-    dialogContainer.style.cssText = 'position: fixed; z-index: 999999998; pointer-events: auto;';
+    dialogContainer.style.cssText = 'position: fixed; z-index: 999999998; pointer-events: auto; display: none;';
     document.body.appendChild(dialogContainer);
     dialogRoot = createRoot(dialogContainer);
 
@@ -84,8 +90,6 @@ function App() {
           if (response.cdata.bookmark) {
             setBookmark(response.cdata.bookmark);
             setPosition(response.cdata.config?.currentNotifyLocation || 'top-right');
-          } else {
-            console.log('No bookmark to show (mini mode may be disabled or no bookmarks available)');
           }
         }
       }
@@ -120,8 +124,10 @@ function App() {
   // 渲染通知
   useEffect(() => {
     if (bookmark && notificationRoot && notificationContainer) {
+      // 显示通知容器
+      notificationContainer.style.display = 'block';
       notificationRoot.render(
-        <Notification
+        <ContentNotification
           bookmark={bookmark}
           position={position}
           onClose={handleClose}
@@ -130,12 +136,26 @@ function App() {
           onRemove={handleRemove}
         />
       );
+    } else if (notificationContainer) {
+      // 隐藏通知容器
+      notificationContainer.style.display = 'none';
+      if (notificationRoot) {
+        notificationRoot.render(null);
+      }
     }
   }, [bookmark, position]);
 
   // 渲染对话框
   useEffect(() => {
     if (dialogRoot && dialogContainer) {
+      const hasOpenDialog = blockDialogOpen || removeDialogOpen;
+      // 控制对话框容器的显示/隐藏
+      if (hasOpenDialog) {
+        dialogContainer.style.display = 'block';
+      } else {
+        dialogContainer.style.display = 'none';
+      }
+      
       dialogRoot.render(
         <>
           <DialogPortal
@@ -158,11 +178,11 @@ function App() {
   }, [blockDialogOpen, removeDialogOpen]);
 
   const handleClose = () => {
-    if (notificationRoot && notificationContainer) {
-      notificationRoot.unmount();
-      notificationContainer.remove();
-      notificationRoot = null;
-      notificationContainer = null;
+    if (notificationContainer) {
+      notificationContainer.style.display = 'none';
+      if (notificationRoot) {
+        notificationRoot.render(null);
+      }
     }
     setBookmark(null);
   };
@@ -218,6 +238,7 @@ export default defineContentScript({
   main() {
     const initDiv = document.createElement('div');
     initDiv.id = 'review-bookmark';
+    initDiv.style.display = 'none'; // 默认隐藏主容器
     document.body.appendChild(initDiv);
 
     const root = createRoot(initDiv);
