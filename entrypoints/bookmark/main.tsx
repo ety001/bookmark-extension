@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import App from './App';
 import { Toaster } from '../../components/ui/toaster';
 import '../../styles/globals.css';
@@ -11,10 +11,10 @@ if (!container) throw new Error('Root element not found');
 const root = createRoot(container);
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
+    <HashRouter>
       <App />
       <Toaster />
-    </BrowserRouter>
+    </HashRouter>
   </React.StrictMode>
 );
 

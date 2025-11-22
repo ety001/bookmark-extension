@@ -27,7 +27,7 @@ import type { BookmarkMenuNode } from '../../libs/BookmarkLib';
 import { Edit, Trash2, Folder, Tag, X } from 'lucide-react';
 import type { Bookmark } from '../../store';
 
-interface BookmarkItem extends chrome.bookmarks.BookmarkTreeNode {
+interface BookmarkItem extends Omit<chrome.bookmarks.BookmarkTreeNode, 'url'> {
   url?: string | null;
 }
 
@@ -68,6 +68,7 @@ export default function App() {
   const [selectedMenuId, setSelectedMenuId] = useState('0');
   const topRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const currentRequestIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     document.title = getMessage('appname');
@@ -88,18 +89,23 @@ export default function App() {
 
   useEffect(() => {
     if (pid) {
-      getBookmarkChildren(pid);
+      // 生成请求 ID 来避免竞态条件
+      const requestId = `${pid}-${Date.now()}`;
+      currentRequestIdRef.current = requestId;
+      getBookmarkChildren(pid, requestId);
       setSelectedMenuId(pid);
     }
   }, [pid]);
 
   useEffect(() => {
-    if (bid && bid !== '0') {
-      setSearch(bid);
+    // 从 searchParams 获取最新的 bid，而不是使用闭包中的 bid
+    const queryBid = searchParams.get('bid') || '0';
+    if (queryBid && queryBid !== '0') {
+      setSearch(queryBid);
     } else {
       setSearch(null);
     }
-  }, [bid]);
+  }, [searchParams]);
 
   const getBookmarkMenu = () => {
     setLoading(true);
@@ -109,27 +115,34 @@ export default function App() {
         if (response && response.cdata) {
           setMenu(response.cdata);
           setLoading(false);
-          if (pid) {
-            getBookmarkChildren(pid);
-          }
+          // 移除这里的 getBookmarkChildren 调用，因为 useEffect 会处理
         }
       }
     );
   };
 
-  const getBookmarkChildren = (id: string) => {
+  const getBookmarkChildren = (id: string, requestId: string) => {
     const targetId = id === '0' ? '0' : id;
+    // 在请求开始时获取当前的 bid，避免闭包问题
+    const currentBid = searchParams.get('bid') || '0';
     chrome.runtime.sendMessage(
       { ctype: 'getbookmark_children', cdata: targetId },
       (response) => {
+        // 检查这个响应是否对应最新的请求
+        if (currentRequestIdRef.current !== requestId) {
+          return; // 忽略过期的响应
+        }
         if (response && response.cdata) {
           const items: BookmarkItem[] = response.cdata.map((item: chrome.bookmarks.BookmarkTreeNode) => ({
             ...item,
             url: item.url || null,
           }));
           setBookmarks(items);
-          if (bid && bid !== '0') {
-            setSearch(bid);
+          // 使用请求时的 bid 值
+          if (currentBid && currentBid !== '0') {
+            setSearch(currentBid);
+          } else {
+            setSearch(null);
           }
           getBreadcrumb(targetId);
         }
@@ -206,7 +219,10 @@ export default function App() {
             variant: 'success',
             title: getMessage('success'),
           });
-          getBookmarkChildren(pid);
+          // 重新加载当前目录的内容
+          const requestId = `${pid}-${Date.now()}`;
+          currentRequestIdRef.current = requestId;
+          getBookmarkChildren(pid, requestId);
         }
       }
     );
