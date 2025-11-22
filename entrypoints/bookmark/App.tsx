@@ -301,18 +301,18 @@ export default function App() {
     <div className="h-screen flex flex-col">
       <div
         ref={topRef}
-        className="bg-primary text-white pt-2"
+        className="bg-primary text-white py-3"
       >
         <div className="flex items-center justify-between px-10">
-          <div className="text-[22px] font-extrabold pt-2 pl-10">
+          <div className="text-[22px] font-extrabold pl-10">
             {getMessage('appname')}
           </div>
-          <div className="flex gap-4 pt-2.5 text-right">
+          <div className="flex gap-4 text-right">
             <a
               href="https://akawa.ink/donate"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-white hover:underline"
+              className="text-sm text-white font-medium hover:opacity-80 hover:underline transition-all"
             >
               {getMessage('donate')}
             </a>
@@ -320,7 +320,7 @@ export default function App() {
               href="https://github.com/ety001/bookmark-extension"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-white hover:underline"
+              className="text-sm text-white font-medium hover:opacity-80 hover:underline transition-all"
             >
               {getMessage('source_code')}
             </a>
@@ -420,19 +420,19 @@ export default function App() {
                     className="flex items-center justify-between p-2 hover:bg-gray-50 rounded"
                   >
                     <div
-                      className="flex-1 cursor-pointer"
+                      className="flex-1 cursor-pointer min-w-0"
                       onClick={() => handleVisit(item)}
                     >
                       <div className="flex items-center gap-2">
                         {item.url ? (
-                          <Tag className="w-4 h-4 text-gray-600" />
+                          <Tag className="w-4 h-4 text-gray-600 flex-shrink-0" />
                         ) : (
-                          <Folder className="w-4 h-4 text-gray-600" />
+                          <Folder className="w-4 h-4 text-gray-600 flex-shrink-0" />
                         )}
-                        <span className="text-sm font-semibold">{item.title}</span>
+                        <span className="text-sm font-semibold truncate">{item.title}</span>
                       </div>
                       {item.url && (
-                        <div className="text-xs text-gray-500 mt-1 ml-6">
+                        <div className="text-xs text-gray-500 mt-1 ml-6 line-clamp-2 max-w-full">
                           {item.url}
                         </div>
                       )}

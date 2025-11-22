@@ -48,3 +48,21 @@ a:hover {
   color: #4285d6;
 }
 
+/* 允许在蓝色背景栏中的链接使用白色 */
+.bg-primary a.text-white {
+  color: #ffffff !important;
+}
+
+.bg-primary a.text-white:hover {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* 多行文本截断支持 */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-all;
+}
+

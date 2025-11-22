@@ -109,18 +109,18 @@ export default function App() {
     <div className="h-screen flex flex-col">
       <div
         ref={topRef}
-        className="bg-primary text-white pt-2"
+        className="bg-primary text-white py-3"
       >
         <div className="flex items-center justify-between px-10">
-          <div className="text-[22px] font-extrabold pt-2 pl-10">
+          <div className="text-[22px] font-extrabold pl-10">
             {getMessage('appname')}
           </div>
-          <div className="flex gap-4 pt-2.5 text-right">
+          <div className="flex gap-4 text-right">
             <a
               href="https://akawa.ink/donate"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-white hover:underline"
+              className="text-sm text-white font-medium hover:opacity-80 hover:underline transition-all"
             >
               {getMessage('donate')}
             </a>
@@ -128,7 +128,7 @@ export default function App() {
               href="https://github.com/ety001/bookmark-extension"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-white hover:underline"
+              className="text-sm text-white font-medium hover:opacity-80 hover:underline transition-all"
             >
               {getMessage('source_code')}
             </a>
