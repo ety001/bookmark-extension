@@ -199,7 +199,7 @@ export default function App() {
                 href="https://akawa.ink/donate"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-gray-600 hover:underline"
+                className="text-sm text-gray-700 font-medium hover:text-primary hover:underline transition-colors"
               >
                 {getMessage('donate')}
               </a>
@@ -207,7 +207,7 @@ export default function App() {
                 href="https://github.com/ety001/bookmark-extension"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm text-gray-600 hover:underline"
+                className="text-sm text-gray-700 font-medium hover:text-primary hover:underline transition-colors"
               >
                 {getMessage('source_code')}
               </a>
