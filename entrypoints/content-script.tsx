@@ -1,10 +1,10 @@
 import React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { ContentNotification } from '../components/ContentNotification';
 import { getMessage } from '../utils/i18n';
 import type { Bookmark } from '../store';
-import '../styles/content-script.css';
+// CSS 通过 manifest.json 中的 content_scripts.css 自动注入，不需要在这里导入
 import { defineContentScript } from 'wxt/utils/define-content-script';
 
 let notificationRoot: Root | null = null;
@@ -62,6 +62,17 @@ function App() {
   const [position, setPosition] = useState<'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'>('top-right');
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [countdown, setCountdown] = useState<number>(15);
+
+  const handleClose = useCallback(() => {
+    if (notificationContainer) {
+      notificationContainer.style.display = 'none';
+      if (notificationRoot) {
+        notificationRoot.render(null);
+      }
+    }
+    setBookmark(null);
+  }, []);
 
   useEffect(() => {
     // 创建通知容器
@@ -119,7 +130,34 @@ function App() {
         dialogContainer.remove();
       }
     };
-  }, []);
+  }, [handleClose]);
+
+  // 倒计时和自动关闭
+  useEffect(() => {
+    if (!bookmark) {
+      setCountdown(15);
+      return;
+    }
+
+    // 重置倒计时
+    setCountdown(15);
+
+    // 倒计时定时器
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleClose();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, [bookmark, handleClose]);
 
   // 渲染通知
   useEffect(() => {
@@ -130,6 +168,7 @@ function App() {
         <ContentNotification
           bookmark={bookmark}
           position={position}
+          countdown={countdown}
           onClose={handleClose}
           onBlock={handleBlock}
           onEdit={handleEdit}
@@ -143,7 +182,7 @@ function App() {
         notificationRoot.render(null);
       }
     }
-  }, [bookmark, position]);
+  }, [bookmark, position, countdown]);
 
   // 渲染对话框
   useEffect(() => {
@@ -176,16 +215,6 @@ function App() {
       );
     }
   }, [blockDialogOpen, removeDialogOpen]);
-
-  const handleClose = () => {
-    if (notificationContainer) {
-      notificationContainer.style.display = 'none';
-      if (notificationRoot) {
-        notificationRoot.render(null);
-      }
-    }
-    setBookmark(null);
-  };
 
   const handleBlock = () => {
     setBlockDialogOpen(true);

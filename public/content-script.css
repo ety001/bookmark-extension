@@ -1,4 +1,25 @@
 /* Content Script 专用样式 - 使用 rb- 前缀避免与页面样式冲突 */
+/* 临时测试 - 如果看到这个效果，说明 CSS 已加载 */
+body {
+  border-top: 3px solid red !important; /* 页面顶部会出现红色边框 */
+}
+/* 容器默认隐藏 */
+#review-bookmark {
+  display: none;
+}
+
+#review-bookmark-notification {
+  display: none;
+}
+
+#review-bookmark-dialog {
+  display: none;
+}
+
+/* 显示状态类 */
+.rb-visible {
+  display: block !important;
+}
 
 /* 对话框遮罩层 */
 .rb-dialog-overlay {
@@ -81,12 +102,12 @@
   position: fixed;
   z-index: 999999999;
   background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 16px;
-  min-width: 300px;
-  max-width: 400px;
+  border: 2px solid #53a8ff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  min-width: 320px;
+  max-width: 420px;
   pointer-events: auto;
   color: #444;
   font-family: system-ui, -apple-system, sans-serif;
@@ -118,10 +139,11 @@
 }
 
 .rb-notification-title {
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 8px;
-  color: #444;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #1f2937;
+  line-height: 1.4;
 }
 
 .rb-notification-url {
@@ -148,26 +170,69 @@
 
 /* 通知按钮 */
 .rb-notification-button {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 1px solid #ccc;
-  background-color: #e5e7eb;
+  border: none; /* 移除边框，使用背景色 */
+  color: #fff; /* 图标颜色为白色 */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out; /* 添加 transform 过渡 */
   padding: 0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* 按钮阴影 */
 }
 
 .rb-notification-button:hover {
-  background-color: #d1d5db;
+  transform: scale(1.05); /* hover 放大效果 */
 }
 
 .rb-notification-button-icon {
-  width: 14px;
-  height: 14px;
-  color: #1f2937;
+  width: 18px; /* 增大图标尺寸 */
+  height: 18px; /* 增大图标尺寸 */
+  color: #fff; /* 图标颜色为白色 */
 }
 
+.rb-notification-button-close {
+  background-color: #fbbf24; /* 橙色 */
+}
+.rb-notification-button-close:hover {
+  background-color: #f59e0b;
+}
+
+.rb-notification-button-block {
+  background-color: #3b82f6; /* 蓝色 */
+}
+.rb-notification-button-block:hover {
+  background-color: #2563eb;
+}
+
+.rb-notification-button-edit {
+  background-color: #10b981; /* 绿色 */
+}
+.rb-notification-button-edit:hover {
+  background-color: #059669;
+}
+
+.rb-notification-button-remove {
+  background-color: #ef4444; /* 红色 */
+}
+.rb-notification-button-remove:hover {
+  background-color: #dc2626;
+}
+
+/* 倒计时显示 */
+.rb-notification-countdown {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  text-align: center;
+}

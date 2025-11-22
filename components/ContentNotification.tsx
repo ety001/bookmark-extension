@@ -4,6 +4,7 @@ import type { Bookmark } from '../store';
 interface ContentNotificationProps {
   bookmark: Bookmark;
   position: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  countdown: number;
   onClose: () => void;
   onBlock: () => void;
   onEdit: () => void;
@@ -13,6 +14,7 @@ interface ContentNotificationProps {
 export function ContentNotification({
   bookmark,
   position,
+  countdown,
   onClose,
   onBlock,
   onEdit,
@@ -37,7 +39,7 @@ export function ContentNotification({
       </div>
       <div className="rb-notification-buttons">
         <button
-          className="rb-notification-button"
+          className="rb-notification-button rb-notification-button-close"
           onClick={onClose}
           type="button"
           title="关闭"
@@ -57,7 +59,7 @@ export function ContentNotification({
           </svg>
         </button>
         <button
-          className="rb-notification-button"
+          className="rb-notification-button rb-notification-button-block"
           onClick={onBlock}
           type="button"
           title="屏蔽"
@@ -77,7 +79,7 @@ export function ContentNotification({
           </svg>
         </button>
         <button
-          className="rb-notification-button"
+          className="rb-notification-button rb-notification-button-edit"
           onClick={onEdit}
           type="button"
           title="编辑"
@@ -97,7 +99,7 @@ export function ContentNotification({
           </svg>
         </button>
         <button
-          className="rb-notification-button"
+          className="rb-notification-button rb-notification-button-remove"
           onClick={onRemove}
           type="button"
           title="删除"
@@ -116,6 +118,9 @@ export function ContentNotification({
             />
           </svg>
         </button>
+      </div>
+      <div className="rb-notification-countdown">
+        {countdown}秒后关闭
       </div>
     </div>
   );

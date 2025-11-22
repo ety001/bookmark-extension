@@ -1,5 +1,8 @@
 /* Content Script 专用样式 - 使用 rb- 前缀避免与页面样式冲突 */
-
+/* 临时测试 - 如果看到这个效果，说明 CSS 已加载 */
+body {
+  border-top: 3px solid red !important; /* 页面顶部会出现红色边框 */
+}
 /* 容器默认隐藏 */
 #review-bookmark {
   display: none;
@@ -99,12 +102,12 @@
   position: fixed;
   z-index: 999999999;
   background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 16px;
-  min-width: 300px;
-  max-width: 400px;
+  border: 2px solid #53a8ff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  min-width: 320px;
+  max-width: 420px;
   pointer-events: auto;
   color: #444;
   font-family: system-ui, -apple-system, sans-serif;
@@ -136,10 +139,11 @@
 }
 
 .rb-notification-title {
-  font-weight: 600;
-  font-size: 14px;
-  margin-bottom: 8px;
-  color: #444;
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #1f2937;
+  line-height: 1.4;
 }
 
 .rb-notification-url {
@@ -166,26 +170,80 @@
 
 /* 通知按钮 */
 .rb-notification-button {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 1px solid #ccc;
-  background-color: #e5e7eb;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   padding: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.rb-notification-button:hover {
-  background-color: #d1d5db;
+/* 关闭按钮 - 橙色/警告色 */
+.rb-notification-button:first-child {
+  background-color: #fbbf24;
+  border-color: #f59e0b;
+}
+
+.rb-notification-button:first-child:hover {
+  background-color: #f59e0b;
+  transform: scale(1.05);
+}
+
+/* 屏蔽按钮 - 蓝色 */
+.rb-notification-button:nth-child(2) {
+  background-color: #3b82f6;
+  border-color: #2563eb;
+}
+
+.rb-notification-button:nth-child(2):hover {
+  background-color: #2563eb;
+  transform: scale(1.05);
+}
+
+/* 编辑按钮 - 绿色 */
+.rb-notification-button:nth-child(3) {
+  background-color: #10b981;
+  border-color: #059669;
+}
+
+.rb-notification-button:nth-child(3):hover {
+  background-color: #059669;
+  transform: scale(1.05);
+}
+
+/* 删除按钮 - 红色 */
+.rb-notification-button:nth-child(4) {
+  background-color: #ef4444;
+  border-color: #dc2626;
+}
+
+.rb-notification-button:nth-child(4):hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
 }
 
 .rb-notification-button-icon {
-  width: 14px;
-  height: 14px;
-  color: #1f2937;
+  width: 16px;
+  height: 16px;
+  color: #fff;
 }
 
+/* 倒计时显示 */
+.rb-notification-countdown {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  text-align: center;
+}

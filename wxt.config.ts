@@ -3,12 +3,12 @@ import { defineConfig } from 'wxt';
 // https://wxt.dev/api/config.html
 export default defineConfig({
   publicDir: 'public',
+  manifestVersion: 3,
   manifest: {
     name: '__MSG_appname__',
     description: '__MSG_appdesc__',
     default_locale: 'en',
     version: '4.0.0',
-    manifest_version: 3,
     author: { email: 'work@akawa.ink' },
     permissions: [
       'notifications',
