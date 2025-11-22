@@ -9,10 +9,10 @@ const buttonVariants = cva(
       variant: {
         default: 'bg-primary text-white hover:bg-[#4285d6]',
         primary: 'bg-primary text-white hover:bg-[#4285d6]',
-        success: 'bg-green-500 text-white hover:bg-green-600',
-        warning: 'bg-yellow-500 text-white hover:bg-yellow-600',
-        danger: 'bg-red-500 text-white hover:bg-red-600',
-        info: 'bg-gray-500 text-white hover:bg-gray-600',
+        success: 'bg-[#10b981] text-white hover:bg-[#059669]', // 绿色，与 content-script.css 的编辑按钮一致
+        warning: 'bg-[#fbbf24] text-white hover:bg-[#f59e0b]', // 橙色，与 content-script.css 的关闭按钮一致
+        danger: 'bg-[#ef4444] text-white hover:bg-[#dc2626]', // 红色，与 content-script.css 的删除按钮一致
+        info: 'bg-[#3b82f6] text-white hover:bg-[#2563eb]', // 蓝色，与 content-script.css 的屏蔽按钮一致
         outline: 'border border-gray-300 bg-transparent hover:bg-gray-100',
         ghost: 'hover:bg-gray-100',
       },
@@ -50,13 +50,18 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, circle, plain, icon, children, ...props }, ref) => {
+    // 如果只有图标没有文字，图标不需要 margin
+    const iconOnly = icon && !children;
+    
     return (
       <button
         className={cn(buttonVariants({ variant, size, circle, plain, className }))}
         ref={ref}
         {...props}
       >
-        {icon && <span className="mr-1">{icon}</span>}
+        {icon && (
+          <span className={iconOnly ? '' : 'mr-1'}>{icon}</span>
+        )}
         {children}
       </button>
     );

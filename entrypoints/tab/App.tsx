@@ -154,7 +154,6 @@ export default function App() {
                 variant="success"
                 size="small"
                 circle
-                plain
                 onClick={getBookmark}
                 icon={<ArrowRight className="w-4 h-4" />}
               />
@@ -162,15 +161,13 @@ export default function App() {
                 variant="info"
                 size="small"
                 circle
-                plain
                 onClick={handleBlock}
                 icon={<BellOff className="w-4 h-4" />}
               />
               <Button
-                variant="primary"
+                variant="success"
                 size="small"
                 circle
-                plain
                 onClick={handleEdit}
                 icon={<Edit className="w-4 h-4" />}
               />
@@ -178,7 +175,6 @@ export default function App() {
                 variant="danger"
                 size="small"
                 circle
-                plain
                 onClick={handleRemove}
                 icon={<Trash2 className="w-4 h-4" />}
               />
