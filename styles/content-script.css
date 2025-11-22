@@ -1,8 +1,5 @@
 /* Content Script 专用样式 - 使用 rb- 前缀避免与页面样式冲突 */
-/* 临时测试 - 如果看到这个效果，说明 CSS 已加载 */
-body {
-  border-top: 3px solid red !important; /* 页面顶部会出现红色边框 */
-}
+
 /* 容器默认隐藏 */
 #review-bookmark {
   display: none;
