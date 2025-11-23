@@ -10,7 +10,9 @@ export default defineConfig({
     description: '__MSG_appdesc__',
     default_locale: 'en',
     version: '4.0.0',
-    author: { email: 'work@akawa.ink' },
+    // 修改：author 改为字符串格式（Firefox 要求）
+    // 使用类型断言绕过 WXT 的类型检查，因为 Firefox 需要字符串格式
+    author: 'work@akawa.ink' as any,
     permissions: [
       'notifications',
       'bookmarks',
@@ -48,6 +50,13 @@ export default defineConfig({
       '38': 'icons/icon-38.png',
       '48': 'icons/icon-48.png',
       '128': 'icons/icon-128.png',
+    },
+    // 添加：Firefox 特定的配置
+    browser_specific_settings: {
+      gecko: {
+        id: '{e6d65c2b-3748-4962-8e8f-d25891bf1ed0}', // 必须与 AMO 上注册的 ID 匹配
+        strict_min_version: '109.0', // Firefox 109+ 支持 Manifest V3
+      },
     },
   },
   modules: ['@wxt-dev/module-react'],
