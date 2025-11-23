@@ -19,7 +19,7 @@ export default defineConfig({
       'unlimitedStorage',
     ],
     host_permissions: [
-      'https://www.google-analytics.com/*',
+      'https://ga-bm.mypi.win/*',
     ],
     action: {
       default_title: '__MSG_appname__',
