@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Switch } from '../../components/ui/switch';
@@ -27,8 +27,13 @@ export default function App() {
   const { toast } = useToast();
   const [formData, setFormData] = useState<FormData | null>(null);
   const [displayGaReminder, setDisplayGaReminder] = useState<'display' | 'hidden'>('display');
+  const configFetchedRef = useRef(false);
 
   useEffect(() => {
+    // 防止 React.StrictMode 在开发模式下重复调用
+    if (configFetchedRef.current) return;
+    configFetchedRef.current = true;
+
     // 获取配置
     chrome.runtime.sendMessage(
       { ctype: 'get_config', cdata: true },

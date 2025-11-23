@@ -68,7 +68,12 @@ function App() {
     if (notificationContainer) {
       notificationContainer.style.display = 'none';
       if (notificationRoot) {
-        notificationRoot.render(null);
+        // 使用 setTimeout 延迟渲染，避免在 React 渲染期间同步卸载
+        setTimeout(() => {
+          if (notificationRoot) {
+            notificationRoot.render(null);
+          }
+        }, 0);
       }
     }
     setBookmark(null);
@@ -125,10 +130,17 @@ function App() {
     return () => {
       chrome.runtime.onMessage.removeListener(messageListener);
       handleClose();
-      if (dialogRoot && dialogContainer) {
-        dialogRoot.unmount();
-        dialogContainer.remove();
-      }
+      // 使用 setTimeout 延迟卸载，避免在 React 渲染期间同步卸载
+      setTimeout(() => {
+        if (dialogRoot && dialogContainer) {
+          dialogRoot.unmount();
+          dialogContainer.remove();
+        }
+        if (notificationRoot && notificationContainer) {
+          notificationRoot.unmount();
+          notificationContainer.remove();
+        }
+      }, 0);
     };
   }, [handleClose]);
 
@@ -179,7 +191,12 @@ function App() {
       // 隐藏通知容器
       notificationContainer.style.display = 'none';
       if (notificationRoot) {
-        notificationRoot.render(null);
+        // 使用 setTimeout 延迟渲染，避免在 React 渲染期间同步卸载
+        setTimeout(() => {
+          if (notificationRoot) {
+            notificationRoot.render(null);
+          }
+        }, 0);
       }
     }
   }, [bookmark, position, countdown]);

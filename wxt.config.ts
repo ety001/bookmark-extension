@@ -3,6 +3,7 @@ import { defineConfig } from 'wxt';
 // https://wxt.dev/api/config.html
 export default defineConfig({
   publicDir: 'public',
+  entrypointsDir: 'entrypoints',
   manifestVersion: 3,
   manifest: {
     name: '__MSG_appname__',

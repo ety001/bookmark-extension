@@ -1,7 +1,7 @@
 import { defineBackground } from 'wxt/utils/define-background';
 import { useStore, type Bookmark } from '../../store';
 import * as BookmarkLib from '../../libs/BookmarkLib';
-import { GA } from '../../libs/GA';
+import { gtag } from '../../utils/google-analytics';
 
 export default defineBackground(() => {
 
@@ -95,15 +95,6 @@ if (isChrome()) {
 } else if (isEdge()) {
   currentVersion = `edge_${currentVersion}`;
 }
-const gaMeasurementId = 'G-L1CXD1G3GK'; // GA4 测量 ID
-// const gaApiSecret = 'your-api-secret'; // 可选：如果使用 API Secret，取消注释并填入
-let gaObj: GA | null = null;
-
-// 初始化 GA4
-getUid().then((uid) => {
-  gaObj = new GA(gaMeasurementId, uid, debug); // 如果使用 API Secret，添加第四个参数
-});
-
 function sendEvent(
   eventCategory: string,
   eventAction: string,
@@ -111,16 +102,26 @@ function sendEvent(
   eventValue: number = 1
 ): void {
   const store = useStore.getState();
-  if (store.config.ga === false || !gaObj) return;
+  if (store.config.ga === false) return;
+  
   getUid().then((uid) => {
-    gaObj?.ga('event', eventCategory, eventAction, eventLabel || uid, String(eventValue));
+    gtag('event', eventAction, {
+      event_category: eventCategory,
+      event_label: eventLabel || uid,
+      value: eventValue,
+    });
   });
 }
 
 function sendPageview(dp: string, dh: string = '', dt: string = ''): void {
   const store = useStore.getState();
-  if (store.config.ga === false || !gaObj) return;
-  gaObj.ga('pageview', dh, dp, dt);
+  if (store.config.ga === false) return;
+  
+  gtag('event', 'page_view', {
+    page_path: dp || '/',
+    page_title: dt || dp || '/',
+    page_location: dh || dp || '/',
+  });
 }
 
 // 数据初始化
