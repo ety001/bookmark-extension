@@ -21,16 +21,6 @@ interface Response {
   cdata: any;
 }
 
-// 清空之前版本的数据（在 Service Worker 中使用 chrome.storage）
-// 只在运行时执行，构建时跳过
-if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-  chrome.storage.local.get('curt_index', (result) => {
-    if (!result.curt_index) {
-      chrome.storage.local.clear();
-    }
-  });
-}
-
 const debug = import.meta.env.DEV;
 
 // 获取浏览器类型（使用函数延迟初始化，避免构建时错误）
@@ -87,7 +77,7 @@ async function getUid(): Promise<string> {
 }
 
 // Google Analytics 4
-let currentVersion = '4_0_0';
+let currentVersion = '4_0_1';
 if (isChrome()) {
   currentVersion = `chrome_${currentVersion}`;
 } else if (isFirefox()) {
@@ -347,6 +337,25 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
           currentNotifyLocation: cdata.currentNotifyLocation,
           ga: cdata.ga,
         });
+        sendResponse({ ctype, cdata: true });
+        return false;
+
+      case 'reset_config':
+        getUid().then((uid) => {
+          sendEvent(currentVersion, 'reset_config', uid);
+        });
+        // 重置配置为默认值
+        const resetStore = useStore.getState();
+        resetStore.updateConfig({
+          status: true,
+          mini: false,
+          random: true,
+          frequency: 5,
+          currentNotifyLocation: 'top-right',
+          ga: false,
+        });
+        // 重置频度计数器
+        useStore.setState({ frequencyCounter: 0 });
         sendResponse({ ctype, cdata: true });
         return false;
 

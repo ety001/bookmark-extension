@@ -142,5 +142,17 @@
   },
   "privacy_policy": {
     "message": "如果同意，温故知新将会匿名地收集用户的展示/屏蔽/整理书签的频率，这将帮助作者提升扩展的使用体验。"
+  },
+  "reset_config": {
+    "message": "重置配置"
+  },
+  "reset_config_title": {
+    "message": "重置配置"
+  },
+  "reset_config_description": {
+    "message": "确定要重置所有配置为默认值吗？此操作将恢复所有设置到初始状态，但不会删除书签数据。"
+  },
+  "reset_success": {
+    "message": "重置成功"
   }
 }

@@ -142,5 +142,17 @@
   },
   "privacy_policy": {
     "message": "Review Bookmarks will collect anonymously how freqency to display/block/manage bookmarks, if you have agreed. These data will help author to improve the extension's experience."
+  },
+  "reset_config": {
+    "message": "Reset Config"
+  },
+  "reset_config_title": {
+    "message": "Reset Configuration"
+  },
+  "reset_config_description": {
+    "message": "Are you sure you want to reset all configurations to default values? This will restore all settings to their initial state, but will not delete bookmark data."
+  },
+  "reset_success": {
+    "message": "Reset success"
   }
 }

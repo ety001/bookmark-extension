@@ -4,6 +4,16 @@ import { Input } from '../../components/ui/input';
 import { Switch } from '../../components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../components/ui/alert-dialog';
 import { useToast } from '../../components/ui/use-toast';
 import { getMessage } from '../../utils/i18n';
 
@@ -27,6 +37,7 @@ export default function App() {
   const { toast } = useToast();
   const [formData, setFormData] = useState<FormData | null>(null);
   const [displayGaReminder, setDisplayGaReminder] = useState<'display' | 'hidden'>('display');
+  const [showResetDialog, setShowResetDialog] = useState(false);
   const configFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -125,6 +136,43 @@ export default function App() {
   const handleBlockManager = () => {
     const baseUrl = chrome.runtime.getURL('block-manager.html');
     window.open(baseUrl);
+  };
+
+  const handleResetConfig = () => {
+    setShowResetDialog(true);
+  };
+
+  const confirmResetConfig = () => {
+    chrome.runtime.sendMessage(
+      { ctype: 'reset_config', cdata: true },
+      (response) => {
+        if (response && response.cdata) {
+          // 重新获取配置
+          chrome.runtime.sendMessage(
+            { ctype: 'get_config', cdata: true },
+            (response) => {
+              if (response && response.cdata) {
+                const config = response.cdata;
+                setFormData({
+                  status: config.status ?? true,
+                  mini: config.mini ?? false,
+                  random: config.random ?? true,
+                  frequency: config.frequency ?? 5,
+                  currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
+                  ga: config.ga ?? false,
+                });
+                setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
+              }
+            }
+          );
+          toast({
+            variant: 'success',
+            title: getMessage('reset_success'),
+          });
+          setShowResetDialog(false);
+        }
+      }
+    );
   };
 
   if (!formData) {
@@ -272,11 +320,35 @@ export default function App() {
                 >
                   {getMessage('block_manager')}
                 </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleResetConfig}
+                >
+                  {getMessage('reset_config')}
+                </Button>
               </div>
             </>
           )}
         </div>
       )}
+
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{getMessage('reset_config_title')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {getMessage('reset_config_description')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{getMessage('cancel_btn')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmResetConfig}>
+              {getMessage('confirm_btn')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
