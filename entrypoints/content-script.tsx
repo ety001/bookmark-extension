@@ -62,7 +62,9 @@ function App() {
   const [position, setPosition] = useState<'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'>('top-right');
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
-  const [countdown, setCountdown] = useState<number>(15);
+  const [countdown, setCountdown] = useState<number>(0);
+  const [autoClose, setAutoClose] = useState<boolean>(false);
+  const [autoCloseDelay, setAutoCloseDelay] = useState<number>(30);
 
   const handleClose = useCallback(() => {
     if (notificationContainer) {
@@ -106,6 +108,8 @@ function App() {
           if (response.cdata.bookmark) {
             setBookmark(response.cdata.bookmark);
             setPosition(response.cdata.config?.currentNotifyLocation || 'top-right');
+            setAutoClose(response.cdata.config?.autoClose ?? false);
+            setAutoCloseDelay(response.cdata.config?.autoCloseDelay ?? 30);
           }
         }
       }
@@ -146,13 +150,13 @@ function App() {
 
   // 倒计时和自动关闭
   useEffect(() => {
-    if (!bookmark) {
-      setCountdown(15);
+    if (!bookmark || !autoClose) {
+      setCountdown(0);
       return;
     }
 
     // 重置倒计时
-    setCountdown(15);
+    setCountdown(autoCloseDelay);
 
     // 倒计时定时器
     const timer = setInterval(() => {
@@ -169,7 +173,7 @@ function App() {
     return () => {
       clearInterval(timer);
     };
-  }, [bookmark, handleClose]);
+  }, [bookmark, autoClose, autoCloseDelay, handleClose]);
 
   // 渲染通知
   useEffect(() => {

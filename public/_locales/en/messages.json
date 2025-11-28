@@ -154,5 +154,11 @@
   },
   "reset_success": {
     "message": "Reset success"
+  },
+  "auto_close": {
+    "message": "Auto Close"
+  },
+  "auto_close_delay": {
+    "message": "Auto Close Delay (seconds)"
   }
 }

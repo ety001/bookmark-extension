@@ -119,9 +119,11 @@ export function ContentNotification({
           </svg>
         </button>
       </div>
-      <div className="rb-notification-countdown">
-        {countdown}秒后关闭
-      </div>
+      {countdown > 0 && (
+        <div className="rb-notification-countdown">
+          {countdown}秒后关闭
+        </div>
+      )}
     </div>
   );
 }

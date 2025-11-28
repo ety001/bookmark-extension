@@ -11,6 +11,8 @@ export interface Config {
   frequency: number; // mini 模式展示频度
   currentNotifyLocation: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'; // 当前 Mini 提醒框位置
   ga: boolean; // Google Analytics Status
+  autoClose: boolean; // 是否自动关闭弹层
+  autoCloseDelay: number; // 自动关闭延迟秒数
 }
 
 /**
@@ -57,6 +59,8 @@ const defaultConfig: Config = {
   frequency: 5,
   currentNotifyLocation: 'top-right',
   ga: false,
+  autoClose: false,
+  autoCloseDelay: 30,
 };
 
 /**
