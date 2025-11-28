@@ -77,7 +77,7 @@ async function getUid(): Promise<string> {
 }
 
 // Google Analytics 4
-let currentVersion = '4_0_1';
+let currentVersion = '4_0_2';
 if (isChrome()) {
   currentVersion = `chrome_${currentVersion}`;
 } else if (isFirefox()) {
@@ -336,6 +336,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
           frequency: cdata.frequency,
           currentNotifyLocation: cdata.currentNotifyLocation,
           ga: cdata.ga,
+          autoClose: cdata.autoClose,
+          autoCloseDelay: cdata.autoCloseDelay,
         });
         sendResponse({ ctype, cdata: true });
         return false;
@@ -353,6 +355,8 @@ if (typeof chrome !== 'undefined' && chrome.runtime) {
           frequency: 5,
           currentNotifyLocation: 'top-right',
           ga: false,
+          autoClose: false,
+          autoCloseDelay: 30,
         });
         // 重置频度计数器
         useStore.setState({ frequencyCounter: 0 });

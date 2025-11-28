@@ -24,6 +24,8 @@ interface FormData {
   frequency: number;
   currentNotifyLocation: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
   ga: boolean;
+  autoClose: boolean;
+  autoCloseDelay: number;
 }
 
 const notifyLocations = [
@@ -59,6 +61,8 @@ export default function App() {
             frequency: 5,
             currentNotifyLocation: 'top-right',
             ga: false,
+            autoClose: false,
+            autoCloseDelay: 30,
           });
           return;
         }
@@ -71,6 +75,8 @@ export default function App() {
             frequency: config.frequency ?? 5,
             currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
             ga: config.ga ?? false,
+            autoClose: config.autoClose ?? false,
+            autoCloseDelay: config.autoCloseDelay ?? 30,
           });
           setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
         } else {
@@ -82,6 +88,8 @@ export default function App() {
             frequency: 5,
             currentNotifyLocation: 'top-right',
             ga: false,
+            autoClose: false,
+            autoCloseDelay: 30,
           });
         }
       }
@@ -93,6 +101,16 @@ export default function App() {
 
     // 验证
     if (formData.frequency && (!Number.isInteger(formData.frequency) || formData.frequency < 1)) {
+      toast({
+        variant: 'warning',
+        title: getMessage('save_failed'),
+        description: getMessage('need_integer'),
+      });
+      return;
+    }
+
+    // 验证自动关闭延迟
+    if (formData.autoClose && (!Number.isInteger(formData.autoCloseDelay) || formData.autoCloseDelay < 1)) {
       toast({
         variant: 'warning',
         title: getMessage('save_failed'),
@@ -160,6 +178,8 @@ export default function App() {
                   frequency: config.frequency ?? 5,
                   currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
                   ga: config.ga ?? false,
+                  autoClose: config.autoClose ?? false,
+                  autoCloseDelay: config.autoCloseDelay ?? 30,
                 });
                 setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
               }
@@ -284,6 +304,38 @@ export default function App() {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium w-[140px] text-left">
+                      {getMessage('auto_close')}
+                    </label>
+                    <Switch
+                      checked={formData.autoClose}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, autoClose: checked })
+                      }
+                    />
+                  </div>
+
+                  {formData.autoClose && (
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium w-[140px] text-left">
+                        {getMessage('auto_close_delay')}
+                      </label>
+                      <Input
+                        type="number"
+                        value={formData.autoCloseDelay}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            autoCloseDelay: parseInt(e.target.value) || 30,
+                          })
+                        }
+                        className="w-[200px]"
+                        min="1"
+                      />
+                    </div>
+                  )}
                 </>
               )}
 

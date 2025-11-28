@@ -154,5 +154,11 @@
   },
   "reset_success": {
     "message": "重置成功"
+  },
+  "auto_close": {
+    "message": "自动关闭"
+  },
+  "auto_close_delay": {
+    "message": "自动关闭延迟（秒）"
   }
 }
