@@ -40,6 +40,8 @@ export default function App() {
   const [formData, setFormData] = useState<FormData | null>(null);
   const [displayGaReminder, setDisplayGaReminder] = useState<'display' | 'hidden'>('display');
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [frequencyInput, setFrequencyInput] = useState<string>('');
+  const [autoCloseDelayInput, setAutoCloseDelayInput] = useState<string>('');
   const configFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -64,20 +66,26 @@ export default function App() {
             autoClose: false,
             autoCloseDelay: 30,
           });
+          setFrequencyInput('5');
+          setAutoCloseDelayInput('30');
           return;
         }
         if (response && response.cdata) {
           const config = response.cdata;
+          const frequency = config.frequency ?? 5;
+          const autoCloseDelay = config.autoCloseDelay ?? 30;
           setFormData({
             status: config.status ?? true,
             mini: config.mini ?? false,
             random: config.random ?? true,
-            frequency: config.frequency ?? 5,
+            frequency: frequency,
             currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
             ga: config.ga ?? false,
             autoClose: config.autoClose ?? false,
-            autoCloseDelay: config.autoCloseDelay ?? 30,
+            autoCloseDelay: autoCloseDelay,
           });
+          setFrequencyInput(frequency.toString());
+          setAutoCloseDelayInput(autoCloseDelay.toString());
           setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
         } else {
           // 如果没有响应，设置默认值
@@ -91,6 +99,8 @@ export default function App() {
             autoClose: false,
             autoCloseDelay: 30,
           });
+          setFrequencyInput('5');
+          setAutoCloseDelayInput('30');
         }
       }
     );
@@ -99,30 +109,47 @@ export default function App() {
   const handleSave = () => {
     if (!formData) return;
 
-    // 验证
-    if (formData.frequency && (!Number.isInteger(formData.frequency) || formData.frequency < 1)) {
+    // 在保存前，同步输入框的值到 formData
+    const frequencyValue = parseInt(frequencyInput);
+    const autoCloseDelayValue = parseInt(autoCloseDelayInput);
+    
+    // 验证频率
+    if (!frequencyInput.trim() || !Number.isInteger(frequencyValue) || frequencyValue < 1) {
       toast({
         variant: 'warning',
         title: getMessage('save_failed'),
         description: getMessage('need_integer'),
       });
+      // 恢复为当前值
+      setFrequencyInput(formData.frequency.toString());
       return;
     }
 
-    // 验证自动关闭延迟
-    if (formData.autoClose && (!Number.isInteger(formData.autoCloseDelay) || formData.autoCloseDelay < 1)) {
+    // 验证自动关闭延迟（如果启用了自动关闭）
+    if (formData.autoClose && (!autoCloseDelayInput.trim() || !Number.isInteger(autoCloseDelayValue) || autoCloseDelayValue < 1)) {
       toast({
         variant: 'warning',
         title: getMessage('save_failed'),
         description: getMessage('need_integer'),
       });
+      // 恢复为当前值
+      setAutoCloseDelayInput(formData.autoCloseDelay.toString());
       return;
     }
+
+    // 更新 formData 使用输入框的值
+    const updatedFormData = {
+      ...formData,
+      frequency: frequencyValue,
+      ...(formData.autoClose && { autoCloseDelay: autoCloseDelayValue }),
+    };
 
     chrome.runtime.sendMessage(
-      { ctype: 'save_config', cdata: formData },
+      { ctype: 'save_config', cdata: updatedFormData },
       (response) => {
         if (response && response.cdata) {
+          // 更新 formData 状态
+          setFormData(updatedFormData);
           toast({
             variant: 'success',
             title: getMessage('save_success'),
@@ -171,16 +198,20 @@ export default function App() {
             (response) => {
               if (response && response.cdata) {
                 const config = response.cdata;
+                const frequency = config.frequency ?? 5;
+                const autoCloseDelay = config.autoCloseDelay ?? 30;
                 setFormData({
                   status: config.status ?? true,
                   mini: config.mini ?? false,
                   random: config.random ?? true,
-                  frequency: config.frequency ?? 5,
+                  frequency: frequency,
                   currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
                   ga: config.ga ?? false,
                   autoClose: config.autoClose ?? false,
-                  autoCloseDelay: config.autoCloseDelay ?? 30,
+                  autoCloseDelay: autoCloseDelay,
                 });
+                setFrequencyInput(frequency.toString());
+                setAutoCloseDelayInput(autoCloseDelay.toString());
                 setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
               }
             }
@@ -268,13 +299,26 @@ export default function App() {
                     </label>
                     <Input
                       type="number"
-                      value={formData.frequency}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          frequency: parseInt(e.target.value) || 0,
-                        })
-                      }
+                      value={frequencyInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFrequencyInput(value);
+                        // 只有在输入有效数字时才更新 formData
+                        const numValue = parseInt(value);
+                        if (!isNaN(numValue) && numValue > 0) {
+                          setFormData({
+                            ...formData,
+                            frequency: numValue,
+                          });
+                        }
+                      }}
+                      onBlur={(e) => {
+                        // 失去焦点时，如果为空或无效，恢复为当前值
+                        const value = e.target.value.trim();
+                        if (!value || isNaN(parseInt(value)) || parseInt(value) < 1) {
+                          setFrequencyInput(formData.frequency.toString());
+                        }
+                      }}
                       className="w-[200px]"
                     />
                   </div>
@@ -324,13 +368,26 @@ export default function App() {
                       </label>
                       <Input
                         type="number"
-                        value={formData.autoCloseDelay}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            autoCloseDelay: parseInt(e.target.value) || 30,
-                          })
-                        }
+                        value={autoCloseDelayInput}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setAutoCloseDelayInput(value);
+                          // 只有在输入有效数字时才更新 formData
+                          const numValue = parseInt(value);
+                          if (!isNaN(numValue) && numValue > 0) {
+                            setFormData({
+                              ...formData,
+                              autoCloseDelay: numValue,
+                            });
+                          }
+                        }}
+                        onBlur={(e) => {
+                          // 失去焦点时，如果为空或无效，恢复为当前值
+                          const value = e.target.value.trim();
+                          if (!value || isNaN(parseInt(value)) || parseInt(value) < 1) {
+                            setAutoCloseDelayInput(formData.autoCloseDelay.toString());
+                          }
+                        }}
                         className="w-[200px]"
                         min="1"
                       />
