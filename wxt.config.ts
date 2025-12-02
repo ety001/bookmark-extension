@@ -9,7 +9,7 @@ export default defineConfig({
     name: '__MSG_appname__',
     description: '__MSG_appdesc__',
     default_locale: 'en',
-    version: '4.0.2',
+    version: '4.0.3',
     // 修改：author 改为字符串格式（Firefox 要求）
     // 使用类型断言绕过 WXT 的类型检查，因为 Firefox 需要字符串格式
     author: 'work@akawa.ink' as any,

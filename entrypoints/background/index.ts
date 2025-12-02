@@ -1,5 +1,5 @@
 import { defineBackground } from 'wxt/utils/define-background';
-import { useStore, type Bookmark } from '../../store';
+import { useStore, waitForStoreRehydration, type Bookmark } from '../../store';
 import * as BookmarkLib from '../../libs/BookmarkLib';
 import { gtag } from '../../utils/google-analytics';
 
@@ -77,7 +77,7 @@ async function getUid(): Promise<string> {
 }
 
 // Google Analytics 4
-let currentVersion = '4_0_2';
+let currentVersion = '4_0_3';
 if (isChrome()) {
   currentVersion = `chrome_${currentVersion}`;
 } else if (isFirefox()) {
@@ -114,8 +114,22 @@ function sendPageview(dp: string, dh: string = '', dt: string = ''): void {
   });
 }
 
-// 数据初始化
-BookmarkLib.init();
+// 等待 Store 恢复完成后再初始化
+// 只在运行时执行，构建时跳过
+if (typeof chrome !== 'undefined' && chrome.runtime) {
+  waitForStoreRehydration().then(() => {
+    console.log('[Background] Store rehydration complete, initializing...');
+    // 数据初始化
+    BookmarkLib.init();
+  }).catch((error) => {
+    console.error('[Background] Error waiting for store rehydration:', error);
+    // 即使出错也继续初始化
+    BookmarkLib.init();
+  });
+} else {
+  // 构建时直接初始化
+  BookmarkLib.init();
+}
 
 // 检测新标签页，控制迷你和full版本
 // 只在运行时注册监听器，构建时跳过
