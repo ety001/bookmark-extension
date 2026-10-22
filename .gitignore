@@ -33,3 +33,4 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+.husky/_

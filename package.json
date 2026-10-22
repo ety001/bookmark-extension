@@ -18,12 +18,8 @@
     "dev:edge": "wxt -b edge",
     "zip": "wxt zip",
     "prettier": "prettier \"**/*.{ts,tsx,js,json}\"",
-    "prettier:write": "npm run prettier -- --write"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "pretty-quick --staged"
-    }
+    "prettier:write": "npm run prettier -- --write",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.23",
@@ -39,7 +35,7 @@
     "autoprefixer": "^10.5.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "husky": "^2.7.0",
+    "husky": "^9.1.7",
     "lucide-react": "^0.554.0",
     "postcss": "^8.5.26",
     "prettier": "^1.19.1",
