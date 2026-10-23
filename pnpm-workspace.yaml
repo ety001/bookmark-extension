@@ -1,11 +1,6 @@
 # pnpm settings (pnpm >= 10 keeps config in this file)
 overrides:
-  adm-zip: 0.6.1
-  tmp: 0.2.7
-  uuid: 11.1.1
-  shell-quote: 1.11.0
   cross-spawn: 6.0.6
-  rollup: 4.62.4
   esbuild: 0.28.2
   brace-expansion: 1.1.21
   source-map-js: 1.2.2
