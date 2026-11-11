@@ -30,14 +30,10 @@ export function init(): void {
   // 只在运行时执行，构建时跳过
   try {
     // 检查是否在构建时（通过检查 chrome.bookmarks.getTree 是否可用）
-    if (
-      typeof chrome === 'undefined' ||
-      !chrome.bookmarks ||
-      typeof chrome.bookmarks.getTree !== 'function'
-    ) {
+    if (typeof chrome === 'undefined' || !chrome.bookmarks || typeof chrome.bookmarks.getTree !== 'function') {
       return;
     }
-    
+
     const store = useStore.getState();
     const bookmarks = store.waitingBookmarks;
     console.log('init_num:', bookmarks.length);
@@ -58,18 +54,18 @@ export function init(): void {
 export function getBookmark(): Bookmark | null {
   const store = useStore.getState();
   const bookmarks = [...store.waitingBookmarks];
-  
+
   if (bookmarks.length === 0) {
     getBookmarksFromChrome();
     return null;
   }
-  
+
   // 判断开关
   if (store.config.status === false) {
     console.log('plugin closed');
     return null;
   }
-  
+
   // 如果是mini模式，则判断频度
   if (store.config.mini === true) {
     const frequencyCounter = store.frequencyCounter;
@@ -78,7 +74,7 @@ export function getBookmark(): Bookmark | null {
       return null;
     }
   }
-  
+
   // 判断随机还是顺次展示
   let selectedBookmark: Bookmark;
   if (store.config.random === false) {
@@ -90,23 +86,45 @@ export function getBookmark(): Bookmark | null {
     selectedBookmark = bookmarks[num];
     bookmarks.splice(num, 1);
   }
-  
+
   useStore.getState().updateWaitingBookmarks(bookmarks);
   useStore.getState().updateFrequencyCounter();
-  
+
   return selectedBookmark;
 }
 
 /**
  * 从 chrome 中删除书签
+ * 目录（无 url）必须用 removeTree，非空目录用 remove 会失败
+ * 纵深防御：根节点及其直接子节点（书签栏/其他书签等系统目录）直接拒绝删除，
+ * 不调用 remove/removeTree（根 id 从 getTree 结果取，兼容 Firefox 的 GUID 根）
  */
-export function removeBookmark(
-  bm: Bookmark,
-  cb?: () => void
-): void {
-  if (bm.id) {
-    chrome.bookmarks.remove(bm.id, () => cb?.());
+export function removeBookmark(bm: Bookmark, cb?: (success: boolean) => void): void {
+  if (!bm.id) {
+    cb?.(false);
+    return;
   }
+  chrome.bookmarks.getTree(tree => {
+    if (chrome.runtime.lastError) {
+      console.error('removeBookmark getTree failed:', chrome.runtime.lastError.message);
+      cb?.(false);
+      return;
+    }
+    const rootId = tree[0]?.id;
+    if (rootId && (bm.id === rootId || bm.parentId === rootId)) {
+      cb?.(false);
+      return;
+    }
+    const remove = bm.url ? chrome.bookmarks.remove : chrome.bookmarks.removeTree;
+    remove(bm.id, () => {
+      if (chrome.runtime.lastError) {
+        console.error('removeBookmark failed:', chrome.runtime.lastError.message);
+        cb?.(false);
+        return;
+      }
+      cb?.(true);
+    });
+  });
 }
 
 /**
@@ -129,7 +147,7 @@ export function addWaitingBookmark(bm: Bookmark): void {
 export function removeWaitingBookmark(bm: Bookmark): void {
   const store = useStore.getState();
   const bookmarks = [...store.waitingBookmarks];
-  const i = bookmarks.findIndex((b) => bm.id === b.id);
+  const i = bookmarks.findIndex(b => bm.id === b.id);
   if (i !== -1) {
     bookmarks.splice(i, 1);
     store.updateWaitingBookmarks(bookmarks);
@@ -149,7 +167,7 @@ export function addBlockedBookmark(bm: Bookmark): void {
 export function removeBlockedBookmark(bm: Bookmark): void {
   const store = useStore.getState();
   const bookmarks = [...store.blockedBookmarks];
-  const i = bookmarks.findIndex((b) => bm.id === b.id);
+  const i = bookmarks.findIndex(b => bm.id === b.id);
   if (i !== -1) {
     bookmarks.splice(i, 1);
     store.updateBlockedBookmarks(bookmarks);
@@ -164,15 +182,11 @@ export function getBookmarksFromChrome(): void {
   // 只在运行时执行，构建时跳过
   try {
     // 检查是否在构建时（通过检查 chrome.bookmarks.getTree 是否可用）
-    if (
-      typeof chrome === 'undefined' ||
-      !chrome.bookmarks ||
-      typeof chrome.bookmarks.getTree !== 'function'
-    ) {
+    if (typeof chrome === 'undefined' || !chrome.bookmarks || typeof chrome.bookmarks.getTree !== 'function') {
       return;
     }
-    
-    chrome.bookmarks.getTree((bookmarks) => {
+
+    chrome.bookmarks.getTree(bookmarks => {
       console.log('getBookmarksFromChrome: 获取书签树', bookmarks);
       // Chrome 书签树结构：
       // - 根节点 id='0' 包含所有书签
@@ -180,20 +194,26 @@ export function getBookmarksFromChrome(): void {
       // - 第二个子节点 id='2' 是"其他书签"（Other Bookmarks）
       // 我们只获取书签栏的书签
       if (bookmarks && bookmarks.length > 0 && bookmarks[0].children) {
-        console.log('根节点子节点:', bookmarks[0].children.map((n) => ({ id: n.id, title: n.title })));
-        const bookmarkBar = bookmarks[0].children.find((node) => node.id === '1');
+        console.log(
+          '根节点子节点:',
+          bookmarks[0].children.map(n => ({ id: n.id, title: n.title }))
+        );
+        const bookmarkBar = bookmarks[0].children.find(node => node.id === '1');
         if (bookmarkBar) {
           console.log('找到书签栏，开始处理:', bookmarkBar);
           changeTreeNodeToList([bookmarkBar]);
-          
+
           // 过滤掉屏蔽列表中的书签
           const store = useStore.getState();
-          const blockedIds = new Set(store.blockedBookmarks.map((b) => b.id));
-          const filteredBookmarks = tmpBookmarks.filter((bm) => !blockedIds.has(bm.id));
-          
+          const blockedIds = new Set(store.blockedBookmarks.map(b => b.id));
+          const filteredBookmarks = tmpBookmarks.filter(bm => !blockedIds.has(bm.id));
+
           console.log(`获取到 ${tmpBookmarks.length} 个书签，过滤后剩余 ${filteredBookmarks.length} 个`);
           if (filteredBookmarks.length > 0) {
-            console.log('前3个书签:', filteredBookmarks.slice(0, 3).map((b) => ({ id: b.id, title: b.title })));
+            console.log(
+              '前3个书签:',
+              filteredBookmarks.slice(0, 3).map(b => ({ id: b.id, title: b.title }))
+            );
           }
           useStore.getState().updateWaitingBookmarks(filteredBookmarks);
           tmpBookmarks = [];
@@ -206,8 +226,8 @@ export function getBookmarksFromChrome(): void {
             console.log('使用第一个子节点作为书签栏:', firstChild);
             changeTreeNodeToList([firstChild]);
             const store = useStore.getState();
-            const blockedIds = new Set(store.blockedBookmarks.map((b) => b.id));
-            const filteredBookmarks = tmpBookmarks.filter((bm) => !blockedIds.has(bm.id));
+            const blockedIds = new Set(store.blockedBookmarks.map(b => b.id));
+            const filteredBookmarks = tmpBookmarks.filter(bm => !blockedIds.has(bm.id));
             console.log(`获取到 ${tmpBookmarks.length} 个书签，过滤后剩余 ${filteredBookmarks.length} 个`);
             useStore.getState().updateWaitingBookmarks(filteredBookmarks);
             tmpBookmarks = [];
@@ -232,9 +252,7 @@ export function getBookmarksFromChrome(): void {
 /**
  * 把树形数据转成列表数据
  */
-function changeTreeNodeToList(
-  nodes: chrome.bookmarks.BookmarkTreeNode[]
-): void {
+function changeTreeNodeToList(nodes: chrome.bookmarks.BookmarkTreeNode[]): void {
   for (const node of nodes) {
     if (node.children) {
       changeTreeNodeToList(node.children);
@@ -255,10 +273,13 @@ function changeTreeNodeToList(
 /**
  * 获取所有书签目录
  */
-export function getBookmarkMenu(
-  cb: (menu: BookmarkMenuNode[]) => void
-): void {
-  chrome.bookmarks.getTree((bookmarks) => {
+export function getBookmarkMenu(cb: (menu: BookmarkMenuNode[]) => void): void {
+  chrome.bookmarks.getTree(bookmarks => {
+    if (chrome.runtime.lastError) {
+      console.error('getBookmarkMenu failed:', chrome.runtime.lastError.message);
+      cb([]);
+      return;
+    }
     cb(menuTreeNode(bookmarks));
   });
 }
@@ -266,18 +287,13 @@ export function getBookmarkMenu(
 /**
  * 将书签树转换为菜单树
  */
-function menuTreeNode(
-  nodes: chrome.bookmarks.BookmarkTreeNode[]
-): BookmarkMenuNode[] {
+function menuTreeNode(nodes: chrome.bookmarks.BookmarkTreeNode[]): BookmarkMenuNode[] {
   const tmp: BookmarkMenuNode[] = [];
   for (const node of nodes) {
     if (node.children) {
       const tmpBM: BookmarkMenuNode = {
         id: node.id,
-        label:
-          node.id === '0'
-            ? chrome.i18n.getMessage('all_bookmarks')
-            : node.title,
+        label: node.id === '0' ? chrome.i18n.getMessage('all_bookmarks') : node.title,
         children: menuTreeNode(node.children),
       };
       tmp.push(tmpBM);
@@ -289,21 +305,22 @@ function menuTreeNode(
 /**
  * 获取书签目录下内容
  */
-export function getBookmarkChildren(
-  id: string,
-  cb: (bookmarks: chrome.bookmarks.BookmarkTreeNode[]) => void
-): void {
-  chrome.bookmarks.getChildren(id, cb);
+export function getBookmarkChildren(id: string, cb: (bookmarks: chrome.bookmarks.BookmarkTreeNode[]) => void): void {
+  chrome.bookmarks.getChildren(id, bookmarks => {
+    if (chrome.runtime.lastError) {
+      console.error('getBookmarkChildren failed:', chrome.runtime.lastError.message);
+      cb([]);
+      return;
+    }
+    cb(bookmarks || []);
+  });
 }
 
 /**
  * 获取书签目录路径
  */
-export function getBookmarkBreadcrumb(
-  id: string,
-  cb: (breadcrumb: chrome.bookmarks.BookmarkTreeNode[]) => void
-): void {
-  chrome.bookmarks.get(id, (bms) => {
+export function getBookmarkBreadcrumb(id: string, cb: (breadcrumb: chrome.bookmarks.BookmarkTreeNode[]) => void): void {
+  chrome.bookmarks.get(id, bms => {
     if (bms.length > 0) {
       tmpBreadcrumb.push(bms[0]);
       if (bms[0].parentId === '0') {
@@ -319,42 +336,45 @@ export function getBookmarkBreadcrumb(
 /**
  * 更新书签
  */
-export function updateBookmark(
-  data: BookmarkUpdateData,
-  cb: (result: string) => void
-): void {
-  chrome.bookmarks.update(
-    data.id,
-    {
-      title: data.title,
-      url: data.url,
-    },
-    () => {
-      if (data.parentId !== null && data.parentId !== undefined) {
-        chrome.bookmarks.move(
-          data.id,
-          {
-            parentId: data.parentId,
-          },
-          () => {
-            cb('success');
-          }
-        );
-      } else {
-        cb('success');
-      }
+export function updateBookmark(data: BookmarkUpdateData, cb: (result: string) => void): void {
+  // url 为 null/''（文件夹或未填写）时不能传给 bookmarks.update：
+  // Chrome 会静默忽略，Firefox 会抛 "Expected string instead of null"
+  const changes: chrome.bookmarks.UpdateChanges = { title: data.title };
+  if (data.url) {
+    changes.url = data.url;
+  }
+  chrome.bookmarks.update(data.id, changes, () => {
+    if (chrome.runtime.lastError) {
+      console.error('updateBookmark failed:', chrome.runtime.lastError.message);
+      cb('error');
+      return;
     }
-  );
+    if (data.parentId) {
+      const destination: chrome.bookmarks.MoveDestination = {
+        parentId: data.parentId,
+      };
+      if (typeof data.index === 'number') {
+        destination.index = data.index;
+      }
+      chrome.bookmarks.move(data.id, destination, () => {
+        if (chrome.runtime.lastError) {
+          console.error('updateBookmark move failed:', chrome.runtime.lastError.message);
+          cb('error');
+          return;
+        }
+        cb('success');
+      });
+    } else {
+      cb('success');
+    }
+  });
 }
 
 /**
  * 根据id获取书签
  */
-export function getBookmarkById(
-  id: string,
-  cb: (bookmark: chrome.bookmarks.BookmarkTreeNode | null) => void
-): void {
-  chrome.bookmarks.get(id, (bookmarks) => {
+export function getBookmarkById(id: string, cb: (bookmark: chrome.bookmarks.BookmarkTreeNode | null) => void): void {
+  chrome.bookmarks.get(id, bookmarks => {
     if (bookmarks.length === 0) {
       cb(null);
     } else {
@@ -366,19 +386,21 @@ export function getBookmarkById(
 /**
  * 创建书签
  */
-export function createBookmark(
-  data: chrome.bookmarks.CreateDetails,
-  cb?: (result: chrome.bookmarks.BookmarkTreeNode) => void
-): void {
-  chrome.bookmarks.create(data, (result) => cb?.(result));
+export function createBookmark(data: chrome.bookmarks.CreateDetails, cb?: (result: chrome.bookmarks.BookmarkTreeNode | null) => void): void {
+  chrome.bookmarks.create(data, result => {
+    if (chrome.runtime.lastError || !result) {
+      console.error('createBookmark failed:', chrome.runtime.lastError?.message);
+      cb?.(null);
+      return;
+    }
+    cb?.(result);
+  });
 }
 
 /**
  * 获取屏蔽列表
  */
-export function getBlockList(
-  cb: (blockedBookmarks: Bookmark[]) => void
-): void {
+export function getBlockList(cb: (blockedBookmarks: Bookmark[]) => void): void {
   const store = useStore.getState();
   cb(store.blockedBookmarks);
 }
@@ -389,4 +411,3 @@ export function getBlockList(
 export function clearBlockList(): void {
   useStore.getState().updateBlockedBookmarks([]);
 }
-
