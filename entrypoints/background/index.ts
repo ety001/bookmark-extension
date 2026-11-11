@@ -23,16 +23,15 @@ interface Response {
 
 const debug = import.meta.env.DEV;
 
-// 获取浏览器类型（使用函数延迟初始化，避免构建时错误）
+// 获取浏览器类型（Service Worker 中通过 UserAgent 判断）
+// 修复：v4.0.0 重构后此函数始终返回 'chrome'，导致 Edge 上
+// isEdge() 永远为 false，edge://newtab/ 新标签页接管失效
 function getBrowserName(): string {
   try {
-    // 在 Service Worker 中，使用 chrome 对象
-    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
-      const manifest = chrome.runtime.getManifest();
-      // 根据 manifest 或其他方式判断浏览器类型
-      // 这里简化处理，默认返回 chrome
-      return 'chrome';
-    }
+    if (typeof navigator === 'undefined') return 'chrome';
+    const ua = navigator.userAgent;
+    if (ua.includes('Firefox')) return 'firefox';
+    if (ua.includes('Edg/')) return 'edge'; // Edge UA 含 "Edg/157.0.0.0"，需在 Chrome 判断之前
     return 'chrome';
   } catch {
     return 'chrome';
@@ -77,7 +76,18 @@ async function getUid(): Promise<string> {
 }
 
 // Google Analytics 4
-let currentVersion = '4_0_3';
+// 版本号从 manifest 读取，避免硬编码过时（此前停留在 4_0_3）
+function getVersionFromManifest(): string {
+  try {
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getManifest) {
+      return chrome.runtime.getManifest().version.replace(/\./g, '_');
+    }
+  } catch {
+    // 构建时等场景下忽略
+  }
+  return 'unknown';
+}
+let currentVersion = getVersionFromManifest();
 if (isChrome()) {
   currentVersion = `chrome_${currentVersion}`;
 } else if (isFirefox()) {
