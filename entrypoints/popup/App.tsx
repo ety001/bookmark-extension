@@ -209,7 +209,7 @@ export default function App() {
 
   const handleBlockManager = () => {
     const baseUrl = chrome.runtime.getURL('block-manager.html');
-    window.open(baseUrl);
+    window.open(baseUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleResetConfig = () => {

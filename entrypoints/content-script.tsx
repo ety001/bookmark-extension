@@ -47,6 +47,11 @@ function App() {
   const [autoCloseDelay, setAutoCloseDelay] = useState<number>(30);
 
   const handleClose = useCallback(() => {
+    // 关闭通知时一并关闭可能仍打开的确认框，避免全屏 overlay 滞留遮挡页面
+    // （确认框开着时点通知 × 关掉通知的场景）；倒计时暂停机制保证此处
+    // 不会与打开的确认框产生竞态。
+    setBlockDialogOpen(false);
+    setRemoveDialogOpen(false);
     if (notificationContainer) {
       notificationContainer.style.display = 'none';
       if (notificationRoot) {
