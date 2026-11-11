@@ -160,5 +160,34 @@
   },
   "auto_close_delay": {
     "message": "Auto Close Delay (seconds)"
+  },
+  "folder_name": {
+    "message": "Folder Name"
+  },
+  "create": {
+    "message": "Create"
+  },
+  "confirm_clear_block_list": {
+    "message": "Are you sure you want to clear the block list?"
+  },
+  "close": {
+    "message": "Close"
+  },
+  "block": {
+    "message": "Block"
+  },
+  "edit": {
+    "message": "Edit"
+  },
+  "remove": {
+    "message": "Delete"
+  },
+  "seconds_to_close": {
+    "message": "Closing in $COUNTDOWN$s",
+    "placeholders": {
+      "countdown": {
+        "content": "$1"
+      }
+    }
   }
 }
