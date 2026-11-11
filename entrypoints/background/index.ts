@@ -316,8 +316,8 @@ export default defineBackground(() => {
           getUid().then(uid => {
             sendEvent(currentVersion, 'remove_bookmark', uid);
           });
-          BookmarkLib.removeBookmark(cdata, () => {
-            sendResponse({ ctype, cdata: true });
+          BookmarkLib.removeBookmark(cdata, success => {
+            sendResponse({ ctype, cdata: success });
           });
           return true;
 
@@ -325,8 +325,8 @@ export default defineBackground(() => {
           getUid().then(uid => {
             sendEvent(currentVersion, 'update_bookmark', uid);
           });
-          BookmarkLib.updateBookmark(cdata, () => {
-            sendResponse({ ctype, cdata: true });
+          BookmarkLib.updateBookmark(cdata, result => {
+            sendResponse({ ctype, cdata: result === 'success' });
           });
           return true;
 
@@ -402,8 +402,8 @@ export default defineBackground(() => {
           getUid().then(uid => {
             sendEvent(currentVersion, 'create_bookmark_folder', uid);
           });
-          BookmarkLib.createBookmark(cdata, () => {
-            sendResponse({ ctype, cdata: true });
+          BookmarkLib.createBookmark(cdata, result => {
+            sendResponse({ ctype, cdata: !!result });
           });
           return true;
 

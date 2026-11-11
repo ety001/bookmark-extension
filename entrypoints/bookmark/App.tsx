@@ -3,14 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { BookmarkTree } from '../../components/BookmarkTree';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../../components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,6 +62,8 @@ export default function App() {
   const topRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const currentRequestIdRef = useRef<string | null>(null);
+  // 编辑弹窗打开时预设的初始父目录 id，用于判断用户是否实际改动了目录
+  const initialParentIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     document.title = getMessage('appname');
@@ -109,45 +104,44 @@ export default function App() {
 
   const getBookmarkMenu = () => {
     setLoading(true);
-    chrome.runtime.sendMessage(
-      { ctype: 'getbookmark_menu', cdata: false },
-      (response) => {
-        if (response && response.cdata) {
-          setMenu(response.cdata);
-          setLoading(false);
-          // 移除这里的 getBookmarkChildren 调用，因为 useEffect 会处理
-        }
+    chrome.runtime.sendMessage({ ctype: 'getbookmark_menu', cdata: false }, response => {
+      if (response && response.cdata) {
+        setMenu(response.cdata);
+        // 移除这里的 getBookmarkChildren 调用，因为 useEffect 会处理
       }
-    );
+      // 所有回调路径都要解除 Loading，避免 response 为 undefined（SW 重启/lastError）时永久卡死
+      setLoading(false);
+    });
   };
 
   const getBookmarkChildren = (id: string, requestId: string) => {
     const targetId = id === '0' ? '0' : id;
     // 在请求开始时获取当前的 bid，避免闭包问题
     const currentBid = searchParams.get('bid') || '0';
-    chrome.runtime.sendMessage(
-      { ctype: 'getbookmark_children', cdata: targetId },
-      (response) => {
-        // 检查这个响应是否对应最新的请求
-        if (currentRequestIdRef.current !== requestId) {
-          return; // 忽略过期的响应
-        }
-        if (response && response.cdata) {
-          const items: BookmarkItem[] = response.cdata.map((item: chrome.bookmarks.BookmarkTreeNode) => ({
-            ...item,
-            url: item.url || null,
-          }));
-          setBookmarks(items);
-          // 使用请求时的 bid 值
-          if (currentBid && currentBid !== '0') {
-            setSearch(currentBid);
-          } else {
-            setSearch(null);
-          }
-          getBreadcrumb(targetId);
-        }
+    chrome.runtime.sendMessage({ ctype: 'getbookmark_children', cdata: targetId }, response => {
+      // 检查这个响应是否对应最新的请求
+      if (currentRequestIdRef.current !== requestId) {
+        return; // 忽略过期的响应
       }
-    );
+      if (response && response.cdata) {
+        const items: BookmarkItem[] = response.cdata.map((item: chrome.bookmarks.BookmarkTreeNode) => ({
+          ...item,
+          url: item.url || null,
+        }));
+        setBookmarks(items);
+        // 使用请求时的 bid 值
+        if (currentBid && currentBid !== '0') {
+          setSearch(currentBid);
+        } else {
+          setSearch(null);
+        }
+        getBreadcrumb(targetId);
+      } else {
+        setBookmarks([]);
+      }
+      // 所有回调路径都要解除 Loading，避免 response 为 undefined（SW 重启/lastError）时永久卡死
+      setLoading(false);
+    });
   };
 
   const getBreadcrumb = (id: string) => {
@@ -155,14 +149,11 @@ export default function App() {
       setBreadcrumb([]);
       return;
     }
-    chrome.runtime.sendMessage(
-      { ctype: 'getbookmark_breadcrumb', cdata: id },
-      (response) => {
-        if (response && response.cdata) {
-          setBreadcrumb(response.cdata);
-        }
+    chrome.runtime.sendMessage({ ctype: 'getbookmark_breadcrumb', cdata: id }, response => {
+      if (response && response.cdata) {
+        setBreadcrumb(response.cdata);
       }
-    );
+    });
   };
 
   const handleNodeClick = (node: BookmarkMenuNode) => {
@@ -182,26 +173,26 @@ export default function App() {
   };
 
   const handleEdit = (item: BookmarkItem) => {
-    chrome.runtime.sendMessage(
-      { ctype: 'getbookmark_byid', cdata: { id: item.id, action: 'edit_open' } },
-      (response) => {
-        if (response && response.cdata && response.cdata.bookmark) {
-          const bookmark = response.cdata.bookmark;
-          setBookmarkData({
-            id: bookmark.id,
-            title: bookmark.title,
-            url: bookmark.url || null,
+    chrome.runtime.sendMessage({ ctype: 'getbookmark_byid', cdata: { id: item.id, action: 'edit_open' } }, response => {
+      if (response && response.cdata && response.cdata.bookmark) {
+        const bookmark = response.cdata.bookmark;
+        setBookmarkData({
+          id: bookmark.id,
+          title: bookmark.title,
+          url: bookmark.url || null,
+        });
+        if (bookmark.parent) {
+          initialParentIdRef.current = bookmark.parent.id;
+          setMenuSelector({
+            id: bookmark.parent.id,
+            label: bookmark.parent.title,
           });
-          if (bookmark.parent) {
-            setMenuSelector({
-              id: bookmark.parent.id,
-              label: bookmark.parent.title,
-            });
-          }
-          setDialogFormVisible(true);
+        } else {
+          initialParentIdRef.current = null;
         }
+        setDialogFormVisible(true);
       }
-    );
+    });
   };
 
   const handleRemove = (item: BookmarkItem) => {
@@ -211,21 +202,23 @@ export default function App() {
 
   const confirmRemove = () => {
     if (!itemToRemove) return;
-    chrome.runtime.sendMessage(
-      { ctype: 'remove_bookmark', cdata: itemToRemove },
-      (response) => {
-        if (response && response.cdata) {
-          toast({
-            variant: 'success',
-            title: getMessage('success'),
-          });
-          // 重新加载当前目录的内容
-          const requestId = `${pid}-${Date.now()}`;
-          currentRequestIdRef.current = requestId;
-          getBookmarkChildren(pid, requestId);
-        }
+    chrome.runtime.sendMessage({ ctype: 'remove_bookmark', cdata: itemToRemove }, response => {
+      if (response && response.cdata) {
+        toast({
+          variant: 'success',
+          title: getMessage('success'),
+        });
+        // 重新加载当前目录的内容
+        const requestId = `${pid}-${Date.now()}`;
+        currentRequestIdRef.current = requestId;
+        getBookmarkChildren(pid, requestId);
+      } else {
+        toast({
+          variant: 'error',
+          title: getMessage('save_failed'),
+        });
       }
-    );
+    });
     setRemoveDialogOpen(false);
     setItemToRemove(null);
   };
@@ -240,6 +233,8 @@ export default function App() {
   const handleConfirmDialog = () => {
     if (!bookmarkData.id) return;
     setSaving(true);
+    // 仅在用户实际改动了目录时才带 parentId，避免仅改标题也触发 move 挪到目录末尾
+    const parentId = menuSelector?.id && menuSelector.id !== initialParentIdRef.current ? menuSelector.id : null;
     chrome.runtime.sendMessage(
       {
         ctype: 'update_bookmark',
@@ -247,11 +242,11 @@ export default function App() {
           id: bookmarkData.id,
           title: bookmarkData.title,
           url: bookmarkData.url,
-          parentId: menuSelector?.id || null,
-          index: 0,
+          parentId,
         },
       },
-      (response) => {
+      response => {
+        setSaving(false);
         if (response && response.cdata) {
           toast({
             variant: 'success',
@@ -259,61 +254,64 @@ export default function App() {
           });
           getBookmarkMenu();
           setMenuSelector(null);
-          setSaving(false);
           setDialogFormVisible(false);
+          // 重新加载当前目录的内容与面包屑（带 requestId 防竞态）
+          const requestId = `${pid}-${Date.now()}`;
+          currentRequestIdRef.current = requestId;
+          getBookmarkChildren(pid, requestId);
+        } else {
+          toast({
+            variant: 'error',
+            title: getMessage('save_failed'),
+          });
         }
       }
     );
   };
 
   const handleOpenCreateFolder = () => {
-    setBookmarkFolder({ parentId: pid, title: null });
+    // 根节点 '0' 下不能创建目录，默认落到书签栏 '1'
+    setBookmarkFolder({ parentId: pid === '0' ? '1' : pid, title: null });
     setDialogAddFolderFormVisible(true);
   };
 
   const handleCreateFolder = () => {
     if (!bookmarkFolder.title) return;
-    chrome.runtime.sendMessage(
-      { ctype: 'create_bookmark_folder', cdata: bookmarkFolder },
-      (response) => {
-        if (response && response.cdata) {
-          toast({
-            variant: 'success',
-            title: getMessage('success'),
-          });
-          getBookmarkMenu();
-          setDialogAddFolderFormVisible(false);
-          setBookmarkFolder({ parentId: null, title: null });
-        }
+    chrome.runtime.sendMessage({ ctype: 'create_bookmark_folder', cdata: bookmarkFolder }, response => {
+      if (response && response.cdata) {
+        toast({
+          variant: 'success',
+          title: getMessage('success'),
+        });
+        getBookmarkMenu();
+        setDialogAddFolderFormVisible(false);
+        setBookmarkFolder({ parentId: null, title: null });
+      } else {
+        toast({
+          variant: 'error',
+          title: getMessage('save_failed'),
+        });
       }
-    );
+    });
   };
 
   const handleFormNodeClick = (node: BookmarkMenuNode) => {
     setMenuSelector({ id: node.id, label: node.label });
   };
 
-  const filteredBookmarks = bookmarks?.filter(
-    (item) => !search || item.id.includes(search)
-  ) || [];
+  // 编辑弹窗的目录树过滤掉根节点 '0'（move 到根是非法操作），直接渲染其 children
+  const menuTreeRoot = menu.find(node => node.id === '0');
+  const folderSelectorData = menuTreeRoot?.children || menu;
+
+  const filteredBookmarks = bookmarks?.filter(item => !search || item.id === search) || [];
 
   return (
     <div className="h-screen flex flex-col">
-      <div
-        ref={topRef}
-        className="bg-primary text-white py-3"
-      >
+      <div ref={topRef} className="bg-primary text-white py-3">
         <div className="flex items-center justify-between px-10">
-          <div className="text-[22px] font-extrabold pl-10">
-            {getMessage('appname')}
-          </div>
+          <div className="text-[22px] font-extrabold pl-10">{getMessage('appname')}</div>
           <div className="flex gap-4 text-right">
-            <a
-              href="https://akawa.ink/donate"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-white font-medium hover:opacity-80 hover:underline transition-all"
-            >
+            <a href="https://akawa.ink/donate" target="_blank" rel="noopener noreferrer" className="text-sm text-white font-medium hover:opacity-80 hover:underline transition-all">
               {getMessage('donate')}
             </a>
             <a
@@ -344,39 +342,22 @@ export default function App() {
           </div>
         )}
 
-        <aside
-          ref={menuRef}
-          className="w-[300px] overflow-y-auto pt-2 bg-bg-gray"
-          style={{ height: `${height}px` }}
-        >
-          <BookmarkTree
-            data={menu}
-            selectedId={selectedMenuId}
-            onNodeClick={handleNodeClick}
-          />
+        <aside ref={menuRef} className="w-[300px] overflow-y-auto pt-2 bg-bg-gray" style={{ height: `${height}px` }}>
+          <BookmarkTree data={menu} selectedId={selectedMenuId} onNodeClick={handleNodeClick} />
         </aside>
 
-        <main
-          className="flex-1 overflow-y-auto p-4 bg-bg-gray"
-          style={{ height: `${height}px` }}
-        >
+        <main className="flex-1 overflow-y-auto p-4 bg-bg-gray" style={{ height: `${height}px` }}>
           <div className="max-w-5xl mx-auto">
             {breadcrumb.length > 0 && (
               <div className="mb-2.5">
                 <nav className="flex items-center gap-1 text-sm">
-                  <button
-                    onClick={() => navigate('/?pid=0')}
-                    className="text-primary hover:underline"
-                  >
+                  <button onClick={() => navigate('/?pid=0')} className="text-primary hover:underline">
                     {getMessage('all_bookmarks')}
                   </button>
                   {breadcrumb.map((bc, idx) => (
                     <React.Fragment key={bc.id}>
                       <span>/</span>
-                      <button
-                        onClick={() => navigate(`/?pid=${bc.id}`)}
-                        className="text-primary hover:underline"
-                      >
+                      <button onClick={() => navigate(`/?pid=${bc.id}`)} className="text-primary hover:underline">
                         {bc.title}
                       </button>
                     </React.Fragment>
@@ -386,12 +367,7 @@ export default function App() {
             )}
 
             <div className="mb-2.5 text-right">
-              <Button
-                variant="primary"
-                size="mini"
-                onClick={handleOpenCreateFolder}
-                className="rounded-full"
-              >
+              <Button variant="primary" size="mini" onClick={handleOpenCreateFolder} className="rounded-full">
                 {getMessage('add_folder')}
               </Button>
             </div>
@@ -409,51 +385,21 @@ export default function App() {
             )}
 
             {filteredBookmarks.length === 0 ? (
-              <div className="text-center text-gray-500 py-8">
-                {getMessage('no_bookmark')}
-              </div>
+              <div className="text-center text-gray-500 py-8">{getMessage('no_bookmark')}</div>
             ) : (
               <div className="space-y-2">
-                {filteredBookmarks.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-2 hover:bg-gray-50 rounded"
-                  >
-                    <div
-                      className="flex-1 cursor-pointer min-w-0"
-                      onClick={() => handleVisit(item)}
-                    >
+                {filteredBookmarks.map(item => (
+                  <div key={item.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                    <div className="flex-1 cursor-pointer min-w-0" onClick={() => handleVisit(item)}>
                       <div className="flex items-center gap-2">
-                        {item.url ? (
-                          <Tag className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                        ) : (
-                          <Folder className="w-4 h-4 text-gray-600 flex-shrink-0" />
-                        )}
+                        {item.url ? <Tag className="w-4 h-4 text-gray-600 flex-shrink-0" /> : <Folder className="w-4 h-4 text-gray-600 flex-shrink-0" />}
                         <span className="text-sm font-semibold truncate">{item.title}</span>
                       </div>
-                      {item.url && (
-                        <div className="text-xs text-gray-500 mt-1 ml-6 line-clamp-2 max-w-full">
-                          {item.url}
-                        </div>
-                      )}
+                      {item.url && <div className="text-xs text-gray-500 mt-1 ml-6 line-clamp-2 max-w-full">{item.url}</div>}
                     </div>
                     <div className="flex gap-2">
-                      <Button
-                        variant="primary"
-                        size="mini"
-                        circle
-                        plain
-                        onClick={() => handleEdit(item)}
-                        icon={<Edit className="w-3 h-3" />}
-                      />
-                      <Button
-                        variant="danger"
-                        size="mini"
-                        circle
-                        plain
-                        onClick={() => handleRemove(item)}
-                        icon={<Trash2 className="w-3 h-3" />}
-                      />
+                      <Button variant="primary" size="mini" circle plain onClick={() => handleEdit(item)} icon={<Edit className="w-3 h-3" />} />
+                      <Button variant="danger" size="mini" circle plain onClick={() => handleRemove(item)} icon={<Trash2 className="w-3 h-3" />} />
                     </div>
                   </div>
                 ))}
@@ -474,44 +420,22 @@ export default function App() {
             <>
               <div className="space-y-4 py-4">
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    {getMessage('title')}
-                  </label>
-                  <Input
-                    value={bookmarkData.title || ''}
-                    onChange={(e) =>
-                      setBookmarkData({ ...bookmarkData, title: e.target.value })
-                    }
-                  />
+                  <label className="text-sm font-medium mb-2 block">{getMessage('title')}</label>
+                  <Input value={bookmarkData.title || ''} onChange={e => setBookmarkData({ ...bookmarkData, title: e.target.value })} />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    {getMessage('url')}
-                  </label>
-                  <Input
-                    value={bookmarkData.url || ''}
-                    onChange={(e) =>
-                      setBookmarkData({ ...bookmarkData, url: e.target.value })
-                    }
-                  />
+                  <label className="text-sm font-medium mb-2 block">{getMessage('url')}</label>
+                  <Input value={bookmarkData.url || ''} onChange={e => setBookmarkData({ ...bookmarkData, url: e.target.value })} />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    {getMessage('save_at')}
-                  </label>
+                  <label className="text-sm font-medium mb-2 block">{getMessage('save_at')}</label>
                   {menuSelector && (
                     <div className="mb-3">
-                      <span className="px-2 py-1 bg-gray-200 rounded text-sm">
-                        {menuSelector.label}
-                      </span>
+                      <span className="px-2 py-1 bg-gray-200 rounded text-sm">{menuSelector.label}</span>
                     </div>
                   )}
                   <div className="border rounded p-2 max-h-[200px] overflow-y-auto">
-                    <BookmarkTree
-                      data={menu}
-                      selectedId={menuSelector?.id}
-                      onNodeClick={handleFormNodeClick}
-                    />
+                    <BookmarkTree data={folderSelectorData} selectedId={menuSelector?.id} onNodeClick={handleFormNodeClick} />
                   </div>
                 </div>
               </div>
@@ -528,10 +452,7 @@ export default function App() {
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={dialogAddFolderFormVisible}
-        onOpenChange={setDialogAddFolderFormVisible}
-      >
+      <Dialog open={dialogAddFolderFormVisible} onOpenChange={setDialogAddFolderFormVisible}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{getMessage('add_folder')}</DialogTitle>
@@ -539,12 +460,7 @@ export default function App() {
           <div className="space-y-4 py-4">
             <div>
               <label className="text-sm font-medium mb-2 block">目录名</label>
-              <Input
-                value={bookmarkFolder.title || ''}
-                onChange={(e) =>
-                  setBookmarkFolder({ ...bookmarkFolder, title: e.target.value })
-                }
-              />
+              <Input value={bookmarkFolder.title || ''} onChange={e => setBookmarkFolder({ ...bookmarkFolder, title: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
@@ -559,19 +475,14 @@ export default function App() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{getMessage('notification')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {getMessage('confirm_remove_info')}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{getMessage('confirm_remove_info')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{getMessage('cancel_btn')}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmRemove}>
-              {getMessage('confirm_btn')}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmRemove}>{getMessage('confirm_btn')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
   );
 }
-
