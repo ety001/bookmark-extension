@@ -95,42 +95,25 @@ function migrateOldData(): Partial<StoreState> | null {
 }
 
 /**
+ * Store 恢复（rehydration）就绪 Promise
+ * 在 Service Worker 中，persist 从 chrome.storage.local 的恢复是异步的，
+ * 冷启动后首个事件若直接读 useStore.getState() 只能拿到默认值
+ * （mini=false/status=true），会误判开关状态。
+ * 该 Promise 在 persist 的 onRehydrateStorage 完成回调中 resolve：
+ * 有存储数据、无存储数据（首次安装）、恢复出错三种情况都会 resolve，
+ * 否则冷启动时调用方会永久挂起。
+ */
+let resolveStoreRehydration: () => void;
+export const storeRehydrationPromise: Promise<void> = new Promise<void>(resolve => {
+  resolveStoreRehydration = resolve;
+});
+
+/**
  * 等待 Store 恢复完成
  * 在 Service Worker 中，persist 的恢复是异步的，需要等待恢复完成
  */
 export async function waitForStoreRehydration(): Promise<void> {
-  // 在 Service Worker 中，直接检查 chrome.storage.local 是否有数据
-  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    return new Promise(resolve => {
-      chrome.storage.local.get('bookmark-extension-storage', result => {
-        if (chrome.runtime.lastError) {
-          console.error('[Store] Error checking storage:', chrome.runtime.lastError);
-          resolve(); // 即使出错也继续，使用默认值
-        } else {
-          // 如果有存储的数据，等待一小段时间让 persist 恢复
-          if (result['bookmark-extension-storage']) {
-            console.log('[Store] Found stored data, waiting for rehydration...');
-            // 等待最多 1 秒让 persist 恢复
-            const startTime = Date.now();
-            const checkInterval = setInterval(() => {
-              const state = useStore.getState();
-              // 检查配置是否已恢复（不是默认值，或者有书签数据）
-              if (state.config.autoClose !== undefined || state.waitingBookmarks.length > 0 || Date.now() - startTime > 1000) {
-                clearInterval(checkInterval);
-                console.log('[Store] Rehydration check complete');
-                resolve();
-              }
-            }, 50);
-          } else {
-            console.log('[Store] No stored data found');
-            resolve();
-          }
-        }
-      });
-    });
-  }
-  // 非 Service Worker 环境，直接返回
-  return Promise.resolve();
+  await storeRehydrationPromise;
 }
 
 /**
@@ -206,6 +189,9 @@ export const useStore = create<StoreState>()(
         } else {
           console.log('[Store] No stored state found, using defaults');
         }
+        // 无论有/无存储数据、成功/失败，都标记 rehydration 完成，
+        // 让 waitForStoreRehydration 的等待方继续执行（出错时使用默认值）
+        resolveStoreRehydration();
       },
       storage: {
         getItem: async (name: string): Promise<string | null> => {

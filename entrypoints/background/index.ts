@@ -140,25 +140,97 @@ export default defineBackground(() => {
   // 检测新标签页，控制迷你和full版本
   // 只在运行时注册监听器，构建时跳过
   if (typeof chrome !== 'undefined' && chrome.tabs) {
-    chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-      const store = useStore.getState();
-      if (store.config.mini === true) return;
+    // 各浏览器新标签页地址（Chrome/Firefox/Edge），按 URL 统一匹配
+    const newTabUrls = new Set(['chrome://newtab/', 'edge://newtab/', 'about:newtab']);
+    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+      // 统一 loading 门：一次新标签页打开会触发多轮 onUpdated，
+      // 非 loading 轮次重复 tabs.update 会产生冗余导航/闪烁与极端竞态
+      if (changeInfo.status !== 'loading') return;
+      if (!tab.url || !newTabUrls.has(tab.url)) return;
 
-      if (isChrome() && changeInfo.status === 'loading') {
-        if (tab.url === 'chrome://newtab/') {
-          const url = chrome.runtime.getURL('tab.html');
-          chrome.tabs.update(tabId, { url });
-        }
-      }
-      if (isFirefox() && tab.url === 'about:newtab') {
-        const url = chrome.runtime.getURL('tab.html');
-        chrome.tabs.update(tabId, { url });
-      }
-      if (isEdge() && tab.url === 'edge://newtab/') {
-        const url = chrome.runtime.getURL('tab.html');
-        chrome.tabs.update(tabId, { url });
-      }
+      // SW 冷启动时 persist rehydration 是异步的，先等恢复完成再读配置，
+      // 否则拿到默认值（mini=false/status=true）会误重定向 mini 用户的新标签页
+      await waitForStoreRehydration();
+      const store = useStore.getState();
+      // mini 模式不接管；总开关 status 关闭时也不接管（避免重定向到 tab.html 后只看到"暂无书签"）
+      if (store.config.mini === true || store.config.status === false) return;
+
+      const url = chrome.runtime.getURL('tab.html');
+      chrome.tabs.update(tabId, { url });
     });
+  }
+
+  // SW 冷启动时 BookmarkLib.init 的全量加载可能尚未完成（waitingBookmarks 还是空的），
+  // 有限轮询等待就绪（10 次 × 100ms），超时后放弃等待，由调用方按空数据处理
+  function waitForBookmarksLoaded(maxAttempts: number = 10, intervalMs: number = 100): Promise<void> {
+    return new Promise(resolve => {
+      let attempts = 0;
+      const check = () => {
+        attempts++;
+        const store = useStore.getState();
+        if (store.waitingBookmarks.length > 0 || attempts >= maxAttempts) {
+          resolve();
+        } else {
+          setTimeout(check, intervalMs);
+        }
+      };
+      setTimeout(check, intervalMs);
+    });
+  }
+
+  // getbookmark_from_full：full 模式页面取书签
+  // SW 冷启动竞态：先等 rehydration 再读 config，否则可能拿到默认值误判 mini 开关；
+  // 书签未加载完时做有限重试，避免冷启动时直接回 null 导致 tab.html 显示"暂无书签"
+  async function handleGetBookmarkFromFull(ctype: string): Promise<Response> {
+    await waitForStoreRehydration();
+    const store = useStore.getState();
+    if (store.config.mini === true) {
+      console.log('full model closed');
+      return { ctype, cdata: null };
+    }
+
+    if (store.waitingBookmarks.length === 0) {
+      BookmarkLib.getBookmarksFromChrome();
+      await waitForBookmarksLoaded();
+    }
+
+    const bmForFull = BookmarkLib.getBookmark();
+    sendPageview('/full_mode_page');
+    getUid().then(uid => {
+      sendEvent(currentVersion, 'getbookmark_from_full', uid);
+    });
+    return { ctype, cdata: bmForFull };
+  }
+
+  // getbookmark_from_mini：mini 模式通知取书签
+  // SW 冷启动竞态：先等 rehydration 再读 config；书签未加载完时有限重试等待
+  async function handleGetBookmarkFromMini(ctype: string): Promise<Response> {
+    await waitForStoreRehydration();
+    const currentStore = useStore.getState();
+    if (currentStore.config.mini === false) {
+      return { ctype, cdata: null };
+    }
+
+    if (currentStore.waitingBookmarks.length === 0) {
+      BookmarkLib.getBookmarksFromChrome();
+      await waitForBookmarksLoaded();
+    }
+
+    const bmForMini = BookmarkLib.getBookmark();
+    if (!bmForMini) {
+      return { ctype, cdata: null };
+    }
+    sendPageview('/mini_mode_notification');
+    getUid().then(uid => {
+      sendEvent(currentVersion, 'getbookmark_from_mini', uid);
+    });
+    return {
+      ctype,
+      cdata: {
+        bookmark: bmForMini,
+        config: useStore.getState().config,
+      },
+    };
   }
 
   // 与前端页面通讯 - 使用 onMessage 替代 onConnect
@@ -170,78 +242,22 @@ export default defineBackground(() => {
 
       switch (ctype) {
         case 'getbookmark_from_full':
-          if (store.config.mini === true) {
-            console.log('full model closed');
-            sendResponse({ ctype, cdata: null });
-            return false;
-          }
-          const bmForFull = BookmarkLib.getBookmark();
-          sendPageview('/full_mode_page');
-          getUid().then(uid => {
-            sendEvent(currentVersion, 'getbookmark_from_full', uid);
-          });
-          sendResponse({ ctype, cdata: bmForFull });
-          return false;
+          handleGetBookmarkFromFull(ctype)
+            .then(sendResponse)
+            .catch(error => {
+              console.error('[Background] getbookmark_from_full failed:', error);
+              sendResponse({ ctype, cdata: null });
+            });
+          return true; // 异步响应
 
         case 'getbookmark_from_mini':
-          // 确保 store 已初始化
-          const currentStore = useStore.getState();
-          if (currentStore.config.mini === false) {
-            sendResponse({ ctype, cdata: null });
-            return false;
-          }
-
-          // 如果书签列表为空，先尝试获取
-          if (currentStore.waitingBookmarks.length === 0) {
-            BookmarkLib.getBookmarksFromChrome();
-            // 等待书签加载完成（使用轮询方式检查）
-            let attempts = 0;
-            const maxAttempts = 10; // 最多尝试 10 次，每次 100ms
-            const checkBookmarks = () => {
-              attempts++;
-              const store = useStore.getState();
-              if (store.waitingBookmarks.length > 0 || attempts >= maxAttempts) {
-                const bmForMini = BookmarkLib.getBookmark();
-                if (!bmForMini) {
-                  sendResponse({ ctype, cdata: null });
-                } else {
-                  sendPageview('/mini_mode_notification');
-                  getUid().then(uid => {
-                    sendEvent(currentVersion, 'getbookmark_from_mini', uid);
-                  });
-                  sendResponse({
-                    ctype,
-                    cdata: {
-                      bookmark: bmForMini,
-                      config: store.config,
-                    },
-                  });
-                }
-              } else {
-                setTimeout(checkBookmarks, 100);
-              }
-            };
-            setTimeout(checkBookmarks, 100);
-            return true; // 异步响应
-          }
-
-          const bmForMini = BookmarkLib.getBookmark();
-          if (!bmForMini) {
-            sendResponse({ ctype, cdata: null });
-            return false;
-          }
-          sendPageview('/mini_mode_notification');
-          getUid().then(uid => {
-            sendEvent(currentVersion, 'getbookmark_from_mini', uid);
-          });
-          sendResponse({
-            ctype,
-            cdata: {
-              bookmark: bmForMini,
-              config: currentStore.config,
-            },
-          });
-          return false;
+          handleGetBookmarkFromMini(ctype)
+            .then(sendResponse)
+            .catch(error => {
+              console.error('[Background] getbookmark_from_mini failed:', error);
+              sendResponse({ ctype, cdata: null });
+            });
+          return true; // 异步响应
 
         case 'getbookmark_byid':
           BookmarkLib.getBookmarkById(cdata.id, bm => {
