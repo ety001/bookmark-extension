@@ -111,9 +111,21 @@ export const storeRehydrationPromise: Promise<void> = new Promise<void>(resolve 
 /**
  * 等待 Store 恢复完成
  * 在 Service Worker 中，persist 的恢复是异步的，需要等待恢复完成
+ * 加 5 秒超时兜底（Promise.race）：极端情况下 storage 回调可能永不返回，
+ * 不加兜底会导致所有等待方（消息处理/新标签页接管）永久挂起
  */
 export async function waitForStoreRehydration(): Promise<void> {
-  await storeRehydrationPromise;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      storeRehydrationPromise,
+      new Promise<void>(resolve => {
+        timeoutId = setTimeout(resolve, 5000);
+      }),
+    ]);
+  } finally {
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
+  }
 }
 
 /**

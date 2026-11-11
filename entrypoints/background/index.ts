@@ -142,11 +142,22 @@ export default defineBackground(() => {
   if (typeof chrome !== 'undefined' && chrome.tabs) {
     // 各浏览器新标签页地址（Chrome/Firefox/Edge），按 URL 统一匹配
     const newTabUrls = new Set(['chrome://newtab/', 'edge://newtab/', 'about:newtab']);
+    // 已认领（重定向处理中/已处理）的 tab 集合：一次新标签页打开会触发多轮
+    // onUpdated，逐轮 tabs.update 会产生冗余导航/闪烁与极端竞态。
+    // 注意不能用 status:'loading' 门去重：Firefox 默认预载 about:newtab
+    // （browser.newtab.preload），Ctrl+T 换入的是已加载浏览器、无新导航，
+    // 永不触发 loading 事件，loading 门会使 Firefox 的 NTP 接管完全失效
+    const redirectedTabs = new Set<number>();
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-      // 统一 loading 门：一次新标签页打开会触发多轮 onUpdated，
-      // 非 loading 轮次重复 tabs.update 会产生冗余导航/闪烁与极端竞态
-      if (changeInfo.status !== 'loading') return;
-      if (!tab.url || !newTabUrls.has(tab.url)) return;
+      // URL 门：Firefox 的 onUpdated 不提供 tab.pendingUrl，
+      // 取本轮变化的 changeInfo.url（优先，用户已导航离开时能拿到新 URL 而跳过）
+      // 或事件时快照 tab.url；不在目标集合内直接跳过
+      const targetUrl = changeInfo.url || tab.url;
+      if (!targetUrl || !newTabUrls.has(targetUrl)) return;
+      // 去重：首个命中的轮次同步认领该 tab（必须在任何 await 之前），
+      // 后续轮次（含 rehydration 等待窗口内到达的）直接跳过
+      if (redirectedTabs.has(tabId)) return;
+      redirectedTabs.add(tabId);
 
       // SW 冷启动时 persist rehydration 是异步的，先等恢复完成再读配置，
       // 否则拿到默认值（mini=false/status=true）会误重定向 mini 用户的新标签页
@@ -155,8 +166,20 @@ export default defineBackground(() => {
       // mini 模式不接管；总开关 status 关闭时也不接管（避免重定向到 tab.html 后只看到"暂无书签"）
       if (store.config.mini === true || store.config.status === false) return;
 
-      const url = chrome.runtime.getURL('tab.html');
-      chrome.tabs.update(tabId, { url });
+      // 等待窗口内用户可能已手动导航离开新标签页（tab 参数是事件时快照，
+      // 不可复用），重定向前用 tabs.get 复核当前 URL 仍是要接管的新标签页
+      chrome.tabs.get(tabId, currentTab => {
+        if (chrome.runtime.lastError) {
+          console.error('[Background] tabs.get failed:', chrome.runtime.lastError.message);
+          return;
+        }
+        if (!currentTab || !currentTab.url || !newTabUrls.has(currentTab.url)) return;
+        chrome.tabs.update(tabId, { url: chrome.runtime.getURL('tab.html') });
+      });
+    });
+    // tab 关闭时清理去重集合，避免驻留 SW 内存缓慢增长
+    chrome.tabs.onRemoved.addListener(tabId => {
+      redirectedTabs.delete(tabId);
     });
   }
 
@@ -233,12 +256,66 @@ export default defineBackground(() => {
     };
   }
 
+  // get_config：popup 读取配置
+  // SW 冷启动竞态：先等 rehydration 再读，否则 popup 可能短暂拿到默认配置
+  async function handleGetConfig(ctype: string): Promise<Response> {
+    await waitForStoreRehydration();
+    sendPageview('/popup');
+    getUid().then(uid => {
+      sendEvent(currentVersion, 'get_config', uid);
+    });
+    return { ctype, cdata: useStore.getState().config };
+  }
+
+  // save_config：popup 保存配置
+  // 必须等 rehydration 完成后再写入：SW 因 popup 消息冷启动时，若 save_config
+  // 先于 hydrate 完成，updateConfig 写入的新状态会被 hydrate 随后的
+  // set(stateFromStorage) 整体覆盖，造成配置丢失
+  async function handleSaveConfig(ctype: string, cdata: any): Promise<Response> {
+    await waitForStoreRehydration();
+    getUid().then(uid => {
+      sendEvent(currentVersion, 'save_config', uid);
+    });
+    useStore.getState().updateConfig({
+      status: cdata.status,
+      mini: cdata.mini,
+      random: cdata.random,
+      frequency: cdata.frequency,
+      currentNotifyLocation: cdata.currentNotifyLocation,
+      ga: cdata.ga,
+      autoClose: cdata.autoClose,
+      autoCloseDelay: cdata.autoCloseDelay,
+    });
+    return { ctype, cdata: true };
+  }
+
+  // reset_config：popup 重置配置（同样需在 rehydration 后写入，避免被 hydrate 覆盖）
+  async function handleResetConfig(ctype: string): Promise<Response> {
+    await waitForStoreRehydration();
+    getUid().then(uid => {
+      sendEvent(currentVersion, 'reset_config', uid);
+    });
+    // 重置配置为默认值
+    useStore.getState().updateConfig({
+      status: true,
+      mini: false,
+      random: true,
+      frequency: 5,
+      currentNotifyLocation: 'top-right',
+      ga: false,
+      autoClose: false,
+      autoCloseDelay: 30,
+    });
+    // 重置频度计数器
+    useStore.setState({ frequencyCounter: 0 });
+    return { ctype, cdata: true };
+  }
+
   // 与前端页面通讯 - 使用 onMessage 替代 onConnect
   // 只在运行时注册监听器，构建时跳过
   if (typeof chrome !== 'undefined' && chrome.runtime) {
     chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse: (response: Response) => void): boolean => {
       const { ctype, cdata } = message;
-      const store = useStore.getState();
 
       switch (ctype) {
         case 'getbookmark_from_full':
@@ -345,52 +422,31 @@ export default defineBackground(() => {
           return true;
 
         case 'get_config':
-          // 确保 store 已初始化
-          const configStore = useStore.getState();
-          sendPageview('/popup');
-          getUid().then(uid => {
-            sendEvent(currentVersion, 'get_config', uid);
-          });
-          sendResponse({ ctype, cdata: configStore.config });
-          return false;
+          handleGetConfig(ctype)
+            .then(sendResponse)
+            .catch(error => {
+              console.error('[Background] get_config failed:', error);
+              sendResponse({ ctype, cdata: null });
+            });
+          return true; // 异步响应
 
         case 'save_config':
-          getUid().then(uid => {
-            sendEvent(currentVersion, 'save_config', uid);
-          });
-          store.updateConfig({
-            status: cdata.status,
-            mini: cdata.mini,
-            random: cdata.random,
-            frequency: cdata.frequency,
-            currentNotifyLocation: cdata.currentNotifyLocation,
-            ga: cdata.ga,
-            autoClose: cdata.autoClose,
-            autoCloseDelay: cdata.autoCloseDelay,
-          });
-          sendResponse({ ctype, cdata: true });
-          return false;
+          handleSaveConfig(ctype, cdata)
+            .then(sendResponse)
+            .catch(error => {
+              console.error('[Background] save_config failed:', error);
+              sendResponse({ ctype, cdata: null });
+            });
+          return true; // 异步响应
 
         case 'reset_config':
-          getUid().then(uid => {
-            sendEvent(currentVersion, 'reset_config', uid);
-          });
-          // 重置配置为默认值
-          const resetStore = useStore.getState();
-          resetStore.updateConfig({
-            status: true,
-            mini: false,
-            random: true,
-            frequency: 5,
-            currentNotifyLocation: 'top-right',
-            ga: false,
-            autoClose: false,
-            autoCloseDelay: 30,
-          });
-          // 重置频度计数器
-          useStore.setState({ frequencyCounter: 0 });
-          sendResponse({ ctype, cdata: true });
-          return false;
+          handleResetConfig(ctype)
+            .then(sendResponse)
+            .catch(error => {
+              console.error('[Background] reset_config failed:', error);
+              sendResponse({ ctype, cdata: null });
+            });
+          return true; // 异步响应
 
         case 'getbookmark_breadcrumb':
           if (cdata === '0') {
