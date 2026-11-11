@@ -177,7 +177,7 @@ export default function App() {
 
   const handleVisit = (item: BookmarkItem) => {
     if (item.url) {
-      window.open(item.url);
+      window.open(item.url, '_blank', 'noopener,noreferrer');
     } else {
       navigate(`/?pid=${item.id}`);
     }

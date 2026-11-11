@@ -98,7 +98,7 @@ export default function App() {
 
   const handleVisit = (url?: string) => {
     if (url) {
-      window.open(url);
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
 
