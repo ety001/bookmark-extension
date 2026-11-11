@@ -36,7 +36,7 @@ interface StoreState {
   waitingBookmarks: Bookmark[];
   blockedBookmarks: Bookmark[];
   notifyLocationList: string[];
-  
+
   // Actions
   updateConfig: (config: Partial<Config>) => void;
   updateFrequencyCounter: () => void;
@@ -72,14 +72,14 @@ function migrateOldData(): Partial<StoreState> | null {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
     return null;
   }
-  
+
   try {
     const oldData = localStorage.getItem('vuex');
     if (!oldData) return null;
-    
+
     const parsed = JSON.parse(oldData);
     if (!parsed || !parsed.state) return null;
-    
+
     const oldState = parsed.state;
     return {
       config: oldState.config || defaultConfig,
@@ -101,8 +101,8 @@ function migrateOldData(): Partial<StoreState> | null {
 export async function waitForStoreRehydration(): Promise<void> {
   // 在 Service Worker 中，直接检查 chrome.storage.local 是否有数据
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-    return new Promise((resolve) => {
-      chrome.storage.local.get('bookmark-extension-storage', (result) => {
+    return new Promise(resolve => {
+      chrome.storage.local.get('bookmark-extension-storage', result => {
         if (chrome.runtime.lastError) {
           console.error('[Store] Error checking storage:', chrome.runtime.lastError);
           resolve(); // 即使出错也继续，使用默认值
@@ -141,59 +141,54 @@ export const useStore = create<StoreState>()(
     (set, get) => {
       // 尝试迁移旧数据
       const migratedData = migrateOldData();
-      
+
       return {
         config: migratedData?.config || defaultConfig,
         frequencyCounter: migratedData?.frequencyCounter || 0,
         waitingBookmarks: migratedData?.waitingBookmarks || [],
         blockedBookmarks: migratedData?.blockedBookmarks || [],
         notifyLocationList: migratedData?.notifyLocationList || ['top-right', 'top-left', 'bottom-right', 'bottom-left'],
-        
-        updateConfig: (newConfig) =>
-          set((state) => ({
+
+        updateConfig: newConfig =>
+          set(state => ({
             config: { ...state.config, ...newConfig },
           })),
-        
+
         updateFrequencyCounter: () =>
-          set((state) => {
+          set(state => {
             const config = state.config;
-            const newCounter =
-              state.frequencyCounter >= config.frequency - 1
-                ? 0
-                : state.frequencyCounter + 1;
+            const newCounter = state.frequencyCounter >= config.frequency - 1 ? 0 : state.frequencyCounter + 1;
             return { frequencyCounter: newCounter };
           }),
-        
-        updateWaitingBookmarks: (bookmarks) =>
-          set({ waitingBookmarks: bookmarks }),
-        
-        updateBlockedBookmarks: (bookmarks) =>
-          set({ blockedBookmarks: bookmarks }),
-        
-        addWaitingBookmark: (bookmark) =>
-          set((state) => ({
-            waitingBookmarks: [...state.waitingBookmarks, bookmark],
+
+        updateWaitingBookmarks: bookmarks => set({ waitingBookmarks: bookmarks }),
+
+        updateBlockedBookmarks: bookmarks => set({ blockedBookmarks: bookmarks }),
+
+        addWaitingBookmark: bookmark =>
+          set(state => ({
+            // 按 id 去重（与 addBlockedBookmark 同款守卫）：
+            // onCreated 异步入队与防抖全量重拉交错时避免重复入队
+            waitingBookmarks: state.waitingBookmarks.some(b => b.id === bookmark.id) ? state.waitingBookmarks : [...state.waitingBookmarks, bookmark],
           })),
-        
-        addBlockedBookmark: (bookmark) =>
-          set((state) => ({
-            blockedBookmarks: [...state.blockedBookmarks, bookmark],
+
+        addBlockedBookmark: bookmark =>
+          set(state => ({
+            // 按 id 去重：重复屏蔽同一条不再重复入列
+            // （避免 block-manager 列表重复行与 React key 冲突）
+            blockedBookmarks: state.blockedBookmarks.some(b => b.id === bookmark.id) ? state.blockedBookmarks : [...state.blockedBookmarks, bookmark],
           })),
-        
-        removeWaitingBookmark: (bookmark) =>
-          set((state) => ({
-            waitingBookmarks: state.waitingBookmarks.filter(
-              (b) => b.id !== bookmark.id
-            ),
+
+        removeWaitingBookmark: bookmark =>
+          set(state => ({
+            waitingBookmarks: state.waitingBookmarks.filter(b => b.id !== bookmark.id),
           })),
-        
-        removeBlockedBookmark: (bookmark) =>
-          set((state) => ({
-            blockedBookmarks: state.blockedBookmarks.filter(
-              (b) => b.id !== bookmark.id
-            ),
+
+        removeBlockedBookmark: bookmark =>
+          set(state => ({
+            blockedBookmarks: state.blockedBookmarks.filter(b => b.id !== bookmark.id),
           })),
-        
+
         resetBlockedBookmarks: () => set({ blockedBookmarks: [] }),
       };
     },
@@ -218,7 +213,7 @@ export const useStore = create<StoreState>()(
           if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
             return new Promise((resolve, reject) => {
               try {
-                chrome.storage.local.get(name, (result) => {
+                chrome.storage.local.get(name, result => {
                   if (chrome.runtime.lastError) {
                     console.error('[Store] Error getting storage:', chrome.runtime.lastError);
                     reject(chrome.runtime.lastError);
@@ -305,4 +300,3 @@ export const useStore = create<StoreState>()(
     }
   )
 );
-
