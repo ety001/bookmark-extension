@@ -24,6 +24,7 @@ interface FormData {
   frequency: number;
   currentNotifyLocation: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
   ga: boolean;
+  gaPrompted: boolean;
   autoClose: boolean;
   autoCloseDelay: number;
 }
@@ -61,6 +62,7 @@ export default function App() {
           frequency: 5,
           currentNotifyLocation: 'top-right',
           ga: false,
+          gaPrompted: false,
           autoClose: false,
           autoCloseDelay: 30,
         });
@@ -79,12 +81,13 @@ export default function App() {
           frequency: frequency,
           currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
           ga: config.ga ?? false,
+          gaPrompted: config.gaPrompted ?? false,
           autoClose: config.autoClose ?? false,
           autoCloseDelay: autoCloseDelay,
         });
         setFrequencyInput(frequency.toString());
         setAutoCloseDelayInput(autoCloseDelay.toString());
-        setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
+        setDisplayGaReminder(config.ga === true || config.gaPrompted === true ? 'hidden' : 'display');
       } else {
         // 如果没有响应，设置默认值
         setFormData({
@@ -94,6 +97,7 @@ export default function App() {
           frequency: 5,
           currentNotifyLocation: 'top-right',
           ga: false,
+          gaPrompted: false,
           autoClose: false,
           autoCloseDelay: 30,
         });
@@ -103,15 +107,23 @@ export default function App() {
     });
   }, []);
 
-  // 校验并同步输入框的值，返回可保存的完整配置；校验失败时提示并恢复输入框，返回 null
+  // 校验并同步输入框的值，返回可保存的完整配置；严格模式校验失败时提示并恢复输入框，返回 null
   // （save_config 必须发送完整 config：background 的 updateConfig 是浅合并，
   // 缺字段会被 undefined 覆盖，故 GA 允许/拒绝等持久化路径也统一走这里）
-  const buildValidatedConfig = (base: FormData): FormData | null => {
+  // lenient 宽松模式（GA 征询屏专用：屏上没有可见输入框，严格模式的 toast 报错无处修正、
+  // 返回 null 会让征询永远关不掉）：输入无效时不提示、不恢复输入框、不返回 null，
+  // 静默回退用 base 的 frequency/autoCloseDelay 继续构造 config
+  const buildValidatedConfig = (base: FormData, lenient: boolean = false): FormData | null => {
     const frequencyValue = parseInt(frequencyInput);
     const autoCloseDelayValue = parseInt(autoCloseDelayInput);
 
+    // frequency 输入框仅在 status 与 mini 均开启时可见；status=false 或 mini=false 时
+    // 输入框已隐藏，toast 报错无处修正，跳过校验直接沿用 base.frequency
+    const frequencyInputVisible = base.status === true && base.mini === true;
+    const frequencyInvalid = frequencyInputVisible && (!frequencyInput.trim() || !Number.isInteger(frequencyValue) || frequencyValue < 1);
+
     // 验证频率
-    if (!frequencyInput.trim() || !Number.isInteger(frequencyValue) || frequencyValue < 1) {
+    if (frequencyInvalid && !lenient) {
       toast({
         variant: 'warning',
         title: getMessage('save_failed'),
@@ -122,8 +134,10 @@ export default function App() {
       return null;
     }
 
-    // 验证自动关闭延迟（如果启用了自动关闭）
-    if (base.autoClose && (!autoCloseDelayInput.trim() || !Number.isInteger(autoCloseDelayValue) || autoCloseDelayValue < 1)) {
+    // 验证自动关闭延迟（如果启用了自动关闭；维持按 base.autoClose 的条件校验）
+    const autoCloseDelayInvalid = base.autoClose && (!autoCloseDelayInput.trim() || !Number.isInteger(autoCloseDelayValue) || autoCloseDelayValue < 1);
+
+    if (autoCloseDelayInvalid && !lenient) {
       toast({
         variant: 'warning',
         title: getMessage('save_failed'),
@@ -134,18 +148,22 @@ export default function App() {
       return null;
     }
 
+    // 输入框不可见或输入无效（lenient 静默回退）时沿用 base 的值
+    const effectiveFrequency = frequencyInputVisible && !frequencyInvalid ? frequencyValue : base.frequency;
+    const effectiveAutoCloseDelay = !autoCloseDelayInvalid ? autoCloseDelayValue : base.autoCloseDelay;
+
     return {
       ...base,
-      frequency: frequencyValue,
-      ...(base.autoClose && { autoCloseDelay: autoCloseDelayValue }),
+      frequency: effectiveFrequency,
+      ...(base.autoClose && { autoCloseDelay: effectiveAutoCloseDelay }),
     };
   };
 
   const handleSave = () => {
     if (!formData) return;
 
-    // 在保存前，同步输入框的值并校验
-    const updatedFormData = buildValidatedConfig(formData);
+    // 在保存前，同步输入框的值并校验；保存即视为已完成 GA 征询，gaPrompted 落盘为 true
+    const updatedFormData = buildValidatedConfig({ ...formData, gaPrompted: true });
     if (!updatedFormData) return;
 
     chrome.runtime.sendMessage({ ctype: 'save_config', cdata: updatedFormData }, response => {
@@ -163,8 +181,9 @@ export default function App() {
 
   const handleEnableGa = () => {
     if (!formData) return;
-    // 与保存同款校验+同步，避免把与输入框不同步的旧 formData 存盘
-    const newFormData = buildValidatedConfig({ ...formData, ga: true });
+    // 与保存同款校验+同步，避免把与输入框不同步的旧 formData 存盘；
+    // 宽松模式：征询屏上没有可见输入框，严格模式会困住用户；gaPrompted 落盘为 true
+    const newFormData = buildValidatedConfig({ ...formData, ga: true, gaPrompted: true }, true);
     if (!newFormData) return;
     setFormData(newFormData);
     chrome.runtime.sendMessage({ ctype: 'save_config', cdata: newFormData }, response => {
@@ -176,8 +195,9 @@ export default function App() {
 
   const handleCancelGa = () => {
     if (!formData) return;
-    // 拒绝也要落盘（发送完整 config），否则下次打开 popup 会再次弹出征询
-    const newFormData = buildValidatedConfig({ ...formData, ga: false });
+    // 拒绝也要落盘（发送完整 config + gaPrompted 三态标记，区分"拒绝过"与"从未询问"），
+    // 否则下次打开 popup 会再次弹出征询；宽松模式同 handleEnableGa
+    const newFormData = buildValidatedConfig({ ...formData, ga: false, gaPrompted: true }, true);
     if (!newFormData) return;
     setFormData(newFormData);
     chrome.runtime.sendMessage({ ctype: 'save_config', cdata: newFormData }, response => {
@@ -212,12 +232,13 @@ export default function App() {
               frequency: frequency,
               currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
               ga: config.ga ?? false,
+              gaPrompted: config.gaPrompted ?? false,
               autoClose: config.autoClose ?? false,
               autoCloseDelay: autoCloseDelay,
             });
             setFrequencyInput(frequency.toString());
             setAutoCloseDelayInput(autoCloseDelay.toString());
-            setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
+            setDisplayGaReminder(config.ga === true || config.gaPrompted === true ? 'hidden' : 'display');
           }
         });
         toast({
