@@ -20,8 +20,101 @@ export interface BookmarkUpdateData {
   index?: number;
 }
 
-let tmpBookmarks: Bookmark[] = [];
-let tmpBreadcrumb: chrome.bookmarks.BookmarkTreeNode[] = [];
+// 根节点/书签栏 id 模块级缓存（解析失败不缓存，下次调用重试）
+// Chrome/Edge 书签栏 id 为 '1'，Firefox 为 'toolbar_____'
+let rootIdCache: string | null = null;
+let bookmarkBarIdCache: string | null = null;
+
+/**
+ * 从书签树中解析根节点与书签栏并写入缓存
+ * 先找 id 为 '1' 或 'toolbar_____' 的子节点，找不到时退回第一个子节点；
+ * 解析失败返回 null（不缓存）
+ */
+function resolveBookmarkBar(tree: chrome.bookmarks.BookmarkTreeNode[]): chrome.bookmarks.BookmarkTreeNode | null {
+  const root = tree[0];
+  if (!root || !root.id) return null;
+  const children = root.children || [];
+  const bookmarkBar = children.find(node => node.id === '1' || node.id === 'toolbar_____') || children[0] || null;
+  if (!bookmarkBar) return null;
+  rootIdCache = root.id;
+  bookmarkBarIdCache = bookmarkBar.id;
+  return bookmarkBar;
+}
+
+/**
+ * 确保根节点/书签栏 id 已解析（带缓存，失败不缓存）
+ */
+function ensureTreeIds(cb: (ok: boolean) => void): void {
+  if (rootIdCache && bookmarkBarIdCache) {
+    cb(true);
+    return;
+  }
+  if (typeof chrome === 'undefined' || !chrome.bookmarks || typeof chrome.bookmarks.getTree !== 'function') {
+    cb(false);
+    return;
+  }
+  chrome.bookmarks.getTree(tree => {
+    if (chrome.runtime.lastError) {
+      console.error('getTree failed:', chrome.runtime.lastError.message);
+      cb(false);
+      return;
+    }
+    cb(resolveBookmarkBar(tree || []) !== null);
+  });
+}
+
+/**
+ * 获取根节点 id（getTree 解析 + 模块级缓存，失败返回 null）
+ */
+export function getRootId(cb: (rootId: string | null) => void): void {
+  ensureTreeIds(ok => cb(ok ? rootIdCache : null));
+}
+
+/**
+ * 获取书签栏 id（getTree 解析 + 模块级缓存，失败返回 null）
+ */
+export function getBookmarkBarId(cb: (bookmarkBarId: string | null) => void): void {
+  ensureTreeIds(ok => cb(ok ? bookmarkBarIdCache : null));
+}
+
+/**
+ * 在书签树中 DFS 查找指定 id 的节点
+ */
+function findNodeInTree(nodes: chrome.bookmarks.BookmarkTreeNode[], id: string): chrome.bookmarks.BookmarkTreeNode | null {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    if (node.children) {
+      const found = findNodeInTree(node.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * 判断书签是否位于书签栏子树内（任意层级）
+ * 供 background 的 onCreated 监听使用
+ */
+export function isInBookmarkBarSubtree(id: string, cb: (inSubtree: boolean) => void): void {
+  if (typeof chrome === 'undefined' || !chrome.bookmarks || typeof chrome.bookmarks.getSubTree !== 'function') {
+    cb(false);
+    return;
+  }
+  getBookmarkBarId(bookmarkBarId => {
+    if (!bookmarkBarId) {
+      cb(false);
+      return;
+    }
+    chrome.bookmarks.getSubTree(bookmarkBarId, nodes => {
+      if (chrome.runtime.lastError) {
+        console.error('isInBookmarkBarSubtree getSubTree failed:', chrome.runtime.lastError.message);
+        cb(false);
+        return;
+      }
+      cb(findNodeInTree(nodes || [], id) !== null);
+    });
+  });
+}
 
 /**
  * 初始化书签
@@ -33,6 +126,9 @@ export function init(): void {
     if (typeof chrome === 'undefined' || !chrome.bookmarks || typeof chrome.bookmarks.getTree !== 'function') {
       return;
     }
+
+    // 预解析根节点/书签栏 id 并缓存（失败不缓存，后续调用自动重试）
+    ensureTreeIds(() => {});
 
     const store = useStore.getState();
     const bookmarks = store.waitingBookmarks;
@@ -53,7 +149,10 @@ export function init(): void {
  */
 export function getBookmark(): Bookmark | null {
   const store = useStore.getState();
-  const bookmarks = [...store.waitingBookmarks];
+  // 先按屏蔽列表过滤（防历史数据：旧版本屏蔽时未移出队列），
+  // 过滤结果回写时会顺带清理掉队列中残留的被屏蔽书签
+  const blockedIds = new Set(store.blockedBookmarks.map(b => b.id));
+  const bookmarks = store.waitingBookmarks.filter(b => !blockedIds.has(b.id));
 
   if (bookmarks.length === 0) {
     getBookmarksFromChrome();
@@ -187,21 +286,26 @@ export function getBookmarksFromChrome(): void {
     }
 
     chrome.bookmarks.getTree(bookmarks => {
+      if (chrome.runtime.lastError) {
+        console.error('getBookmarksFromChrome getTree failed:', chrome.runtime.lastError.message);
+        return;
+      }
       console.log('getBookmarksFromChrome: 获取书签树', bookmarks);
-      // Chrome 书签树结构：
-      // - 根节点 id='0' 包含所有书签
-      // - 第一个子节点 id='1' 是"书签栏"（Bookmark Bar）
-      // - 第二个子节点 id='2' 是"其他书签"（Other Bookmarks）
+      // 书签树结构：
+      // - 根节点包含所有书签
+      // - Chrome/Edge 书签栏 id='1'，Firefox 为 'toolbar_____'（由 resolveBookmarkBar 解析并缓存）
       // 我们只获取书签栏的书签
       if (bookmarks && bookmarks.length > 0 && bookmarks[0].children) {
         console.log(
           '根节点子节点:',
           bookmarks[0].children.map(n => ({ id: n.id, title: n.title }))
         );
-        const bookmarkBar = bookmarks[0].children.find(node => node.id === '1');
+        const bookmarkBar = resolveBookmarkBar(bookmarks);
         if (bookmarkBar) {
           console.log('找到书签栏，开始处理:', bookmarkBar);
-          changeTreeNodeToList([bookmarkBar]);
+          // 函数局部列表，经递归参数传递，避免并发调用互相污染
+          const tmpBookmarks: Bookmark[] = [];
+          changeTreeNodeToList([bookmarkBar], tmpBookmarks);
 
           // 过滤掉屏蔽列表中的书签
           const store = useStore.getState();
@@ -216,25 +320,9 @@ export function getBookmarksFromChrome(): void {
             );
           }
           useStore.getState().updateWaitingBookmarks(filteredBookmarks);
-          tmpBookmarks = [];
         } else {
-          console.warn('未找到书签栏 (id=1)，尝试查找所有子节点');
-          // 如果找不到 id='1'，尝试查找所有子节点（可能是其他浏览器）
-          if (bookmarks[0].children.length > 0) {
-            // 使用第一个子节点（通常是书签栏）
-            const firstChild = bookmarks[0].children[0];
-            console.log('使用第一个子节点作为书签栏:', firstChild);
-            changeTreeNodeToList([firstChild]);
-            const store = useStore.getState();
-            const blockedIds = new Set(store.blockedBookmarks.map(b => b.id));
-            const filteredBookmarks = tmpBookmarks.filter(bm => !blockedIds.has(bm.id));
-            console.log(`获取到 ${tmpBookmarks.length} 个书签，过滤后剩余 ${filteredBookmarks.length} 个`);
-            useStore.getState().updateWaitingBookmarks(filteredBookmarks);
-            tmpBookmarks = [];
-          } else {
-            console.warn('书签栏子节点为空');
-            useStore.getState().updateWaitingBookmarks([]);
-          }
+          console.warn('书签栏子节点为空');
+          useStore.getState().updateWaitingBookmarks([]);
         }
       } else {
         console.warn('书签树为空或格式不正确', bookmarks);
@@ -250,15 +338,15 @@ export function getBookmarksFromChrome(): void {
 }
 
 /**
- * 把树形数据转成列表数据
+ * 把树形数据转成列表数据（累积到传入的局部列表，避免模块级状态并发污染）
  */
-function changeTreeNodeToList(nodes: chrome.bookmarks.BookmarkTreeNode[]): void {
+function changeTreeNodeToList(nodes: chrome.bookmarks.BookmarkTreeNode[], list: Bookmark[]): void {
   for (const node of nodes) {
     if (node.children) {
-      changeTreeNodeToList(node.children);
+      changeTreeNodeToList(node.children, list);
     } else {
       if (node.url) {
-        tmpBookmarks.push({
+        list.push({
           id: node.id,
           title: node.title,
           url: node.url,
@@ -317,19 +405,42 @@ export function getBookmarkChildren(id: string, cb: (bookmarks: chrome.bookmarks
 }
 
 /**
- * 获取书签目录路径
+ * 获取书签目录路径（从指定书签到书签栏顶层的祖先链）
+ * 兼容 Firefox：终止条件为 parentId 等于 getTree 解析出的根 id，
+ * 而非硬编码 '0'（Firefox 根 id 为 'root________'，恒不命中会导致 sendResponse 挂起）
  */
 export function getBookmarkBreadcrumb(id: string, cb: (breadcrumb: chrome.bookmarks.BookmarkTreeNode[]) => void): void {
+  getRootId(rootId => {
+    collectBreadcrumb(id, rootId, [], cb);
+  });
+}
+
+/**
+ * 递归收集祖先链（局部累积，返回顺序为 子 -> 父，由调用方反转）
+ */
+function collectBreadcrumb(
+  id: string,
+  rootId: string | null,
+  breadcrumb: chrome.bookmarks.BookmarkTreeNode[],
+  cb: (breadcrumb: chrome.bookmarks.BookmarkTreeNode[]) => void
+): void {
   chrome.bookmarks.get(id, bms => {
-    if (bms.length > 0) {
-      tmpBreadcrumb.push(bms[0]);
-      if (bms[0].parentId === '0') {
-        cb([...tmpBreadcrumb]);
-        tmpBreadcrumb = [];
-      } else {
-        getBookmarkBreadcrumb(bms[0].parentId!, cb);
+    // 出错或空结果时返回已累积的路径（首次调用即空数组），避免 sendResponse 挂起
+    if (chrome.runtime.lastError || !bms || bms.length === 0) {
+      if (chrome.runtime.lastError) {
+        console.error('getBookmarkBreadcrumb failed:', chrome.runtime.lastError.message);
       }
+      cb(breadcrumb);
+      return;
     }
+    breadcrumb.push(bms[0]);
+    const parentId = bms[0].parentId;
+    // 到达根的直接子节点（或 parentId 缺失）时终止
+    if (!parentId || (rootId !== null && parentId === rootId)) {
+      cb(breadcrumb);
+      return;
+    }
+    collectBreadcrumb(parentId, rootId, breadcrumb, cb);
   });
 }
 

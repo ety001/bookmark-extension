@@ -301,14 +301,8 @@ export default defineBackground(() => {
             sendEvent(currentVersion, 'block', uid);
           });
           BookmarkLib.addBlockedBookmark(cdata);
-          sendResponse({ ctype, cdata: true });
-          return false;
-
-        case 'cancel_block':
-          getUid().then(uid => {
-            sendEvent(currentVersion, 'cancel_block', uid);
-          });
-          BookmarkLib.removeBlockedBookmark(cdata);
+          // 同步移出待读队列，避免被屏蔽书签在队列耗尽前仍被推送
+          BookmarkLib.removeWaitingBookmark(cdata);
           sendResponse({ ctype, cdata: true });
           return false;
 
@@ -434,16 +428,39 @@ export default defineBackground(() => {
   if (typeof chrome !== 'undefined' && chrome.bookmarks) {
     chrome.bookmarks.onCreated.addListener((id, bookmark) => {
       console.log('Bookmark created:', id, bookmark);
-      // 只添加书签栏的书签（parentId === '1'），且必须有 URL（不是文件夹）
-      if (bookmark.url && bookmark.parentId === '1') {
-        const store = useStore.getState();
-        // 检查是否在屏蔽列表中
-        const isBlocked = store.blockedBookmarks.some(b => b.id === bookmark.id);
-        if (!isBlocked) {
+      // 必须有 URL（不是文件夹）
+      if (!bookmark.url) {
+        return;
+      }
+      // 检查是否在屏蔽列表中
+      const store = useStore.getState();
+      const isBlocked = store.blockedBookmarks.some(b => b.id === bookmark.id);
+      if (isBlocked) {
+        return;
+      }
+      // 位于书签栏子树内（任意层级，与全量加载逻辑一致）才入队。
+      // 书签栏 id 由 getTree 解析（Chrome/Edge 为 '1'，Firefox 为 'toolbar_____'），
+      // 不能硬编码 parentId === '1'（Firefox 恒不命中）
+      BookmarkLib.isInBookmarkBarSubtree(bookmark.id, inBookmarkBar => {
+        if (inBookmarkBar) {
           BookmarkLib.addWaitingBookmark(bookmark as any);
         }
-      }
+      });
     });
+
+    // Chrome/Edge 的 RemoveInfo 只有 {parentId, index}，无 node（Firefox 才有 node），
+    // 无 node 时已删书签无法按节点清理，需全量重拉待读队列；
+    // 防抖：短时间连续删多个书签时合并为一次重拉
+    let queueRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleQueueRefresh = () => {
+      if (queueRefreshTimer !== null) {
+        clearTimeout(queueRefreshTimer);
+      }
+      queueRefreshTimer = setTimeout(() => {
+        queueRefreshTimer = null;
+        BookmarkLib.getBookmarksFromChrome();
+      }, 500);
+    };
 
     chrome.bookmarks.onRemoved.addListener((id, removeInfo) => {
       console.log('Bookmark removed:', id, removeInfo);
@@ -451,6 +468,8 @@ export default defineBackground(() => {
       if (removeInfo.node) {
         BookmarkLib.removeWaitingBookmark(removeInfo.node as any);
         BookmarkLib.removeBlockedBookmark(removeInfo.node as any);
+      } else {
+        scheduleQueueRefresh();
       }
     });
   }
@@ -498,6 +517,14 @@ export default defineBackground(() => {
     });
   }
 
+  // 升级提醒按钮监听器在模块顶层只注册一次，
+  // 避免每次 onUpdateAvailable 触发 notifications() 都叠加新监听器，导致一次点击多次 reload
+  if (typeof chrome !== 'undefined' && chrome.notifications && chrome.notifications.onButtonClicked) {
+    chrome.notifications.onButtonClicked.addListener(() => {
+      chrome.runtime.reload();
+    });
+  }
+
   function notifications(version: string): void {
     if (typeof chrome === 'undefined' || !chrome.notifications) {
       return;
@@ -509,10 +536,6 @@ export default defineBackground(() => {
       title: chrome.i18n.getMessage('appname'),
       message: version + chrome.i18n.getMessage('update_reminder'),
       buttons: [{ title: chrome.i18n.getMessage('update_button') }],
-    });
-
-    chrome.notifications.onButtonClicked.addListener(() => {
-      chrome.runtime.reload();
     });
   }
 });
