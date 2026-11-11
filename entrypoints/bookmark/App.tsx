@@ -64,6 +64,8 @@ export default function App() {
   const currentRequestIdRef = useRef<string | null>(null);
   // 编辑弹窗打开时预设的初始父目录 id，用于判断用户是否实际改动了目录
   const initialParentIdRef = useRef<string | null>(null);
+  // 编辑弹窗打开时预设的初始 URL，用于阻止"清空 URL"的提交（bookmarks API 无法移除 URL）
+  const initialUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     document.title = getMessage('appname');
@@ -105,6 +107,9 @@ export default function App() {
   const getBookmarkMenu = () => {
     setLoading(true);
     chrome.runtime.sendMessage({ ctype: 'getbookmark_menu', cdata: false }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('getbookmark_menu failed:', chrome.runtime.lastError.message);
+      }
       if (response && response.cdata) {
         setMenu(response.cdata);
         // 移除这里的 getBookmarkChildren 调用，因为 useEffect 会处理
@@ -119,6 +124,9 @@ export default function App() {
     // 在请求开始时获取当前的 bid，避免闭包问题
     const currentBid = searchParams.get('bid') || '0';
     chrome.runtime.sendMessage({ ctype: 'getbookmark_children', cdata: targetId }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('getbookmark_children failed:', chrome.runtime.lastError.message);
+      }
       // 检查这个响应是否对应最新的请求
       if (currentRequestIdRef.current !== requestId) {
         return; // 忽略过期的响应
@@ -150,6 +158,9 @@ export default function App() {
       return;
     }
     chrome.runtime.sendMessage({ ctype: 'getbookmark_breadcrumb', cdata: id }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('getbookmark_breadcrumb failed:', chrome.runtime.lastError.message);
+      }
       if (response && response.cdata) {
         setBreadcrumb(response.cdata);
       }
@@ -173,9 +184,17 @@ export default function App() {
   };
 
   const handleEdit = (item: BookmarkItem) => {
+    // 先清空上次弹窗（Esc/点遮罩关闭）可能残留的目录选择，避免残留值导致误 move
+    setMenuSelector(null);
+    initialParentIdRef.current = null;
+    initialUrlRef.current = null;
     chrome.runtime.sendMessage({ ctype: 'getbookmark_byid', cdata: { id: item.id, action: 'edit_open' } }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('getbookmark_byid failed:', chrome.runtime.lastError.message);
+      }
       if (response && response.cdata && response.cdata.bookmark) {
         const bookmark = response.cdata.bookmark;
+        initialUrlRef.current = bookmark.url || null;
         setBookmarkData({
           id: bookmark.id,
           title: bookmark.title,
@@ -203,6 +222,9 @@ export default function App() {
   const confirmRemove = () => {
     if (!itemToRemove) return;
     chrome.runtime.sendMessage({ ctype: 'remove_bookmark', cdata: itemToRemove }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('remove_bookmark failed:', chrome.runtime.lastError.message);
+      }
       if (response && response.cdata) {
         toast({
           variant: 'success',
@@ -232,6 +254,15 @@ export default function App() {
 
   const handleConfirmDialog = () => {
     if (!bookmarkData.id) return;
+    // chrome.bookmarks.update 无法移除 URL：原书签有 URL 而输入框被清空时阻止提交，
+    // 避免 API 静默忽略导致"假成功"误导用户
+    if (initialUrlRef.current && !bookmarkData.url) {
+      toast({
+        variant: 'error',
+        title: getMessage('save_failed'),
+      });
+      return;
+    }
     setSaving(true);
     // 仅在用户实际改动了目录时才带 parentId，避免仅改标题也触发 move 挪到目录末尾
     const parentId = menuSelector?.id && menuSelector.id !== initialParentIdRef.current ? menuSelector.id : null;
@@ -246,6 +277,9 @@ export default function App() {
         },
       },
       response => {
+        if (chrome.runtime.lastError) {
+          console.error('update_bookmark failed:', chrome.runtime.lastError.message);
+        }
         setSaving(false);
         if (response && response.cdata) {
           toast({
@@ -270,14 +304,20 @@ export default function App() {
   };
 
   const handleOpenCreateFolder = () => {
-    // 根节点 '0' 下不能创建目录，默认落到书签栏 '1'
-    setBookmarkFolder({ parentId: pid === '0' ? '1' : pid, title: null });
+    // 根节点下不能创建目录：根视图时默认落到书签栏（两种浏览器的书签栏都是根的第一个子节点），
+    // 取不到则不带 parentId（浏览器默认落"其他书签"）。Firefox 根/书签栏 id 为 GUID，不硬编码 '0'/'1'
+    const isRootPid = pid === '0' || pid === menu[0]?.id;
+    const parentId = isRootPid ? menu[0]?.children?.[0]?.id || null : pid;
+    setBookmarkFolder({ parentId, title: null });
     setDialogAddFolderFormVisible(true);
   };
 
   const handleCreateFolder = () => {
     if (!bookmarkFolder.title) return;
     chrome.runtime.sendMessage({ ctype: 'create_bookmark_folder', cdata: bookmarkFolder }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('create_bookmark_folder failed:', chrome.runtime.lastError.message);
+      }
       if (response && response.cdata) {
         toast({
           variant: 'success',
@@ -299,9 +339,9 @@ export default function App() {
     setMenuSelector({ id: node.id, label: node.label });
   };
 
-  // 编辑弹窗的目录树过滤掉根节点 '0'（move 到根是非法操作），直接渲染其 children
-  const menuTreeRoot = menu.find(node => node.id === '0');
-  const folderSelectorData = menuTreeRoot?.children || menu;
+  // 编辑弹窗的目录树过滤掉根节点（move 到根是非法操作），直接渲染其 children；
+  // menu[0] 即 getTree 返回的根节点（任意浏览器，Firefox 根 id 为 GUID），不用 find(id==='0')
+  const folderSelectorData = menu[0]?.children || menu;
 
   const filteredBookmarks = bookmarks?.filter(item => !search || item.id === search) || [];
 
@@ -399,7 +439,11 @@ export default function App() {
                     </div>
                     <div className="flex gap-2">
                       <Button variant="primary" size="mini" circle plain onClick={() => handleEdit(item)} icon={<Edit className="w-3 h-3" />} />
-                      <Button variant="danger" size="mini" circle plain onClick={() => handleRemove(item)} icon={<Trash2 className="w-3 h-3" />} />
+                      {/* 根节点的直接子节点（书签栏/其他书签/移动书签等系统目录）隐藏删除按钮，
+                          避免误删整棵书签栏（removeTree 会递归删除） */}
+                      {item.parentId !== '0' && item.parentId !== menu[0]?.id && (
+                        <Button variant="danger" size="mini" circle plain onClick={() => handleRemove(item)} icon={<Trash2 className="w-3 h-3" />} />
+                      )}
                     </div>
                   </div>
                 ))}

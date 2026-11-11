@@ -42,6 +42,9 @@ export default function App() {
   const getBlockList = () => {
     setLoading(true);
     chrome.runtime.sendMessage({ ctype: 'get_block_list', cdata: null }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('get_block_list failed:', chrome.runtime.lastError.message);
+      }
       if (response && response.cdata) {
         setBlockList(response.cdata);
       }
@@ -58,6 +61,9 @@ export default function App() {
   const confirmRemove = () => {
     if (!itemToRemove) return;
     chrome.runtime.sendMessage({ ctype: 'remove_block_bookmark', cdata: itemToRemove }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('remove_block_bookmark failed:', chrome.runtime.lastError.message);
+      }
       if (response && response.cdata) {
         toast({
           variant: 'success',
@@ -76,6 +82,9 @@ export default function App() {
 
   const confirmClear = () => {
     chrome.runtime.sendMessage({ ctype: 'clear_block_list', cdata: null }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('clear_block_list failed:', chrome.runtime.lastError.message);
+      }
       if (response && response.cdata) {
         toast({
           variant: 'success',
