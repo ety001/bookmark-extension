@@ -24,6 +24,7 @@ interface FormData {
   frequency: number;
   currentNotifyLocation: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
   ga: boolean;
+  gaPrompted: boolean;
   autoClose: boolean;
   autoCloseDelay: number;
 }
@@ -50,132 +51,160 @@ export default function App() {
     configFetchedRef.current = true;
 
     // 获取配置
-    chrome.runtime.sendMessage(
-      { ctype: 'get_config', cdata: true },
-      (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('Popup error:', chrome.runtime.lastError);
-          // 设置默认值，避免一直 loading
-          setFormData({
-            status: true,
-            mini: false,
-            random: true,
-            frequency: 5,
-            currentNotifyLocation: 'top-right',
-            ga: false,
-            autoClose: false,
-            autoCloseDelay: 30,
-          });
-          setFrequencyInput('5');
-          setAutoCloseDelayInput('30');
-          return;
-        }
-        if (response && response.cdata) {
-          const config = response.cdata;
-          const frequency = config.frequency ?? 5;
-          const autoCloseDelay = config.autoCloseDelay ?? 30;
-          setFormData({
-            status: config.status ?? true,
-            mini: config.mini ?? false,
-            random: config.random ?? true,
-            frequency: frequency,
-            currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
-            ga: config.ga ?? false,
-            autoClose: config.autoClose ?? false,
-            autoCloseDelay: autoCloseDelay,
-          });
-          setFrequencyInput(frequency.toString());
-          setAutoCloseDelayInput(autoCloseDelay.toString());
-          setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
-        } else {
-          // 如果没有响应，设置默认值
-          setFormData({
-            status: true,
-            mini: false,
-            random: true,
-            frequency: 5,
-            currentNotifyLocation: 'top-right',
-            ga: false,
-            autoClose: false,
-            autoCloseDelay: 30,
-          });
-          setFrequencyInput('5');
-          setAutoCloseDelayInput('30');
-        }
+    chrome.runtime.sendMessage({ ctype: 'get_config', cdata: true }, response => {
+      if (chrome.runtime.lastError) {
+        console.error('Popup error:', chrome.runtime.lastError);
+        // 设置默认值，避免一直 loading
+        setFormData({
+          status: true,
+          mini: false,
+          random: true,
+          frequency: 5,
+          currentNotifyLocation: 'top-right',
+          ga: false,
+          gaPrompted: false,
+          autoClose: false,
+          autoCloseDelay: 30,
+        });
+        setFrequencyInput('5');
+        setAutoCloseDelayInput('30');
+        return;
       }
-    );
+      if (response && response.cdata) {
+        const config = response.cdata;
+        const frequency = config.frequency ?? 5;
+        const autoCloseDelay = config.autoCloseDelay ?? 30;
+        setFormData({
+          status: config.status ?? true,
+          mini: config.mini ?? false,
+          random: config.random ?? true,
+          frequency: frequency,
+          currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
+          ga: config.ga ?? false,
+          gaPrompted: config.gaPrompted ?? false,
+          autoClose: config.autoClose ?? false,
+          autoCloseDelay: autoCloseDelay,
+        });
+        setFrequencyInput(frequency.toString());
+        setAutoCloseDelayInput(autoCloseDelay.toString());
+        setDisplayGaReminder(config.ga === true || config.gaPrompted === true ? 'hidden' : 'display');
+      } else {
+        // 如果没有响应，设置默认值
+        setFormData({
+          status: true,
+          mini: false,
+          random: true,
+          frequency: 5,
+          currentNotifyLocation: 'top-right',
+          ga: false,
+          gaPrompted: false,
+          autoClose: false,
+          autoCloseDelay: 30,
+        });
+        setFrequencyInput('5');
+        setAutoCloseDelayInput('30');
+      }
+    });
   }, []);
+
+  // 校验并同步输入框的值，返回可保存的完整配置；严格模式校验失败时提示并恢复输入框，返回 null
+  // （save_config 必须发送完整 config：background 的 updateConfig 是浅合并，
+  // 缺字段会被 undefined 覆盖，故 GA 允许/拒绝等持久化路径也统一走这里）
+  // lenient 宽松模式（GA 征询屏专用：屏上没有可见输入框，严格模式的 toast 报错无处修正、
+  // 返回 null 会让征询永远关不掉）：输入无效时不提示、不恢复输入框、不返回 null，
+  // 静默回退用 base 的 frequency/autoCloseDelay 继续构造 config
+  const buildValidatedConfig = (base: FormData, lenient: boolean = false): FormData | null => {
+    const frequencyValue = parseInt(frequencyInput);
+    const autoCloseDelayValue = parseInt(autoCloseDelayInput);
+
+    // frequency 输入框仅在 status 与 mini 均开启时可见；status=false 或 mini=false 时
+    // 输入框已隐藏，toast 报错无处修正，跳过校验直接沿用 base.frequency
+    const frequencyInputVisible = base.status === true && base.mini === true;
+    const frequencyInvalid = frequencyInputVisible && (!frequencyInput.trim() || !Number.isInteger(frequencyValue) || frequencyValue < 1);
+
+    // 验证频率
+    if (frequencyInvalid && !lenient) {
+      toast({
+        variant: 'warning',
+        title: getMessage('save_failed'),
+        description: getMessage('need_integer'),
+      });
+      // 恢复为当前值
+      setFrequencyInput(base.frequency.toString());
+      return null;
+    }
+
+    // 验证自动关闭延迟（如果启用了自动关闭；维持按 base.autoClose 的条件校验）
+    const autoCloseDelayInvalid = base.autoClose && (!autoCloseDelayInput.trim() || !Number.isInteger(autoCloseDelayValue) || autoCloseDelayValue < 1);
+
+    if (autoCloseDelayInvalid && !lenient) {
+      toast({
+        variant: 'warning',
+        title: getMessage('save_failed'),
+        description: getMessage('need_integer'),
+      });
+      // 恢复为当前值
+      setAutoCloseDelayInput(base.autoCloseDelay.toString());
+      return null;
+    }
+
+    // 输入框不可见或输入无效（lenient 静默回退）时沿用 base 的值
+    const effectiveFrequency = frequencyInputVisible && !frequencyInvalid ? frequencyValue : base.frequency;
+    const effectiveAutoCloseDelay = !autoCloseDelayInvalid ? autoCloseDelayValue : base.autoCloseDelay;
+
+    return {
+      ...base,
+      frequency: effectiveFrequency,
+      ...(base.autoClose && { autoCloseDelay: effectiveAutoCloseDelay }),
+    };
+  };
 
   const handleSave = () => {
     if (!formData) return;
 
-    // 在保存前，同步输入框的值到 formData
-    const frequencyValue = parseInt(frequencyInput);
-    const autoCloseDelayValue = parseInt(autoCloseDelayInput);
-    
-    // 验证频率
-    if (!frequencyInput.trim() || !Number.isInteger(frequencyValue) || frequencyValue < 1) {
-      toast({
-        variant: 'warning',
-        title: getMessage('save_failed'),
-        description: getMessage('need_integer'),
-      });
-      // 恢复为当前值
-      setFrequencyInput(formData.frequency.toString());
-      return;
-    }
+    // 在保存前，同步输入框的值并校验；保存即视为已完成 GA 征询，gaPrompted 落盘为 true
+    const updatedFormData = buildValidatedConfig({ ...formData, gaPrompted: true });
+    if (!updatedFormData) return;
 
-    // 验证自动关闭延迟（如果启用了自动关闭）
-    if (formData.autoClose && (!autoCloseDelayInput.trim() || !Number.isInteger(autoCloseDelayValue) || autoCloseDelayValue < 1)) {
-      toast({
-        variant: 'warning',
-        title: getMessage('save_failed'),
-        description: getMessage('need_integer'),
-      });
-      // 恢复为当前值
-      setAutoCloseDelayInput(formData.autoCloseDelay.toString());
-      return;
-    }
-
-    // 更新 formData 使用输入框的值
-    const updatedFormData = {
-      ...formData,
-      frequency: frequencyValue,
-      ...(formData.autoClose && { autoCloseDelay: autoCloseDelayValue }),
-    };
-
-    chrome.runtime.sendMessage(
-      { ctype: 'save_config', cdata: updatedFormData },
-      (response) => {
-        if (response && response.cdata) {
-          // 更新 formData 状态
-          setFormData(updatedFormData);
-          toast({
-            variant: 'success',
-            title: getMessage('save_success'),
-          });
-          setDisplayGaReminder('hidden');
-        }
+    chrome.runtime.sendMessage({ ctype: 'save_config', cdata: updatedFormData }, response => {
+      if (response && response.cdata) {
+        // 更新 formData 状态
+        setFormData(updatedFormData);
+        toast({
+          variant: 'success',
+          title: getMessage('save_success'),
+        });
+        setDisplayGaReminder('hidden');
       }
-    );
+    });
   };
 
   const handleEnableGa = () => {
     if (!formData) return;
-    const newFormData = { ...formData, ga: true };
+    // 与保存同款校验+同步，避免把与输入框不同步的旧 formData 存盘；
+    // 宽松模式：征询屏上没有可见输入框，严格模式会困住用户；gaPrompted 落盘为 true
+    const newFormData = buildValidatedConfig({ ...formData, ga: true, gaPrompted: true }, true);
+    if (!newFormData) return;
     setFormData(newFormData);
-    chrome.runtime.sendMessage(
-      { ctype: 'save_config', cdata: newFormData },
-      (response) => {
-        if (response && response.cdata) {
-          setDisplayGaReminder('hidden');
-        }
+    chrome.runtime.sendMessage({ ctype: 'save_config', cdata: newFormData }, response => {
+      if (response && response.cdata) {
+        setDisplayGaReminder('hidden');
       }
-    );
+    });
   };
 
   const handleCancelGa = () => {
-    setDisplayGaReminder('hidden');
+    if (!formData) return;
+    // 拒绝也要落盘（发送完整 config + gaPrompted 三态标记，区分"拒绝过"与"从未询问"），
+    // 否则下次打开 popup 会再次弹出征询；宽松模式同 handleEnableGa
+    const newFormData = buildValidatedConfig({ ...formData, ga: false, gaPrompted: true }, true);
+    if (!newFormData) return;
+    setFormData(newFormData);
+    chrome.runtime.sendMessage({ ctype: 'save_config', cdata: newFormData }, response => {
+      if (response && response.cdata) {
+        setDisplayGaReminder('hidden');
+      }
+    });
   };
 
   const handleBlockManager = () => {
@@ -188,42 +217,37 @@ export default function App() {
   };
 
   const confirmResetConfig = () => {
-    chrome.runtime.sendMessage(
-      { ctype: 'reset_config', cdata: true },
-      (response) => {
-        if (response && response.cdata) {
-          // 重新获取配置
-          chrome.runtime.sendMessage(
-            { ctype: 'get_config', cdata: true },
-            (response) => {
-              if (response && response.cdata) {
-                const config = response.cdata;
-                const frequency = config.frequency ?? 5;
-                const autoCloseDelay = config.autoCloseDelay ?? 30;
-                setFormData({
-                  status: config.status ?? true,
-                  mini: config.mini ?? false,
-                  random: config.random ?? true,
-                  frequency: frequency,
-                  currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
-                  ga: config.ga ?? false,
-                  autoClose: config.autoClose ?? false,
-                  autoCloseDelay: autoCloseDelay,
-                });
-                setFrequencyInput(frequency.toString());
-                setAutoCloseDelayInput(autoCloseDelay.toString());
-                setDisplayGaReminder(config.ga === true ? 'hidden' : 'display');
-              }
-            }
-          );
-          toast({
-            variant: 'success',
-            title: getMessage('reset_success'),
-          });
-          setShowResetDialog(false);
-        }
+    chrome.runtime.sendMessage({ ctype: 'reset_config', cdata: true }, response => {
+      if (response && response.cdata) {
+        // 重新获取配置
+        chrome.runtime.sendMessage({ ctype: 'get_config', cdata: true }, response => {
+          if (response && response.cdata) {
+            const config = response.cdata;
+            const frequency = config.frequency ?? 5;
+            const autoCloseDelay = config.autoCloseDelay ?? 30;
+            setFormData({
+              status: config.status ?? true,
+              mini: config.mini ?? false,
+              random: config.random ?? true,
+              frequency: frequency,
+              currentNotifyLocation: config.currentNotifyLocation ?? 'top-right',
+              ga: config.ga ?? false,
+              gaPrompted: config.gaPrompted ?? false,
+              autoClose: config.autoClose ?? false,
+              autoCloseDelay: autoCloseDelay,
+            });
+            setFrequencyInput(frequency.toString());
+            setAutoCloseDelayInput(autoCloseDelay.toString());
+            setDisplayGaReminder(config.ga === true || config.gaPrompted === true ? 'hidden' : 'display');
+          }
+        });
+        toast({
+          variant: 'success',
+          title: getMessage('reset_success'),
+        });
+        setShowResetDialog(false);
       }
-    );
+    });
   };
 
   if (!formData) {
@@ -254,53 +278,30 @@ export default function App() {
       {displayGaReminder === 'hidden' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium w-[140px] text-left">
-              {getMessage('switch')}
-            </label>
-            <Switch
-              checked={formData.status}
-              onCheckedChange={(checked) =>
-                setFormData({ ...formData, status: checked })
-              }
-            />
+            <label className="text-sm font-medium w-[140px] text-left">{getMessage('switch')}</label>
+            <Switch checked={formData.status} onCheckedChange={checked => setFormData({ ...formData, status: checked })} />
           </div>
 
           {formData.status && (
             <>
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium w-[140px] text-left">
-                  {getMessage('mini_mode')}
-                </label>
-                <Switch
-                  checked={formData.mini}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, mini: checked })
-                  }
-                />
+                <label className="text-sm font-medium w-[140px] text-left">{getMessage('mini_mode')}</label>
+                <Switch checked={formData.mini} onCheckedChange={checked => setFormData({ ...formData, mini: checked })} />
               </div>
 
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium w-[140px] text-left">
-                  {getMessage('random_reminder')}
-                </label>
-                <Switch
-                  checked={formData.random}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, random: checked })
-                  }
-                />
+                <label className="text-sm font-medium w-[140px] text-left">{getMessage('random_reminder')}</label>
+                <Switch checked={formData.random} onCheckedChange={checked => setFormData({ ...formData, random: checked })} />
               </div>
 
               {formData.mini && (
                 <>
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium w-[140px] text-left">
-                      {getMessage('frequency')}
-                    </label>
+                    <label className="text-sm font-medium w-[140px] text-left">{getMessage('frequency')}</label>
                     <Input
                       type="number"
                       value={frequencyInput}
-                      onChange={(e) => {
+                      onChange={e => {
                         const value = e.target.value;
                         setFrequencyInput(value);
                         // 只有在输入有效数字时才更新 formData
@@ -312,7 +313,7 @@ export default function App() {
                           });
                         }
                       }}
-                      onBlur={(e) => {
+                      onBlur={e => {
                         // 失去焦点时，如果为空或无效，恢复为当前值
                         const value = e.target.value.trim();
                         if (!value || isNaN(parseInt(value)) || parseInt(value) < 1) {
@@ -324,9 +325,7 @@ export default function App() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium w-[140px] text-left">
-                      {getMessage('notify_position')}
-                    </label>
+                    <label className="text-sm font-medium w-[140px] text-left">{getMessage('notify_position')}</label>
                     <Select
                       value={formData.currentNotifyLocation}
                       onValueChange={(value: any) =>
@@ -340,7 +339,7 @@ export default function App() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {notifyLocations.map((item) => (
+                        {notifyLocations.map(item => (
                           <SelectItem key={item.val} value={item.val}>
                             {getMessage(item.name)}
                           </SelectItem>
@@ -350,26 +349,17 @@ export default function App() {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium w-[140px] text-left">
-                      {getMessage('auto_close')}
-                    </label>
-                    <Switch
-                      checked={formData.autoClose}
-                      onCheckedChange={(checked) =>
-                        setFormData({ ...formData, autoClose: checked })
-                      }
-                    />
+                    <label className="text-sm font-medium w-[140px] text-left">{getMessage('auto_close')}</label>
+                    <Switch checked={formData.autoClose} onCheckedChange={checked => setFormData({ ...formData, autoClose: checked })} />
                   </div>
 
                   {formData.autoClose && (
                     <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium w-[140px] text-left">
-                        {getMessage('auto_close_delay')}
-                      </label>
+                      <label className="text-sm font-medium w-[140px] text-left">{getMessage('auto_close_delay')}</label>
                       <Input
                         type="number"
                         value={autoCloseDelayInput}
-                        onChange={(e) => {
+                        onChange={e => {
                           const value = e.target.value;
                           setAutoCloseDelayInput(value);
                           // 只有在输入有效数字时才更新 formData
@@ -381,7 +371,7 @@ export default function App() {
                             });
                           }
                         }}
-                        onBlur={(e) => {
+                        onBlur={e => {
                           // 失去焦点时，如果为空或无效，恢复为当前值
                           const value = e.target.value.trim();
                           if (!value || isNaN(parseInt(value)) || parseInt(value) < 1) {
@@ -398,15 +388,7 @@ export default function App() {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="ga-checkbox"
-                    checked={formData.ga}
-                    onChange={(e) =>
-                      setFormData({ ...formData, ga: e.target.checked })
-                    }
-                    className="w-4 h-4"
-                  />
+                  <input type="checkbox" id="ga-checkbox" checked={formData.ga} onChange={e => setFormData({ ...formData, ga: e.target.checked })} className="w-4 h-4" />
                   <label htmlFor="ga-checkbox" className="text-sm">
                     {getMessage('ga')}
                   </label>
@@ -417,28 +399,21 @@ export default function App() {
                   </Alert>
                 </div>
               </div>
-
-              <div className="flex gap-2 pt-2">
-                <Button type="button" variant="primary" onClick={handleSave}>
-                  {getMessage('save')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="warning"
-                  onClick={handleBlockManager}
-                >
-                  {getMessage('block_manager')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleResetConfig}
-                >
-                  {getMessage('reset_config')}
-                </Button>
-              </div>
             </>
           )}
+
+          {/* 按钮区始终可见：status=false 时仍可保存关闭状态 / 管理屏蔽 / 重置 */}
+          <div className="flex gap-2 pt-2">
+            <Button type="button" variant="primary" onClick={handleSave}>
+              {getMessage('save')}
+            </Button>
+            <Button type="button" variant="warning" onClick={handleBlockManager}>
+              {getMessage('block_manager')}
+            </Button>
+            <Button type="button" variant="outline" onClick={handleResetConfig}>
+              {getMessage('reset_config')}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -446,19 +421,14 @@ export default function App() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{getMessage('reset_config_title')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {getMessage('reset_config_description')}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{getMessage('reset_config_description')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{getMessage('cancel_btn')}</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmResetConfig}>
-              {getMessage('confirm_btn')}
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmResetConfig}>{getMessage('confirm_btn')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
   );
 }
-

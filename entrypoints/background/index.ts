@@ -283,6 +283,7 @@ export default defineBackground(() => {
       frequency: cdata.frequency,
       currentNotifyLocation: cdata.currentNotifyLocation,
       ga: cdata.ga,
+      gaPrompted: cdata.gaPrompted,
       autoClose: cdata.autoClose,
       autoCloseDelay: cdata.autoCloseDelay,
     });
@@ -303,6 +304,8 @@ export default defineBackground(() => {
       frequency: 5,
       currentNotifyLocation: 'top-right',
       ga: false,
+      // 重置后重新征询 GA
+      gaPrompted: false,
       autoClose: false,
       autoCloseDelay: 30,
     });
