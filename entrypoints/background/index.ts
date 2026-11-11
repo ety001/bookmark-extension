@@ -312,8 +312,7 @@ export default defineBackground(() => {
           });
           BookmarkLib.removeBookmark(cdata, success => {
             if (success) {
-              // 删除成功即同步移出待读队列，
-              // 消除旧版 Chrome/Edge（无 node）上 500ms 防抖窗口内已删书签仍被推送
+              // 删除成功即同步移出队列，保证响应前队列即时一致，不依赖 500ms 防抖重拉
               BookmarkLib.removeWaitingBookmark(cdata);
             }
             sendResponse({ ctype, cdata: success });
@@ -453,9 +452,8 @@ export default defineBackground(() => {
       });
     });
 
-    // Firefox 及 Chrome/Edge 132+ 的 RemoveInfo 提供 node，可按节点精确清理；
-    // 旧版 Chrome/Edge（<132）的 RemoveInfo 只有 {parentId, index}，无 node，
-    // 已删书签无法按节点清理，需全量重拉待读队列；
+    // Firefox 与 Chrome 48+/Edge（Chromium 内核）的 RemoveInfo 均提供 node，可按节点精确清理；
+    // 无 node 的 else 分支仅作防御性兜底（全量重拉待读队列）；
     // 防抖：短时间连续删多个书签时合并为一次重拉
     let queueRefreshTimer: ReturnType<typeof setTimeout> | null = null;
     const scheduleQueueRefresh = () => {
@@ -474,8 +472,9 @@ export default defineBackground(() => {
       if (removeInfo.node) {
         BookmarkLib.removeWaitingBookmark(removeInfo.node as any);
         BookmarkLib.removeBlockedBookmark(removeInfo.node as any);
-        // 删除的是文件夹时，按节点清理只删自身，其子书签仍可能残留在队列中，追加兜底重拉
-        if (removeInfo.node.children && removeInfo.node.children.length > 0) {
+        // 删除的是文件夹时，按节点清理只删自身，其子书签仍可能残留在队列中，追加兜底重拉。
+        // Firefox 的 node 无 children 字段，两引擎文件夹节点均无 url，故以 url 判定为主、children 为辅
+        if (!removeInfo.node.url || (removeInfo.node.children?.length ?? 0) > 0) {
           scheduleQueueRefresh();
         }
       } else {
