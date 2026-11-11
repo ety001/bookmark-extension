@@ -311,6 +311,11 @@ export default defineBackground(() => {
             sendEvent(currentVersion, 'remove_bookmark', uid);
           });
           BookmarkLib.removeBookmark(cdata, success => {
+            if (success) {
+              // 删除成功即同步移出待读队列，
+              // 消除旧版 Chrome/Edge（无 node）上 500ms 防抖窗口内已删书签仍被推送
+              BookmarkLib.removeWaitingBookmark(cdata);
+            }
             sendResponse({ ctype, cdata: success });
           });
           return true;
@@ -448,8 +453,9 @@ export default defineBackground(() => {
       });
     });
 
-    // Chrome/Edge 的 RemoveInfo 只有 {parentId, index}，无 node（Firefox 才有 node），
-    // 无 node 时已删书签无法按节点清理，需全量重拉待读队列；
+    // Firefox 及 Chrome/Edge 132+ 的 RemoveInfo 提供 node，可按节点精确清理；
+    // 旧版 Chrome/Edge（<132）的 RemoveInfo 只有 {parentId, index}，无 node，
+    // 已删书签无法按节点清理，需全量重拉待读队列；
     // 防抖：短时间连续删多个书签时合并为一次重拉
     let queueRefreshTimer: ReturnType<typeof setTimeout> | null = null;
     const scheduleQueueRefresh = () => {
@@ -468,6 +474,10 @@ export default defineBackground(() => {
       if (removeInfo.node) {
         BookmarkLib.removeWaitingBookmark(removeInfo.node as any);
         BookmarkLib.removeBlockedBookmark(removeInfo.node as any);
+        // 删除的是文件夹时，按节点清理只删自身，其子书签仍可能残留在队列中，追加兜底重拉
+        if (removeInfo.node.children && removeInfo.node.children.length > 0) {
+          scheduleQueueRefresh();
+        }
       } else {
         scheduleQueueRefresh();
       }

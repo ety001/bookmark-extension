@@ -167,7 +167,9 @@ export const useStore = create<StoreState>()(
 
         addWaitingBookmark: bookmark =>
           set(state => ({
-            waitingBookmarks: [...state.waitingBookmarks, bookmark],
+            // 按 id 去重（与 addBlockedBookmark 同款守卫）：
+            // onCreated 异步入队与防抖全量重拉交错时避免重复入队
+            waitingBookmarks: state.waitingBookmarks.some(b => b.id === bookmark.id) ? state.waitingBookmarks : [...state.waitingBookmarks, bookmark],
           })),
 
         addBlockedBookmark: bookmark =>
