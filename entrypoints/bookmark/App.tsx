@@ -193,6 +193,8 @@ export default function App() {
         console.error('getbookmark_byid failed:', chrome.runtime.lastError.message);
       }
       if (response && response.cdata && response.cdata.bookmark) {
+        // 竞态守卫：响应与本次点击的 item 不一致（快速连点/响应乱序）时丢弃，避免串数据
+        if (response.cdata.bookmark.id !== item.id) return;
         const bookmark = response.cdata.bookmark;
         initialUrlRef.current = bookmark.url || null;
         setBookmarkData({
@@ -221,6 +223,9 @@ export default function App() {
 
   const confirmRemove = () => {
     if (!itemToRemove) return;
+    // 纵深防御：系统目录（根节点的直接子节点，如书签栏）兜底拒绝删除，
+    // 拦截渲染层隐藏删除按钮之外的路径（渲染层守卫见列表 map 内）
+    if (itemToRemove.parentId === '0' || itemToRemove.parentId === menu[0]?.id) return;
     chrome.runtime.sendMessage({ ctype: 'remove_bookmark', cdata: itemToRemove }, response => {
       if (chrome.runtime.lastError) {
         console.error('remove_bookmark failed:', chrome.runtime.lastError.message);
@@ -304,10 +309,15 @@ export default function App() {
   };
 
   const handleOpenCreateFolder = () => {
-    // 根节点下不能创建目录：根视图时默认落到书签栏（两种浏览器的书签栏都是根的第一个子节点），
-    // 取不到则不带 parentId（浏览器默认落"其他书签"）。Firefox 根/书签栏 id 为 GUID，不硬编码 '0'/'1'
-    const isRootPid = pid === '0' || pid === menu[0]?.id;
-    const parentId = isRootPid ? menu[0]?.children?.[0]?.id || null : pid;
+    // 根节点下不能创建目录：menu 未加载或 pid 为根节点时按根视图处理。
+    // 优先在根 children 里找书签栏（Chrome '1' / Firefox 'toolbar_____'；根 children 的
+    // 顺序在 Firefox 并未文档化，不能断言第一个子节点必为书签栏），取不到再退回
+    // children[0]，仍取不到则不带 parentId（浏览器默认落"其他书签"）
+    let parentId: string | null = pid;
+    if (menu.length === 0 || pid === '0' || pid === menu[0]?.id) {
+      const rootChildren = menu[0]?.children;
+      parentId = rootChildren?.find(node => node.id === '1' || node.id === 'toolbar_____')?.id || rootChildren?.[0]?.id || null;
+    }
     setBookmarkFolder({ parentId, title: null });
     setDialogAddFolderFormVisible(true);
   };

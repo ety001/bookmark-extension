@@ -96,20 +96,34 @@ export function getBookmark(): Bookmark | null {
 /**
  * 从 chrome 中删除书签
  * 目录（无 url）必须用 removeTree，非空目录用 remove 会失败
+ * 纵深防御：根节点及其直接子节点（书签栏/其他书签等系统目录）直接拒绝删除，
+ * 不调用 remove/removeTree（根 id 从 getTree 结果取，兼容 Firefox 的 GUID 根）
  */
 export function removeBookmark(bm: Bookmark, cb?: (success: boolean) => void): void {
   if (!bm.id) {
     cb?.(false);
     return;
   }
-  const remove = bm.url ? chrome.bookmarks.remove : chrome.bookmarks.removeTree;
-  remove(bm.id, () => {
+  chrome.bookmarks.getTree(tree => {
     if (chrome.runtime.lastError) {
-      console.error('removeBookmark failed:', chrome.runtime.lastError.message);
+      console.error('removeBookmark getTree failed:', chrome.runtime.lastError.message);
       cb?.(false);
       return;
     }
-    cb?.(true);
+    const rootId = tree[0]?.id;
+    if (rootId && (bm.id === rootId || bm.parentId === rootId)) {
+      cb?.(false);
+      return;
+    }
+    const remove = bm.url ? chrome.bookmarks.remove : chrome.bookmarks.removeTree;
+    remove(bm.id, () => {
+      if (chrome.runtime.lastError) {
+        console.error('removeBookmark failed:', chrome.runtime.lastError.message);
+        cb?.(false);
+        return;
+      }
+      cb?.(true);
+    });
   });
 }
 
