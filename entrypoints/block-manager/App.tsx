@@ -19,7 +19,6 @@ export default function App() {
   const { toast } = useToast();
   const [blockList, setBlockList] = useState<Bookmark[]>([]);
   const [height, setHeight] = useState(0);
-  const [search, setSearch] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [clearDialogOpen, setClearDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
@@ -102,8 +101,6 @@ export default function App() {
     }
   };
 
-  const filteredList = blockList.filter(item => !search || item.title?.includes(search));
-
   return (
     <div className="h-screen flex flex-col">
       <div ref={topRef} className="bg-primary text-white py-3">
@@ -150,11 +147,11 @@ export default function App() {
             </div>
           )}
 
-          {filteredList.length === 0 ? (
+          {blockList.length === 0 ? (
             <div className="text-center text-gray-500 py-8">{getMessage('no_block_list')}</div>
           ) : (
             <div className="space-y-2">
-              {filteredList.map(item => (
+              {blockList.map(item => (
                 <div key={item.id} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
                   <div className="flex-1 cursor-pointer" onClick={() => handleVisit(item.url)}>
                     <div className="flex items-center gap-2">
