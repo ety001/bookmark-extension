@@ -42,32 +42,21 @@ const buttonVariants = cva(
   }
 );
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   icon?: React.ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, circle, plain, icon, children, ...props }, ref) => {
-    // 如果只有图标没有文字，图标不需要 margin
-    const iconOnly = icon && !children;
-    
-    return (
-      <button
-        className={cn(buttonVariants({ variant, size, circle, plain, className }))}
-        ref={ref}
-        {...props}
-      >
-        {icon && (
-          <span className={iconOnly ? '' : 'mr-1'}>{icon}</span>
-        )}
-        {children}
-      </button>
-    );
-  }
-);
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant, size, circle, plain, icon, children, ...props }, ref) => {
+  // 如果只有图标没有文字，图标不需要 margin
+  const iconOnly = icon && !children;
+
+  return (
+    <button className={cn(buttonVariants({ variant, size, circle, plain, className }))} ref={ref} {...props}>
+      {icon && <span className={iconOnly ? '' : 'mr-1'}>{icon}</span>}
+      {children}
+    </button>
+  );
+});
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };
-

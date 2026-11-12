@@ -5,14 +5,14 @@ addEventListener('fetch', event => {
       // 全局错误处理
       console.error('Worker error:', err);
       return new Response(
-        JSON.stringify({ 
-          error: 'internal_server_error', 
+        JSON.stringify({
+          error: 'internal_server_error',
           message: err.message || 'Unknown error',
-          stack: err.stack 
-        }), 
-        { 
-          status: 500, 
-          headers: jsonHeaders() 
+          stack: err.stack,
+        }),
+        {
+          status: 500,
+          headers: jsonHeaders(),
         }
       );
     })
@@ -35,44 +35,35 @@ async function handle(req) {
 
   // 只允许 POST
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'method_not_allowed', allowed: ['POST', 'OPTIONS'] }), 
-      { 
-        status: 405,
-        headers: {
-          ...jsonHeaders(),
-          'Access-Control-Allow-Origin': '*',
-        }
-      }
-    );
+    return new Response(JSON.stringify({ error: 'method_not_allowed', allowed: ['POST', 'OPTIONS'] }), {
+      status: 405,
+      headers: {
+        ...jsonHeaders(),
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
 
   // 简单的 auth：扩展必须提供 x-extension-key
   const extKey = req.headers.get('x-extension-key');
   if (!EXTENSION_KEY) {
     console.error('EXTENSION_KEY not configured');
-    return new Response(
-      JSON.stringify({ error: 'server_misconfigured', detail: 'EXTENSION_KEY not set' }), 
-      {
-        status: 500,
-        headers: {
-          ...jsonHeaders(),
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+    return new Response(JSON.stringify({ error: 'server_misconfigured', detail: 'EXTENSION_KEY not set' }), {
+      status: 500,
+      headers: {
+        ...jsonHeaders(),
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
   if (!extKey || extKey !== EXTENSION_KEY) {
-    return new Response(
-      JSON.stringify({ error: 'unauthorized', detail: 'Invalid or missing x-extension-key' }), 
-      {
-        status: 401,
-        headers: {
-          ...jsonHeaders(),
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+    return new Response(JSON.stringify({ error: 'unauthorized', detail: 'Invalid or missing x-extension-key' }), {
+      status: 401,
+      headers: {
+        ...jsonHeaders(),
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
 
   // 解析 body
@@ -80,16 +71,13 @@ async function handle(req) {
   try {
     body = await req.json();
   } catch (e) {
-    return new Response(
-      JSON.stringify({ error: 'invalid_json', detail: e.message }), 
-      {
-        status: 400,
-        headers: {
-          ...jsonHeaders(),
-          'Access-Control-Allow-Origin': '*',
-        },
-      }
-    );
+    return new Response(JSON.stringify({ error: 'invalid_json', detail: e.message }), {
+      status: 400,
+      headers: {
+        ...jsonHeaders(),
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
   }
 
   // 必要的 env 检查（在 wrangler secret 里配置）
@@ -99,10 +87,10 @@ async function handle(req) {
     if (!GA_MEASUREMENT_ID) missing.push('GA_MEASUREMENT_ID');
     console.error('Missing environment variables:', missing);
     return new Response(
-      JSON.stringify({ 
-        error: 'server_misconfigured', 
-        detail: `Missing: ${missing.join(', ')}` 
-      }), 
+      JSON.stringify({
+        error: 'server_misconfigured',
+        detail: `Missing: ${missing.join(', ')}`,
+      }),
       {
         status: 500,
         headers: {
@@ -137,10 +125,10 @@ async function handle(req) {
     };
   } else {
     return new Response(
-      JSON.stringify({ 
-        error: 'missing_event_payload', 
-        detail: 'Request body must contain either "events" array or "event_name" field' 
-      }), 
+      JSON.stringify({
+        error: 'missing_event_payload',
+        detail: 'Request body must contain either "events" array or "event_name" field',
+      }),
       {
         status: 400,
         headers: {
@@ -155,9 +143,7 @@ async function handle(req) {
   // TODO: add rate limiting / validation if desired.
 
   // 转发到 GA Measurement Protocol
-  const gaUrl = `https://www.google-analytics.com/mp/collect?measurement_id=${encodeURIComponent(
-    GA_MEASUREMENT_ID
-  )}&api_secret=${encodeURIComponent(GA_API_SECRET)}`;
+  const gaUrl = `https://www.google-analytics.com/mp/collect?measurement_id=${encodeURIComponent(GA_MEASUREMENT_ID)}&api_secret=${encodeURIComponent(GA_API_SECRET)}`;
 
   let gaResp;
   try {
@@ -169,10 +155,10 @@ async function handle(req) {
   } catch (err) {
     console.error('GA fetch error:', err);
     return new Response(
-      JSON.stringify({ 
-        error: 'fetch_failed', 
-        detail: err.message || String(err) 
-      }), 
+      JSON.stringify({
+        error: 'fetch_failed',
+        detail: err.message || String(err),
+      }),
       {
         status: 502,
         headers: {
@@ -186,14 +172,14 @@ async function handle(req) {
   // 检查状态码，某些状态码不能有 body（204, 205, 304 等）
   const noBodyStatuses = [101, 204, 205, 304];
   const hasNoBody = noBodyStatuses.includes(gaResp.status);
-  
+
   let responseBody = null;
   let responseHeaders = {
     // CORS：允许扩展读取响应
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, x-extension-key',
   };
-  
+
   if (hasNoBody) {
     // 对于无 body 的状态码，返回 null body
     responseBody = null;
@@ -206,7 +192,7 @@ async function handle(req) {
       ...responseHeaders,
     };
   }
-  
+
   return new Response(responseBody, {
     status: gaResp.status,
     headers: responseHeaders,

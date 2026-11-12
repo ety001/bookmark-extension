@@ -22,19 +22,19 @@ export function gtag(...args: any[]): void {
 
   // 在 Service Worker 中，通过 Cloudflare Worker 中转发送
   if (typeof chrome !== 'undefined' && chrome.storage) {
-    chrome.storage.local.get('uid', (result) => {
+    chrome.storage.local.get('uid', result => {
       const uid = result.uid || 'unknown';
-      
+
       if (DEBUG) {
         console.log('[GA] UID:', uid);
       }
-      
+
       // 解析 gtag 参数
       if (args[0] === 'event') {
         // gtag('event', eventName, params)
         const eventName = args[1];
         const params = args[2] || {};
-        
+
         if (DEBUG) {
           console.log('[GA] Sending event:', {
             eventName,
@@ -44,7 +44,7 @@ export function gtag(...args: any[]): void {
             workerUrl: GA_WORKER_URL,
           });
         }
-        
+
         // 构建符合 GA4 Measurement Protocol 的 payload
         // Worker 会接受这个格式并转发
         const payload = {
@@ -56,19 +56,19 @@ export function gtag(...args: any[]): void {
             },
           ],
         };
-        
+
         if (DEBUG) {
           console.log('[GA] Request URL:', GA_WORKER_URL);
           console.log('[GA] Request payload:', JSON.stringify(payload, null, 2));
         }
-        
+
         // 检查是否有 EXTENSION_KEY
         if (!EXTENSION_KEY) {
           if (DEBUG) {
             console.warn('[GA] EXTENSION_KEY not set, request may fail');
           }
         }
-        
+
         fetch(GA_WORKER_URL, {
           method: 'POST',
           headers: {
@@ -78,7 +78,7 @@ export function gtag(...args: any[]): void {
           body: JSON.stringify(payload),
           keepalive: true,
         })
-          .then((response) => {
+          .then(response => {
             if (DEBUG) {
               console.log('[GA] Response status:', response.status, response.statusText);
               console.log('[GA] Response headers:', Object.fromEntries(response.headers.entries()));
@@ -87,7 +87,7 @@ export function gtag(...args: any[]): void {
               if (DEBUG) {
                 console.warn('[GA] Request failed with status:', response.status);
                 // 尝试读取错误信息
-                response.text().then((text) => {
+                response.text().then(text => {
                   if (DEBUG && text) {
                     console.warn('[GA] Error response:', text);
                   }
@@ -100,12 +100,12 @@ export function gtag(...args: any[]): void {
             }
             return response.text();
           })
-          .then((text) => {
+          .then(text => {
             if (DEBUG && text) {
               console.log('[GA] Response body:', text);
             }
           })
-          .catch((error) => {
+          .catch(error => {
             if (DEBUG) {
               console.error('[GA] Request error:', error);
             }
