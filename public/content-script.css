@@ -1,13 +1,14 @@
 /* Content Script 专用样式 - 使用 rb- 前缀避免与页面样式冲突 */
-/* 所有样式都使用 !important 确保不被网站样式覆盖 */
+/* 除下方注明的三个容器外，其余样式都使用 !important 确保不被网站样式覆盖 */
 
 /* 容器可见性完全由 content-script.tsx 通过内联 style.display 控制：
    容器在创建时即带内联 display:none（内容脚本注入后不会闪烁/占位），
    React 渲染通知/对话框时置为 block。
-   注意：不要在此文件为 #review-bookmark / #review-bookmark-notification /
-   #review-bookmark-dialog 或任何 display 规则加 !important ——
-   CSS !important 会压过 JS 内联样式（PR #49 的回归根因），
-   导致 mini 模式通知永久不可见。 */
+   注意：不要为 #review-bookmark / #review-bookmark-notification /
+   #review-bookmark-dialog 这三个由 JS 内联切换 display 的容器写 display
+   声明（尤其是 !important）—— CSS !important 会压过 JS 内联样式
+   （PR #49 的回归根因），导致 mini 模式通知永久不可见；
+   .rb-* 子元素的 display:flex !important 等不受此限，仍用于防宿主页覆盖。 */
 
 /* 对话框遮罩层 */
 .rb-dialog-overlay {
