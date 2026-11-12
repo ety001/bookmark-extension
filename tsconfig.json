@@ -24,4 +24,3 @@
   "include": ["./**/*.ts", "./**/*.tsx", ".wxt/wxt.d.ts"],
   "exclude": ["node_modules", "dist", ".output"]
 }
-
