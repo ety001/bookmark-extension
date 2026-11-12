@@ -49,13 +49,13 @@ No. All code executed by the extension is bundled inside the extension package a
 
 ## 附：填写对照表（Edge 后台字段 → 上面哪一段）
 
-| Edge 后台字段 | 使用上面的内容 |
-|---|---|
-| Single purpose description | 第 1 节 |
-| Permission justification - notifications | 第 2 节 notifications |
-| Permission justification - bookmarks | 第 2 节 bookmarks |
-| Permission justification - tabs | 第 2 节 tabs |
-| Permission justification - storage | 第 2 节 storage |
-| Permission justification - unlimitedStorage | 第 2 节 unlimitedStorage |
-| Permission justification - host permissions | 第 2 节 Host permissions |
+| Edge 后台字段                                        | 使用上面的内容             |
+| ---------------------------------------------------- | -------------------------- |
+| Single purpose description                           | 第 1 节                    |
+| Permission justification - notifications             | 第 2 节 notifications      |
+| Permission justification - bookmarks                 | 第 2 节 bookmarks          |
+| Permission justification - tabs                      | 第 2 节 tabs               |
+| Permission justification - storage                   | 第 2 节 storage            |
+| Permission justification - unlimitedStorage          | 第 2 节 unlimitedStorage   |
+| Permission justification - host permissions          | 第 2 节 Host permissions   |
 | Remote code - "Does your extension use remote code?" | 第 3 节（选 No，粘贴该段） |

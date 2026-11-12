@@ -21,4 +21,3 @@ export function getMessage(key: string, substitutions?: string | string[]): stri
 export function getUILanguage(): string {
   return chrome.i18n.getUILanguage();
 }
-

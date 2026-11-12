@@ -14,4 +14,3 @@ root.render(
     <Toaster />
   </React.StrictMode>
 );
-
