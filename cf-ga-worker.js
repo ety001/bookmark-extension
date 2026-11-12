@@ -25,6 +25,9 @@
 // - clear_block_list        L493
 // - update_extension        L567
 // - install_extension       L588
+// - cancel_block            存量 v4.0-4.1 构建遗留事件:当前代码已无此调用点,
+//                           但 #45-#56 期间发布的旧版构建仍会发送;待旧版本
+//                           自然淘汰后移除
 const ALLOWED_EVENT_NAMES = new Set([
   'page_view',
   'install_extension',
@@ -44,6 +47,8 @@ const ALLOWED_EVENT_NAMES = new Set([
   'create_bookmark_folder',
   'remove_block_bookmark',
   'clear_block_list',
+  // cancel_block:存量 v4.0-4.1 构建遗留事件,待旧版本自然淘汰后移除
+  'cancel_block',
 ]);
 
 // 单次请求 events 数组长度上限(请求体结构校验,不是限流)
@@ -142,28 +147,43 @@ async function handle(req) {
     });
 
   if (body.events) {
-    if (Array.isArray(body.events)) {
-      // 数组长度上限(请求体结构校验,不是限流)
-      if (body.events.length > MAX_EVENTS_PER_REQUEST) {
-        return new Response(
-          JSON.stringify({
-            error: 'too_many_events',
-            detail: `events array length ${body.events.length} exceeds max ${MAX_EVENTS_PER_REQUEST}`,
-          }),
-          {
-            status: 400,
-            headers: {
-              ...jsonHeaders(),
-              'Access-Control-Allow-Origin': '*',
-            },
-          }
-        );
-      }
-      for (const ev of body.events) {
-        const name = ev && typeof ev === 'object' ? ev.name : undefined;
-        if (typeof name !== 'string' || !ALLOWED_EVENT_NAMES.has(name)) {
-          return eventNotAllowed(`Event name not allowed: ${String(name)}`);
+    if (!Array.isArray(body.events)) {
+      // 真值但非数组(字符串/对象等):结构非法,直接拒绝,
+      // 避免绕过下方白名单与长度上限被原样转发
+      return new Response(
+        JSON.stringify({
+          error: 'invalid_events_format',
+          detail: '"events" must be an array of {name, params} objects',
+        }),
+        {
+          status: 400,
+          headers: {
+            ...jsonHeaders(),
+            'Access-Control-Allow-Origin': '*',
+          },
         }
+      );
+    }
+    // 数组长度上限(请求体结构校验,不是限流)
+    if (body.events.length > MAX_EVENTS_PER_REQUEST) {
+      return new Response(
+        JSON.stringify({
+          error: 'too_many_events',
+          detail: `events array length ${body.events.length} exceeds max ${MAX_EVENTS_PER_REQUEST}`,
+        }),
+        {
+          status: 400,
+          headers: {
+            ...jsonHeaders(),
+            'Access-Control-Allow-Origin': '*',
+          },
+        }
+      );
+    }
+    for (const ev of body.events) {
+      const name = ev && typeof ev === 'object' ? ev.name : undefined;
+      if (typeof name !== 'string' || !ALLOWED_EVENT_NAMES.has(name)) {
+        return eventNotAllowed(`Event name not allowed: ${String(name)}`);
       }
     }
   } else if (body.event_name) {
