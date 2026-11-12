@@ -32,7 +32,7 @@ export default defineConfig({
     ],
     web_accessible_resources: [
       {
-        resources: ['tab.html', 'bookmark.html', 'block-manager.html', 'fonts/*'],
+        resources: ['bookmark.html'],
         matches: ['<all_urls>'],
       },
     ],
