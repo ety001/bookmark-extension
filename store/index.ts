@@ -66,37 +66,6 @@ const defaultConfig: Config = {
 };
 
 /**
- * 从 localStorage 迁移旧数据
- * 只在浏览器环境中执行
- */
-function migrateOldData(): Partial<StoreState> | null {
-  // 检查是否在浏览器环境中
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return null;
-  }
-
-  try {
-    const oldData = localStorage.getItem('vuex');
-    if (!oldData) return null;
-
-    const parsed = JSON.parse(oldData);
-    if (!parsed || !parsed.state) return null;
-
-    const oldState = parsed.state;
-    return {
-      config: oldState.config || defaultConfig,
-      frequencyCounter: oldState.frequencyCounter || 0,
-      waitingBookmarks: oldState.waitingBookmarks || [],
-      blockedBookmarks: oldState.blockedBookmarks || [],
-      notifyLocationList: oldState.notifyLocationList || ['top-right', 'top-left', 'bottom-right', 'bottom-left'],
-    };
-  } catch (error) {
-    console.error('迁移旧数据失败:', error);
-    return null;
-  }
-}
-
-/**
  * Store 恢复（rehydration）就绪 Promise
  * 在 Service Worker 中，persist 从 chrome.storage.local 的恢复是异步的，
  * 冷启动后首个事件若直接读 useStore.getState() 只能拿到默认值
@@ -136,15 +105,12 @@ export async function waitForStoreRehydration(): Promise<void> {
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => {
-      // 尝试迁移旧数据
-      const migratedData = migrateOldData();
-
       return {
-        config: migratedData?.config || defaultConfig,
-        frequencyCounter: migratedData?.frequencyCounter || 0,
-        waitingBookmarks: migratedData?.waitingBookmarks || [],
-        blockedBookmarks: migratedData?.blockedBookmarks || [],
-        notifyLocationList: migratedData?.notifyLocationList || ['top-right', 'top-left', 'bottom-right', 'bottom-left'],
+        config: defaultConfig,
+        frequencyCounter: 0,
+        waitingBookmarks: [],
+        blockedBookmarks: [],
+        notifyLocationList: ['top-right', 'top-left', 'bottom-right', 'bottom-left'],
 
         updateConfig: newConfig =>
           set(state => ({

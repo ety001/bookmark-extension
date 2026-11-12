@@ -35,6 +35,12 @@
   "update_button": {
     "message": "立即升级"
   },
+  "v3_upgrade_notice_title": {
+    "message": "升级提示"
+  },
+  "v3_upgrade_notice_message": {
+    "message": "如果你从旧版本升级，部分偏好设置与屏蔽列表可能需要重新设置。"
+  },
   "switch": {
     "message": "开关"
   },

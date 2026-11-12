@@ -566,6 +566,10 @@ export default defineBackground(() => {
         getUid().then(uid => {
           sendEvent(currentVersion, 'update_extension', uid, 1);
         });
+        // v3→v4 存储迁移已删除：v3 的 localStorage('vuex') 迁移因 SW 冷启动
+        // 竞态自 v4 发布起就已失效，改为升级后一次性告知老用户
+        // 偏好与屏蔽列表可能需要重新设置
+        showV3UpgradeNoticeOnce();
         // TODO: 推广页面已不存在，暂时注释掉
         // window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
         return;
@@ -620,6 +624,36 @@ export default defineBackground(() => {
       title: chrome.i18n.getMessage('appname'),
       message: version + chrome.i18n.getMessage('update_reminder'),
       buttons: [{ title: chrome.i18n.getMessage('update_button') }],
+    });
+  }
+
+  // v3 → v4 升级说明通知（仅弹一次）
+  // v3 数据存 localStorage('vuex')，v4 起改用 chrome.storage.local，
+  // 旧迁移逻辑已删除，用 storage 标志位保证只提示一次
+  function showV3UpgradeNoticeOnce(): void {
+    if (typeof chrome === 'undefined' || !chrome.notifications || !chrome.storage || !chrome.storage.local) {
+      return;
+    }
+
+    chrome.storage.local.get('v3-upgrade-notice-shown', result => {
+      if (chrome.runtime.lastError) {
+        console.error('[Background] Error checking v3 upgrade notice flag:', chrome.runtime.lastError);
+        return;
+      }
+      if (result['v3-upgrade-notice-shown']) return;
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: 'icons/icon-128.png',
+        // 用专用 title key 而非 appname：让用户在通知中心一眼看出
+        // 这是升级相关提示而非日常书签推送
+        title: chrome.i18n.getMessage('v3_upgrade_notice_title'),
+        message: chrome.i18n.getMessage('v3_upgrade_notice_message'),
+      });
+      chrome.storage.local.set({ 'v3-upgrade-notice-shown': true }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('[Background] Error setting v3 upgrade notice flag:', chrome.runtime.lastError);
+        }
+      });
     });
   }
 });

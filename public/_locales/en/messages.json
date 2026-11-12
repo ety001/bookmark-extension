@@ -35,6 +35,12 @@
   "update_button": {
     "message": "Update Now"
   },
+  "v3_upgrade_notice_title": {
+    "message": "Upgrade Notice"
+  },
+  "v3_upgrade_notice_message": {
+    "message": "If you upgraded from an old version, some preferences and your block list may need to be set up again."
+  },
   "switch": {
     "message": "Switch"
   },
