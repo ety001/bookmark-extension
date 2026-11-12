@@ -134,8 +134,10 @@ export default function App() {
       return null;
     }
 
-    // 验证自动关闭延迟（如果启用了自动关闭；维持按 base.autoClose 的条件校验）
-    const autoCloseDelayInvalid = base.autoClose && (!autoCloseDelayInput.trim() || !Number.isInteger(autoCloseDelayValue) || autoCloseDelayValue < 1);
+    // autoCloseDelay 输入框仅在 status、mini、autoClose 均开启时可见；不可见时
+    // 跳过校验直接沿用 base.autoCloseDelay（与 frequency 同款可见性门控）
+    const delayInputVisible = base.status === true && base.mini === true && base.autoClose === true;
+    const autoCloseDelayInvalid = delayInputVisible && (!autoCloseDelayInput.trim() || !Number.isInteger(autoCloseDelayValue) || autoCloseDelayValue < 1);
 
     if (autoCloseDelayInvalid && !lenient) {
       toast({
@@ -150,7 +152,7 @@ export default function App() {
 
     // 输入框不可见或输入无效（lenient 静默回退）时沿用 base 的值
     const effectiveFrequency = frequencyInputVisible && !frequencyInvalid ? frequencyValue : base.frequency;
-    const effectiveAutoCloseDelay = !autoCloseDelayInvalid ? autoCloseDelayValue : base.autoCloseDelay;
+    const effectiveAutoCloseDelay = delayInputVisible && !autoCloseDelayInvalid ? autoCloseDelayValue : base.autoCloseDelay;
 
     return {
       ...base,

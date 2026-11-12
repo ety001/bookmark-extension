@@ -53,7 +53,7 @@ function App() {
     setBlockDialogOpen(false);
     setRemoveDialogOpen(false);
     if (notificationContainer) {
-      notificationContainer.style.display = 'none';
+      notificationContainer.style.setProperty('display', 'none', 'important');
       if (notificationRoot) {
         // 使用 setTimeout 延迟渲染，避免在 React 渲染期间同步卸载
         setTimeout(() => {
@@ -68,16 +68,20 @@ function App() {
 
   useEffect(() => {
     // 创建通知容器
+    // 容器的 display 一律用内联 !important 控制：同为 author-important 时内联胜出、
+    // author-important 整体压过作用于 display 的 CSS 动画，防止宿主页样式表
+    // `#id{display:none!important}` 或 keyframes 把通知/对话框隐藏
+    // （普通 style.display= 赋值会重置 important 标志，所有 display 控制点必须一起用 important）
     notificationContainer = document.createElement('div');
     notificationContainer.id = 'review-bookmark-notification';
-    notificationContainer.style.cssText = 'position: fixed; z-index: 999999999; pointer-events: none; display: none;';
+    notificationContainer.style.cssText = 'position: fixed; z-index: 999999999; pointer-events: none; display: none !important;';
     document.body.appendChild(notificationContainer);
     notificationRoot = createRoot(notificationContainer);
 
     // 创建对话框容器
     dialogContainer = document.createElement('div');
     dialogContainer.id = 'review-bookmark-dialog';
-    dialogContainer.style.cssText = 'position: fixed; z-index: 999999998; pointer-events: auto; display: none;';
+    dialogContainer.style.cssText = 'position: fixed; z-index: 999999998; pointer-events: auto; display: none !important;';
     document.body.appendChild(dialogContainer);
     dialogRoot = createRoot(dialogContainer);
 
@@ -157,7 +161,7 @@ function App() {
   useEffect(() => {
     if (bookmark && notificationRoot && notificationContainer) {
       // 显示通知容器
-      notificationContainer.style.display = 'block';
+      notificationContainer.style.setProperty('display', 'block', 'important');
       notificationRoot.render(
         <ContentNotification
           bookmark={bookmark}
@@ -171,7 +175,7 @@ function App() {
       );
     } else if (notificationContainer) {
       // 隐藏通知容器
-      notificationContainer.style.display = 'none';
+      notificationContainer.style.setProperty('display', 'none', 'important');
       if (notificationRoot) {
         // 使用 setTimeout 延迟渲染，避免在 React 渲染期间同步卸载
         setTimeout(() => {
@@ -189,9 +193,9 @@ function App() {
       const hasOpenDialog = blockDialogOpen || removeDialogOpen;
       // 控制对话框容器的显示/隐藏
       if (hasOpenDialog) {
-        dialogContainer.style.display = 'block';
+        dialogContainer.style.setProperty('display', 'block', 'important');
       } else {
-        dialogContainer.style.display = 'none';
+        dialogContainer.style.setProperty('display', 'none', 'important');
       }
 
       dialogRoot.render(
@@ -264,7 +268,7 @@ export default defineContentScript({
   main() {
     const initDiv = document.createElement('div');
     initDiv.id = 'review-bookmark';
-    initDiv.style.display = 'none'; // 默认隐藏主容器
+    initDiv.style.setProperty('display', 'none', 'important'); // 默认隐藏主容器
     document.body.appendChild(initDiv);
 
     const root = createRoot(initDiv);
