@@ -513,13 +513,13 @@ export default function App() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">目录名</label>
+              <label className="text-sm font-medium mb-2 block">{getMessage('folder_name')}</label>
               <Input value={bookmarkFolder.title || ''} onChange={e => setBookmarkFolder({ ...bookmarkFolder, title: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="primary" onClick={handleCreateFolder}>
-              创建
+              {getMessage('create')}
             </Button>
           </DialogFooter>
         </DialogContent>

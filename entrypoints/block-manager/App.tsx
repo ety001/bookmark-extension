@@ -190,7 +190,7 @@ export default function App() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{getMessage('notification')}</AlertDialogTitle>
-            <AlertDialogDescription>确定要清空屏蔽列表吗？</AlertDialogDescription>
+            <AlertDialogDescription>{getMessage('confirm_clear_block_list')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{getMessage('cancel_btn')}</AlertDialogCancel>

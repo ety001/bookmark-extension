@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Bookmark } from '../store';
+import { getMessage } from '../utils/i18n';
 
 interface ContentNotificationProps {
   bookmark: Bookmark;
@@ -11,15 +12,7 @@ interface ContentNotificationProps {
   onRemove: () => void;
 }
 
-export function ContentNotification({
-  bookmark,
-  position,
-  countdown,
-  onClose,
-  onBlock,
-  onEdit,
-  onRemove,
-}: ContentNotificationProps) {
+export function ContentNotification({ bookmark, position, countdown, onClose, onBlock, onEdit, onRemove }: ContentNotificationProps) {
   const positionClass = `rb-notification-${position}`;
 
   return (
@@ -27,49 +20,19 @@ export function ContentNotification({
       <div className="rb-notification-content">
         <div className="rb-notification-title">{bookmark.title}</div>
         <div className="rb-notification-url">
-          <a
-            href={bookmark.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rb-notification-url-link"
-          >
+          <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="rb-notification-url-link">
             {bookmark.url}
           </a>
         </div>
       </div>
       <div className="rb-notification-buttons">
-        <button
-          className="rb-notification-button rb-notification-button-close"
-          onClick={onClose}
-          type="button"
-          title="关闭"
-        >
-          <svg
-            className="rb-notification-button-icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
+        <button className="rb-notification-button rb-notification-button-close" onClick={onClose} type="button" title={getMessage('close')}>
+          <svg className="rb-notification-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <button
-          className="rb-notification-button rb-notification-button-block"
-          onClick={onBlock}
-          type="button"
-          title="屏蔽"
-        >
-          <svg
-            className="rb-notification-button-icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+        <button className="rb-notification-button rb-notification-button-block" onClick={onBlock} type="button" title={getMessage('block')}>
+          <svg className="rb-notification-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -78,18 +41,8 @@ export function ContentNotification({
             />
           </svg>
         </button>
-        <button
-          className="rb-notification-button rb-notification-button-edit"
-          onClick={onEdit}
-          type="button"
-          title="编辑"
-        >
-          <svg
-            className="rb-notification-button-icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+        <button className="rb-notification-button rb-notification-button-edit" onClick={onEdit} type="button" title={getMessage('edit')}>
+          <svg className="rb-notification-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -98,18 +51,8 @@ export function ContentNotification({
             />
           </svg>
         </button>
-        <button
-          className="rb-notification-button rb-notification-button-remove"
-          onClick={onRemove}
-          type="button"
-          title="删除"
-        >
-          <svg
-            className="rb-notification-button-icon"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+        <button className="rb-notification-button rb-notification-button-remove" onClick={onRemove} type="button" title={getMessage('remove')}>
+          <svg className="rb-notification-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -119,12 +62,7 @@ export function ContentNotification({
           </svg>
         </button>
       </div>
-      {countdown > 0 && (
-        <div className="rb-notification-countdown">
-          {countdown}秒后关闭
-        </div>
-      )}
+      {countdown > 0 && <div className="rb-notification-countdown">{getMessage('seconds_to_close', [String(countdown)])}</div>}
     </div>
   );
 }
-

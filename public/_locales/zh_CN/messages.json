@@ -160,5 +160,34 @@
   },
   "auto_close_delay": {
     "message": "自动关闭延迟（秒）"
+  },
+  "folder_name": {
+    "message": "目录名"
+  },
+  "create": {
+    "message": "创建"
+  },
+  "confirm_clear_block_list": {
+    "message": "确定要清空屏蔽列表吗？"
+  },
+  "close": {
+    "message": "关闭"
+  },
+  "block": {
+    "message": "屏蔽"
+  },
+  "edit": {
+    "message": "编辑"
+  },
+  "remove": {
+    "message": "删除"
+  },
+  "seconds_to_close": {
+    "message": "$COUNTDOWN$秒后关闭",
+    "placeholders": {
+      "countdown": {
+        "content": "$1"
+      }
+    }
   }
 }
