@@ -1,23 +1,13 @@
 /* Content Script 专用样式 - 使用 rb- 前缀避免与页面样式冲突 */
 /* 所有样式都使用 !important 确保不被网站样式覆盖 */
 
-/* 容器默认隐藏 */
-#review-bookmark {
-  display: none !important;
-}
-
-#review-bookmark-notification {
-  display: none !important;
-}
-
-#review-bookmark-dialog {
-  display: none !important;
-}
-
-/* 显示状态类 */
-.rb-visible {
-  display: block !important;
-}
+/* 容器可见性完全由 content-script.tsx 通过内联 style.display 控制：
+   容器在创建时即带内联 display:none（内容脚本注入后不会闪烁/占位），
+   React 渲染通知/对话框时置为 block。
+   注意：不要在此文件为 #review-bookmark / #review-bookmark-notification /
+   #review-bookmark-dialog 或任何 display 规则加 !important ——
+   CSS !important 会压过 JS 内联样式（PR #49 的回归根因），
+   导致 mini 模式通知永久不可见。 */
 
 /* 对话框遮罩层 */
 .rb-dialog-overlay {
@@ -40,7 +30,9 @@
   padding: 24px !important;
   max-width: 512px !important;
   width: calc(100% - 32px) !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
 }
 
 /* 对话框标题 */
@@ -104,13 +96,18 @@
   background-color: #fff !important;
   border: 2px solid #53a8ff !important;
   border-radius: 12px !important;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.2),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
   padding: 20px !important;
   min-width: 320px !important;
   max-width: 420px !important;
   pointer-events: auto !important;
   color: #444 !important;
-  font-family: system-ui, -apple-system, sans-serif !important;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif !important;
 }
 
 .rb-notification-top-right {
@@ -179,7 +176,9 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out !important;
+  transition:
+    background-color 0.2s ease-in-out,
+    transform 0.2s ease-in-out !important;
   padding: 0 !important;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
   background-color: transparent !important;
