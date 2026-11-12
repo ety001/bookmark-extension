@@ -1,4 +1,54 @@
 // worker.js
+//
+// 【维护提示】下方 ALLOWED_EVENT_NAMES 是事件名白名单,必须与扩展端实际发送的
+// 事件名保持同步。全部合法事件名来自 entrypoints/background/index.ts 的
+// gtag 调用点(sendEvent() 的 eventAction 参数,以及 sendPageview() 内固定的
+// 'page_view')。扩展新增埋点事件时,务必同步把新事件名加入白名单,
+// 否则新事件会被本 Worker 以 400 拒绝。
+
+// 合法事件名白名单(出处:entrypoints/background/index.ts @ master f0f0354):
+// - page_view               sendPageview() 内 gtag('event', 'page_view', ...) (L114;调用点 L221/L246/L263/L378/L465)
+// - getbookmark_from_full   L223
+// - getbookmark_from_mini   L248
+// - get_config              L265
+// - save_config             L277
+// - reset_config            L297
+// - getbookmark_byid        L351, L363
+// - getbookmark_menu        L380
+// - getbookmark_children    L388
+// - block                   L397
+// - remove_bookmark         L407
+// - update_bookmark         L420
+// - get_block_list          L467
+// - create_bookmark_folder  L476
+// - remove_block_bookmark   L485
+// - clear_block_list        L493
+// - update_extension        L567
+// - install_extension       L588
+const ALLOWED_EVENT_NAMES = new Set([
+  'page_view',
+  'install_extension',
+  'update_extension',
+  'getbookmark_from_full',
+  'getbookmark_from_mini',
+  'getbookmark_byid',
+  'getbookmark_menu',
+  'getbookmark_children',
+  'block',
+  'remove_bookmark',
+  'update_bookmark',
+  'get_config',
+  'save_config',
+  'reset_config',
+  'get_block_list',
+  'create_bookmark_folder',
+  'remove_block_bookmark',
+  'clear_block_list',
+]);
+
+// 单次请求 events 数组长度上限(请求体结构校验,不是限流)
+const MAX_EVENTS_PER_REQUEST = 20;
+
 addEventListener('fetch', event => {
   event.respondWith(
     handle(event.request).catch(err => {
@@ -78,6 +128,49 @@ async function handle(req) {
         'Access-Control-Allow-Origin': '*',
       },
     });
+  }
+
+  // 事件名白名单校验:events 数组或简化格式 event_name 中任一事件名不在白名单内,
+  // 直接 400 拒绝,不转发到 GA
+  const eventNotAllowed = detail =>
+    new Response(JSON.stringify({ error: 'event_not_allowed', detail }), {
+      status: 400,
+      headers: {
+        ...jsonHeaders(),
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+
+  if (body.events) {
+    if (Array.isArray(body.events)) {
+      // 数组长度上限(请求体结构校验,不是限流)
+      if (body.events.length > MAX_EVENTS_PER_REQUEST) {
+        return new Response(
+          JSON.stringify({
+            error: 'too_many_events',
+            detail: `events array length ${body.events.length} exceeds max ${MAX_EVENTS_PER_REQUEST}`,
+          }),
+          {
+            status: 400,
+            headers: {
+              ...jsonHeaders(),
+              'Access-Control-Allow-Origin': '*',
+            },
+          }
+        );
+      }
+      for (const ev of body.events) {
+        const name = ev && typeof ev === 'object' ? ev.name : undefined;
+        if (typeof name !== 'string' || !ALLOWED_EVENT_NAMES.has(name)) {
+          return eventNotAllowed(`Event name not allowed: ${String(name)}`);
+        }
+      }
+    }
+  } else if (body.event_name) {
+    // 简化格式 { event_name, event_params } 同样校验
+    if (typeof body.event_name !== 'string' || !ALLOWED_EVENT_NAMES.has(body.event_name)) {
+      return eventNotAllowed(`Event name not allowed: ${String(body.event_name)}`);
+    }
   }
 
   // 必要的 env 检查（在 wrangler secret 里配置）
