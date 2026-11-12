@@ -641,19 +641,29 @@ export default defineBackground(() => {
         return;
       }
       if (result['v3-upgrade-notice-shown']) return;
-      chrome.notifications.create({
-        type: 'basic',
-        iconUrl: 'icons/icon-128.png',
-        // 用专用 title key 而非 appname：让用户在通知中心一眼看出
-        // 这是升级相关提示而非日常书签推送
-        title: chrome.i18n.getMessage('v3_upgrade_notice_title'),
-        message: chrome.i18n.getMessage('v3_upgrade_notice_message'),
-      });
-      chrome.storage.local.set({ 'v3-upgrade-notice-shown': true }, () => {
-        if (chrome.runtime.lastError) {
-          console.error('[Background] Error setting v3 upgrade notice flag:', chrome.runtime.lastError);
+      chrome.notifications.create(
+        {
+          type: 'basic',
+          iconUrl: 'icons/icon-128.png',
+          // 用专用 title key 而非 appname：让用户在通知中心一眼看出
+          // 这是升级相关提示而非日常书签推送
+          title: chrome.i18n.getMessage('v3_upgrade_notice_title'),
+          message: chrome.i18n.getMessage('v3_upgrade_notice_message'),
+        },
+        notificationId => {
+          if (chrome.runtime.lastError) {
+            // 创建失败（如 OS 层禁用通知）时不写标志，下次扩展更新可重试，
+            // 避免一次性提示被临时性失败静默吞掉
+            console.error('[Background] Error creating v3 upgrade notice:', chrome.runtime.lastError);
+            return;
+          }
+          chrome.storage.local.set({ 'v3-upgrade-notice-shown': true }, () => {
+            if (chrome.runtime.lastError) {
+              console.error('[Background] Error setting v3 upgrade notice flag:', chrome.runtime.lastError);
+            }
+          });
         }
-      });
+      );
     });
   }
 });
