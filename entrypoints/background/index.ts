@@ -589,7 +589,20 @@ export default defineBackground(() => {
         });
         console.log('installed');
         // 初始化数据
-        BookmarkLib.init();
+        // 必须等 persist rehydration 完成后再加载：onInstalled 触发的 init 若先于
+        // 恢复执行，getBookmarksFromChrome 的异步回包可能晚于 rehydration 落地，
+        // 把刚从 chrome.storage 恢复的待读队列整体覆盖回全量书签
+        // （--load-extension 环境每次启动都会触发 install，竞态稳定可复现；
+        // persist 落盘修复前存储里本就没有可覆盖的数据，该竞态随之显形）
+        waitForStoreRehydration()
+          .then(() => {
+            BookmarkLib.init();
+          })
+          .catch(error => {
+            console.error('[Background] Error waiting for store rehydration (install):', error);
+            // 即使出错也继续初始化
+            BookmarkLib.init();
+          });
         // TODO: 推广页面已不存在，暂时注释掉
         // window.open('https://creatorsdaily.com/9999e88d-0b00-46dc-8ff1-e1d311695324');
       }

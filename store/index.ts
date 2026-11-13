@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 
 /**
  * 配置接口
@@ -100,6 +100,125 @@ export async function waitForStoreRehydration(): Promise<void> {
 }
 
 /**
+ * 底层字符串存储适配器（zustand StateStorage 协议：字符串进出）
+ * 三级优先：chrome.storage.local（Service Worker / 扩展页面）→ localStorage（普通浏览器环境）→ 内存直通（仅构建期兜底）
+ *
+ * 注意：本适配器实现的是 StateStorage 协议，不能直接传给 persist 的 storage 选项
+ * （persist 期望的是 PersistStorage：getItem/setItem 交换的是 {state, version} 反序列化对象）。
+ * 必须用 createJSONStorage 包装，由其负责 JSON.parse/JSON.stringify；
+ * 此前直接把本适配器传给 storage（v4.0.0 起），persist 会把含 action 函数的
+ * {state, version} 原始对象交给 setItem → chrome.storage.local.set 结构化克隆
+ * 抛 DataCloneError，导致每次写入都失败、重启后全部状态丢失。
+ */
+const storageAdapter: StateStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    // 在 Service Worker 中使用 chrome.storage.local
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      return new Promise((resolve, reject) => {
+        try {
+          chrome.storage.local.get(name, result => {
+            if (chrome.runtime.lastError) {
+              console.error('[Store] Error getting storage:', chrome.runtime.lastError);
+              reject(chrome.runtime.lastError);
+            } else {
+              const value = result[name] || null;
+              // 防御 + 历史数据迁移：该 key 下若存在非字符串值,说明是
+              // 修复前(persist 未包 createJSONStorage)在 Chromium 上写入的
+              // {state, version} 原始对象(Chrome 的 storage 序列化器会静默
+              // 剥离函数,侥幸落盘)。该对象本身就是 StorageValue 的反序列化
+              // 形态,序列化为 JSON 字符串返回即可无损迁移;下次状态更新时
+              // 会以标准字符串格式覆盖写回。Firefox 上历史写入全部失败、
+              // 无旧数据,不会走到该分支
+              if (value !== null && typeof value === 'object') {
+                console.warn('[Store] Legacy non-string value in storage, migrating to JSON string:', name);
+                resolve(JSON.stringify(value));
+                return;
+              }
+              if (value !== null && typeof value !== 'string') {
+                console.warn('[Store] Non-string value in storage, treating as empty:', name, typeof value);
+                resolve(null);
+                return;
+              }
+              console.log('[Store] Retrieved from storage:', name, value ? 'has data' : 'empty');
+              resolve(value as string | null);
+            }
+          });
+        } catch (error) {
+          console.error('[Store] Exception getting storage:', error);
+          reject(error);
+        }
+      });
+    }
+    // 浏览器环境使用 localStorage
+    if (typeof localStorage !== 'undefined') {
+      const value = localStorage.getItem(name);
+      console.log('[Store] Retrieved from localStorage:', name, value ? 'has data' : 'empty');
+      return Promise.resolve(value);
+    }
+    // 降级到内存存储（仅用于构建时）
+    return Promise.resolve(null);
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    // 在 Service Worker 中使用 chrome.storage.local
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      return new Promise((resolve, reject) => {
+        try {
+          chrome.storage.local.set({ [name]: value }, () => {
+            if (chrome.runtime.lastError) {
+              console.error('[Store] Error setting storage:', chrome.runtime.lastError);
+              reject(chrome.runtime.lastError);
+            } else {
+              console.log('[Store] Saved to storage:', name, 'size:', value.length);
+              resolve();
+            }
+          });
+        } catch (error) {
+          console.error('[Store] Exception setting storage:', error);
+          reject(error);
+        }
+      });
+    }
+    // 浏览器环境使用 localStorage
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(name, value);
+      console.log('[Store] Saved to localStorage:', name, 'size:', value.length);
+      return Promise.resolve();
+    }
+    // 降级到内存存储（仅用于构建时）
+    return Promise.resolve();
+  },
+  removeItem: async (name: string): Promise<void> => {
+    // 在 Service Worker 中使用 chrome.storage.local
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      return new Promise((resolve, reject) => {
+        try {
+          chrome.storage.local.remove(name, () => {
+            if (chrome.runtime.lastError) {
+              console.error('[Store] Error removing storage:', chrome.runtime.lastError);
+              reject(chrome.runtime.lastError);
+            } else {
+              console.log('[Store] Removed from storage:', name);
+              resolve();
+            }
+          });
+        } catch (error) {
+          console.error('[Store] Exception removing storage:', error);
+          reject(error);
+        }
+      });
+    }
+    // 浏览器环境使用 localStorage
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(name);
+      console.log('[Store] Removed from localStorage:', name);
+      return Promise.resolve();
+    }
+    // 降级到内存存储（仅用于构建时）
+    return Promise.resolve();
+  },
+};
+
+/**
  * 创建 Zustand Store
  */
 export const useStore = create<StoreState>()(
@@ -173,96 +292,9 @@ export const useStore = create<StoreState>()(
         // 让 waitForStoreRehydration 的等待方继续执行（出错时使用默认值）
         resolveStoreRehydration();
       },
-      storage: {
-        getItem: async (name: string): Promise<string | null> => {
-          // 在 Service Worker 中使用 chrome.storage.local
-          if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-            return new Promise((resolve, reject) => {
-              try {
-                chrome.storage.local.get(name, result => {
-                  if (chrome.runtime.lastError) {
-                    console.error('[Store] Error getting storage:', chrome.runtime.lastError);
-                    reject(chrome.runtime.lastError);
-                  } else {
-                    const value = result[name] || null;
-                    console.log('[Store] Retrieved from storage:', name, value ? 'has data' : 'empty');
-                    resolve(value as string | null);
-                  }
-                });
-              } catch (error) {
-                console.error('[Store] Exception getting storage:', error);
-                reject(error);
-              }
-            });
-          }
-          // 浏览器环境使用 localStorage
-          if (typeof localStorage !== 'undefined') {
-            const value = localStorage.getItem(name);
-            console.log('[Store] Retrieved from localStorage:', name, value ? 'has data' : 'empty');
-            return Promise.resolve(value);
-          }
-          // 降级到内存存储（仅用于构建时）
-          return Promise.resolve(null);
-        },
-        setItem: async (name: string, value: string): Promise<void> => {
-          // 在 Service Worker 中使用 chrome.storage.local
-          if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-            return new Promise((resolve, reject) => {
-              try {
-                chrome.storage.local.set({ [name]: value }, () => {
-                  if (chrome.runtime.lastError) {
-                    console.error('[Store] Error setting storage:', chrome.runtime.lastError);
-                    reject(chrome.runtime.lastError);
-                  } else {
-                    console.log('[Store] Saved to storage:', name, 'size:', value.length);
-                    resolve();
-                  }
-                });
-              } catch (error) {
-                console.error('[Store] Exception setting storage:', error);
-                reject(error);
-              }
-            });
-          }
-          // 浏览器环境使用 localStorage
-          if (typeof localStorage !== 'undefined') {
-            localStorage.setItem(name, value);
-            console.log('[Store] Saved to localStorage:', name, 'size:', value.length);
-            return Promise.resolve();
-          }
-          // 降级到内存存储（仅用于构建时）
-          return Promise.resolve();
-        },
-        removeItem: async (name: string): Promise<void> => {
-          // 在 Service Worker 中使用 chrome.storage.local
-          if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-            return new Promise((resolve, reject) => {
-              try {
-                chrome.storage.local.remove(name, () => {
-                  if (chrome.runtime.lastError) {
-                    console.error('[Store] Error removing storage:', chrome.runtime.lastError);
-                    reject(chrome.runtime.lastError);
-                  } else {
-                    console.log('[Store] Removed from storage:', name);
-                    resolve();
-                  }
-                });
-              } catch (error) {
-                console.error('[Store] Exception removing storage:', error);
-                reject(error);
-              }
-            });
-          }
-          // 浏览器环境使用 localStorage
-          if (typeof localStorage !== 'undefined') {
-            localStorage.removeItem(name);
-            console.log('[Store] Removed from localStorage:', name);
-            return Promise.resolve();
-          }
-          // 降级到内存存储（仅用于构建时）
-          return Promise.resolve();
-        },
-      } as any,
+      // 必须经 createJSONStorage 把 StateStorage 适配器包装成 PersistStorage：
+      // 由其负责 {state, version} 对象与 JSON 字符串间的序列化转换
+      storage: createJSONStorage<StoreState>(() => storageAdapter),
     }
   )
 );
