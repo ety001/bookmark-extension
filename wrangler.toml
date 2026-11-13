@@ -1,0 +1,20 @@
+# Cloudflare Workers 配置 — GA 中转服务(ga-bm.mypi.win)
+# 源码: cf-ga-worker.js(不参与扩展构建)
+# 部署: wrangler deploy
+#
+# 凭据说明:
+# - GA_API_SECRET 是 secret,不在本文件中,已通过 `wrangler secret put GA_API_SECRET`
+#   设置在线上 worker;secret 不会被 deploy 覆盖或删除。
+# - EXTENSION_KEY / GA_MEASUREMENT_ID 随扩展包公开分发(见 utils/google-analytics.ts),
+#   属公开值,作为普通 vars 管理即可。
+name = "ga-bm"
+main = "cf-ga-worker.js"
+compatibility_date = "2026-11-01"
+# 保留 dashboard 上可能存在的、本文件未声明的变量
+keep_vars = true
+# 不需要 workers.dev 预览地址(服务走自定义域 ga-bm.mypi.win)
+preview_urls = false
+
+[vars]
+EXTENSION_KEY = "a9d830ce5e7c4b049d395af2b68c1c32"
+GA_MEASUREMENT_ID = "G-QNPZ89L8V9"
