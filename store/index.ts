@@ -122,8 +122,18 @@ const storageAdapter: StateStorage = {
               reject(chrome.runtime.lastError);
             } else {
               const value = result[name] || null;
-              // 防御：该 key 下若存在非字符串值（如历史误写入的对象），
-              // 直接视为无数据返回 null，避免把非字符串交给 JSON.parse
+              // 防御 + 历史数据迁移：该 key 下若存在非字符串值,说明是
+              // 修复前(persist 未包 createJSONStorage)在 Chromium 上写入的
+              // {state, version} 原始对象(Chrome 的 storage 序列化器会静默
+              // 剥离函数,侥幸落盘)。该对象本身就是 StorageValue 的反序列化
+              // 形态,序列化为 JSON 字符串返回即可无损迁移;下次状态更新时
+              // 会以标准字符串格式覆盖写回。Firefox 上历史写入全部失败、
+              // 无旧数据,不会走到该分支
+              if (value !== null && typeof value === 'object') {
+                console.warn('[Store] Legacy non-string value in storage, migrating to JSON string:', name);
+                resolve(JSON.stringify(value));
+                return;
+              }
               if (value !== null && typeof value !== 'string') {
                 console.warn('[Store] Non-string value in storage, treating as empty:', name, typeof value);
                 resolve(null);
