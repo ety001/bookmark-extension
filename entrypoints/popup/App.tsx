@@ -16,6 +16,7 @@ import {
 } from '../../components/ui/alert-dialog';
 import { useToast } from '../../components/ui/use-toast';
 import { getMessage } from '../../utils/i18n';
+import { isBuiltInDataConsentAvailable, requestBuiltInDataConsent } from '../../utils/ff-data-consent';
 
 interface FormData {
   status: boolean;
@@ -44,6 +45,17 @@ export default function App() {
   const [frequencyInput, setFrequencyInput] = useState<string>('');
   const [autoCloseDelayInput, setAutoCloseDelayInput] = useState<string>('');
   const configFetchedRef = useRef(false);
+  // Firefox 内置数据同意弹窗未决期间的门闩：忽略重复触发，防止双击产生的第二个
+  // permissions.request 被 Firefox 拒绝（弹窗已打开），弹出误导性的失败 toast
+  const ffConsentRequestInFlightRef = useRef(false);
+  // 最近一次已落盘（或已确认）的 ga 值：复选框 onChange 会即时改写 formData，
+  // handleSave 的内置同意门控需要拿"落盘值"判断 ga 是否从未开启变为开启，
+  // 不能用被复选框即时污染的 formData 判断
+  const savedGaRef = useRef<boolean>(false);
+  const setSavedFormData = (fd: FormData) => {
+    savedGaRef.current = fd.ga;
+    setFormData(fd);
+  };
 
   useEffect(() => {
     // 防止 React.StrictMode 在开发模式下重复调用
@@ -55,7 +67,7 @@ export default function App() {
       if (chrome.runtime.lastError) {
         console.error('Popup error:', chrome.runtime.lastError);
         // 设置默认值，避免一直 loading
-        setFormData({
+        setSavedFormData({
           status: true,
           mini: false,
           random: true,
@@ -74,7 +86,7 @@ export default function App() {
         const config = response.cdata;
         const frequency = config.frequency ?? 5;
         const autoCloseDelay = config.autoCloseDelay ?? 30;
-        setFormData({
+        setSavedFormData({
           status: config.status ?? true,
           mini: config.mini ?? false,
           random: config.random ?? true,
@@ -90,7 +102,7 @@ export default function App() {
         setDisplayGaReminder(config.ga === true || config.gaPrompted === true ? 'hidden' : 'display');
       } else {
         // 如果没有响应，设置默认值
-        setFormData({
+        setSavedFormData({
           status: true,
           mini: false,
           random: true,
@@ -161,6 +173,15 @@ export default function App() {
     };
   };
 
+  // 内置数据同意被拒绝时的统一提示（复用 save_failed 标题 + 专用说明文案）
+  const showConsentRequiredToast = () => {
+    toast({
+      variant: 'warning',
+      title: getMessage('save_failed'),
+      description: getMessage('ff_data_consent_required'),
+    });
+  };
+
   const handleSave = () => {
     if (!formData) return;
 
@@ -168,17 +189,43 @@ export default function App() {
     const updatedFormData = buildValidatedConfig({ ...formData, gaPrompted: true });
     if (!updatedFormData) return;
 
-    chrome.runtime.sendMessage({ ctype: 'save_config', cdata: updatedFormData }, response => {
-      if (response && response.cdata) {
-        // 更新 formData 状态
-        setFormData(updatedFormData);
-        toast({
-          variant: 'success',
-          title: getMessage('save_success'),
-        });
-        setDisplayGaReminder('hidden');
-      }
-    });
+    const persistSave = () => {
+      chrome.runtime.sendMessage({ ctype: 'save_config', cdata: updatedFormData }, response => {
+        if (response && response.cdata) {
+          // 更新 formData 状态
+          setSavedFormData(updatedFormData);
+          toast({
+            variant: 'success',
+            title: getMessage('save_success'),
+          });
+          setDisplayGaReminder('hidden');
+        }
+      });
+    };
+
+    // Firefox 140+ 联动：设置页复选框把 GA 从关闭变为开启，同样必须先取得浏览器内置
+    // 的数据同意（technicalAndInteraction，已在 about:addons 授予时不会重复弹窗）；
+    // 用户在内置弹窗拒绝则本次保存整体不落盘（含 gaPrompted，征询屏保持可复弹），
+    // 与 handleEnableGa 行为一致 —— 否则内置开关关闭时经此路径开启 GA 后数据照发，
+    // 而浏览器官方 UI 显示"不收集"，声明与行为矛盾。ga 已开启的再次保存不重复请求。
+    // 探测为同步 UA 判定（见 ff-data-consent.ts），确保 permissions.request 在用户
+    // 手势调用栈内触发。转换基准用 savedGaRef（最近落盘值）：复选框 onChange 已把
+    // formData.ga 置为 true，formData 判断不出"从未开启变为开启"
+    if (savedGaRef.current !== true && updatedFormData.ga === true && isBuiltInDataConsentAvailable()) {
+      if (ffConsentRequestInFlightRef.current) return;
+      ffConsentRequestInFlightRef.current = true;
+      requestBuiltInDataConsent().then(consentGranted => {
+        ffConsentRequestInFlightRef.current = false;
+        if (!consentGranted) {
+          showConsentRequiredToast();
+          return;
+        }
+        persistSave();
+      });
+      return;
+    }
+
+    persistSave();
   };
 
   const handleEnableGa = () => {
@@ -187,11 +234,37 @@ export default function App() {
     // 宽松模式：征询屏上没有可见输入框，严格模式会困住用户；gaPrompted 落盘为 true
     const newFormData = buildValidatedConfig({ ...formData, ga: true, gaPrompted: true }, true);
     if (!newFormData) return;
-    setFormData(newFormData);
-    chrome.runtime.sendMessage({ ctype: 'save_config', cdata: newFormData }, response => {
-      if (response && response.cdata) {
-        setDisplayGaReminder('hidden');
+
+    // 持久化 ga=true（仅在 Firefox 内置数据同意已授予后才会走到这里）
+    const persistEnabledGa = () => {
+      setSavedFormData(newFormData);
+      chrome.runtime.sendMessage({ ctype: 'save_config', cdata: newFormData }, response => {
+        if (response && response.cdata) {
+          setDisplayGaReminder('hidden');
+        }
+      });
+    };
+
+    // Firefox 140+ 联动：开启 GA 前必须先取得浏览器内置的数据同意
+    // （technicalAndInteraction，已在 about:addons 授予时不会重复弹窗）；用户在内置
+    // 弹窗拒绝则阻止保存 —— 否则 popup 允许后数据照发，而浏览器官方 UI 显示"不收集"，
+    // 声明与行为矛盾。非 Firefox / FF<140 无内置机制，走原路径，由 popup 自建开关管理。
+    // 探测为同步 UA 判定（见 ff-data-consent.ts），确保 permissions.request 在用户手势
+    // 调用栈内触发
+    if (!isBuiltInDataConsentAvailable()) {
+      persistEnabledGa();
+      return;
+    }
+    // 内置权限弹窗未决期间忽略重复点击（见 ffConsentRequestInFlightRef 说明）
+    if (ffConsentRequestInFlightRef.current) return;
+    ffConsentRequestInFlightRef.current = true;
+    requestBuiltInDataConsent().then(consentGranted => {
+      ffConsentRequestInFlightRef.current = false;
+      if (!consentGranted) {
+        showConsentRequiredToast();
+        return;
       }
+      persistEnabledGa();
     });
   };
 
@@ -201,7 +274,7 @@ export default function App() {
     // 否则下次打开 popup 会再次弹出征询；宽松模式同 handleEnableGa
     const newFormData = buildValidatedConfig({ ...formData, ga: false, gaPrompted: true }, true);
     if (!newFormData) return;
-    setFormData(newFormData);
+    setSavedFormData(newFormData);
     chrome.runtime.sendMessage({ ctype: 'save_config', cdata: newFormData }, response => {
       if (response && response.cdata) {
         setDisplayGaReminder('hidden');
@@ -227,7 +300,7 @@ export default function App() {
             const config = response.cdata;
             const frequency = config.frequency ?? 5;
             const autoCloseDelay = config.autoCloseDelay ?? 30;
-            setFormData({
+            setSavedFormData({
               status: config.status ?? true,
               mini: config.mini ?? false,
               random: config.random ?? true,
