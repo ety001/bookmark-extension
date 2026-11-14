@@ -142,10 +142,10 @@ export default function App() {
     .filter(title => title && title.trim() !== '')
     .join(' / ');
 
-  // 点击路径打开书签管理页并定位到该目录，附带 bid 精确定位到这条书签（与 handleEdit 一致）
+  // 点击路径打开书签管理页并定位到该目录（只带 pid，让用户看到目录完整内容）
   const handleBreadcrumbClick = () => {
     if (!bookmark?.parentId) return;
-    const url = `${chrome.runtime.getURL('bookmark.html#/')}?pid=${bookmark.parentId}&bid=${bookmark.id}`;
+    const url = `${chrome.runtime.getURL('bookmark.html#/')}?pid=${bookmark.parentId}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
