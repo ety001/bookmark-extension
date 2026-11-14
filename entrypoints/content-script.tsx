@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { createRoot, Root } from 'react-dom/client';
 import { ContentNotification } from '../components/ContentNotification';
 import { getMessage } from '../utils/i18n';
@@ -39,12 +39,15 @@ function DialogPortal({ open, title, description, onConfirm, onCancel }: { open:
 
 function App() {
   const [bookmark, setBookmark] = useState<Bookmark | null>(null);
+  const [breadcrumb, setBreadcrumb] = useState<chrome.bookmarks.BookmarkTreeNode[]>([]);
   const [position, setPosition] = useState<'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'>('top-right');
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const [countdown, setCountdown] = useState<number>(0);
   const [autoClose, setAutoClose] = useState<boolean>(false);
   const [autoCloseDelay, setAutoCloseDelay] = useState<number>(30);
+  // 目录路径请求序号守卫：书签变化后旧响应晚到时丢弃，避免显示上一条书签的路径
+  const breadcrumbRequestIdRef = useRef(0);
 
   const handleClose = useCallback(() => {
     // 关闭通知时一并关闭可能仍打开的确认框，避免全屏 overlay 滞留遮挡页面
@@ -122,6 +125,25 @@ function App() {
     };
   }, [handleClose]);
 
+  // 书签变化后拉取其所在目录路径（breadcrumb 消息返回 父目录 -> 书签栏 的祖先链，
+  // background 已反转为根优先顺序），传给通知组件在标题上方小字展示
+  useEffect(() => {
+    if (!bookmark?.parentId) {
+      setBreadcrumb([]);
+      return;
+    }
+    const requestId = ++breadcrumbRequestIdRef.current;
+    chrome.runtime.sendMessage({ ctype: 'getbookmark_breadcrumb', cdata: bookmark.parentId }, response => {
+      // 竞态守卫：书签变化后旧响应晚到时直接丢弃
+      if (breadcrumbRequestIdRef.current !== requestId) return;
+      if (chrome.runtime.lastError) {
+        console.error('getbookmark_breadcrumb failed:', chrome.runtime.lastError.message);
+        return;
+      }
+      setBreadcrumb(Array.isArray(response?.cdata) ? response.cdata : []);
+    });
+  }, [bookmark]);
+
   // 倒计时和自动关闭
   // 设计：确认框（屏蔽/删除）打开期间暂停倒计时，避免倒计时归零触发 handleClose
   // 把 bookmark 置空后，confirmBlock/confirmRemove 因引用失效提前返回导致 UI 卡死。
@@ -165,6 +187,7 @@ function App() {
       notificationRoot.render(
         <ContentNotification
           bookmark={bookmark}
+          breadcrumb={breadcrumb}
           position={position}
           countdown={countdown}
           onClose={handleClose}
@@ -185,7 +208,7 @@ function App() {
         }, 0);
       }
     }
-  }, [bookmark, position, countdown]);
+  }, [bookmark, breadcrumb, position, countdown]);
 
   // 渲染对话框
   useEffect(() => {

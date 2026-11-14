@@ -188,6 +188,9 @@
   "remove": {
     "message": "删除"
   },
+  "folder_path": {
+    "message": "所在目录"
+  },
   "seconds_to_close": {
     "message": "$COUNTDOWN$秒后关闭",
     "placeholders": {

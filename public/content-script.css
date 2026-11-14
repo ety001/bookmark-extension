@@ -136,24 +136,49 @@
   margin-bottom: 12px !important;
 }
 
+/* 目录路径行（书签所在位置，标题上方小字）：单行省略，不响应点击 */
+.rb-notification-breadcrumb {
+  font-size: 11px !important;
+  color: #9ca3af !important;
+  line-height: 14px !important;
+  margin-bottom: 4px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* 标题：单行省略。固定占一行，长标题不再把下方按钮行向下推 */
 .rb-notification-title {
   font-weight: 700 !important;
   font-size: 16px !important;
   margin-bottom: 10px !important;
   color: #1f2937 !important;
   line-height: 1.4 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
+/* URL：固定占两行（2 × 14px = 28px），内容不足两行也占位。
+   配合标题单行，保证按钮行的垂直位置不随书签 URL 长度变化（功能②）。
+   两行 line-clamp 加在内层链接上（内容为纯文本，ellipsis 才会生效；
+   -webkit-box 会把内联子元素块化，clamp 放容器上只裁切不出省略号） */
 .rb-notification-url {
   font-size: 12px !important;
   color: #666 !important;
   line-height: 14px !important;
   word-break: break-all !important;
+  height: 28px !important;
+  overflow: hidden !important;
 }
 
 .rb-notification-url-link {
   color: #2563eb !important;
   text-decoration: none !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 2 !important;
+  overflow: hidden !important;
 }
 
 .rb-notification-url-link:hover {

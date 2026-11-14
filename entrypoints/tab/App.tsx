@@ -19,12 +19,16 @@ import type { Bookmark } from '../../store';
 export default function App() {
   const { toast } = useToast();
   const [bookmark, setBookmark] = useState<Bookmark | null>(null);
+  const [breadcrumb, setBreadcrumb] = useState<chrome.bookmarks.BookmarkTreeNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [blockDialogOpen, setBlockDialogOpen] = useState(false);
   const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
   const topRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [iframeHeight, setIframeHeight] = useState(0);
+  // 目录路径请求序号：换书签（点"换一个"/屏蔽/删除后重取）时旧响应晚到，
+  // 用序号守卫丢弃过期响应，避免显示上一条书签的路径（参考 bookmark/App.tsx 的 currentRequestIdRef 模式）
+  const breadcrumbRequestIdRef = useRef(0);
 
   useEffect(() => {
     document.title = getMessage('appname');
@@ -37,6 +41,27 @@ export default function App() {
       const topHeight = topRef.current.offsetHeight;
       setIframeHeight(totalHeight - topHeight);
     }
+  }, [bookmark]);
+
+  // 书签变化后拉取其所在目录路径（breadcrumb 消息返回 父目录 -> 书签栏 的祖先链，
+  // background 已反转为根优先顺序）
+  useEffect(() => {
+    if (!bookmark?.parentId) {
+      setBreadcrumb([]);
+      return;
+    }
+    // 先清空旧路径，避免换书签后短暂显示上一条书签的路径
+    setBreadcrumb([]);
+    const requestId = ++breadcrumbRequestIdRef.current;
+    chrome.runtime.sendMessage({ ctype: 'getbookmark_breadcrumb', cdata: bookmark.parentId }, response => {
+      // 竞态守卫：换书签后旧响应晚到时直接丢弃
+      if (breadcrumbRequestIdRef.current !== requestId) return;
+      if (chrome.runtime.lastError) {
+        console.error('getbookmark_breadcrumb failed:', chrome.runtime.lastError.message);
+        return;
+      }
+      setBreadcrumb(Array.isArray(response?.cdata) ? response.cdata : []);
+    });
   }, [bookmark]);
 
   const getBookmark = () => {
@@ -104,6 +129,20 @@ export default function App() {
     setLoading(false);
   };
 
+  // 目录路径展示文本：过滤空 title 段（Chrome/Firefox 的书签栏等根级节点 title 可能为空），
+  // 过滤后为空则不渲染该行
+  const breadcrumbText = breadcrumb
+    .map(node => node.title)
+    .filter(title => title && title.trim() !== '')
+    .join(' / ');
+
+  // 点击路径打开书签管理页并定位到该目录
+  const handleBreadcrumbClick = () => {
+    if (!bookmark?.parentId) return;
+    const url = `${chrome.runtime.getURL('bookmark.html#/')}?pid=${bookmark.parentId}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   if (!bookmark) {
     return (
       <div className="m-5">
@@ -123,6 +162,16 @@ export default function App() {
           </div>
           <div className="flex-1 px-4">
             <div className="mb-2">
+              {breadcrumbText && (
+                <button
+                  type="button"
+                  onClick={handleBreadcrumbClick}
+                  title={getMessage('folder_path')}
+                  className="block text-xs text-gray-500 mb-1 max-w-[500px] overflow-hidden text-ellipsis whitespace-nowrap hover:text-primary hover:underline cursor-pointer bg-transparent border-0 p-0 text-left"
+                >
+                  {breadcrumbText}
+                </button>
+              )}
               <div className="text-[18px] font-medium mb-2 overflow-hidden text-ellipsis whitespace-nowrap">{bookmark.title}</div>
               <a
                 href={bookmark.url}
