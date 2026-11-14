@@ -106,13 +106,25 @@ export default defineBackground(() => {
   // 内置机制存在(仅 Firefox 140+;Chrome/Edge 无该 API 字段),字段不存在视为授予,
   // 维持现状由 popup 自建开关管理,Chrome/Edge 行为不变。
   let dataCollectionConsentCache: boolean | null = null; // null = 尚未探测完成
+  let dataCollectionProbeSeq = 0; // 探测代际计数:仅最新一轮探测可写缓存
 
-  // 实际查询一次内置同意状态并写入缓存(getAll 回调含 data_collection 字段时按
-  // 是否包含 technicalAndInteraction 判定;查询失败视为授予,与字段不存在同策略)
+  // 实际查询一次内置同意状态(getAll 回调含 data_collection 字段时按是否包含
+  // technicalAndInteraction 判定)。缓存写入策略:
+  // - 探测成功且为最新一轮(代际相同)才写缓存,防止 onAdded/onRemoved 触发的新
+  //   探测已被更新结果覆盖后,更早发出的旧 getAll 回包乱序晚到用过期状态回写;
+  // - 探测失败(lastError/异常)只放行当次判断,不写缓存(保持 null),
+  //   下次事件重新探测,避免瞬时失败被缓存为"永久授予"。
+  // 注:不做在途 Promise 共享——onAdded/onRemoved 刷新依赖重新
+  // 查询拿到最新状态,共享会让刷新复用旧的在途结果;代际计数已给出同等的
+  // 乱序保护。
   function queryDataCollectionConsent(): Promise<boolean> {
+    const seq = ++dataCollectionProbeSeq;
+    let probed = false;
     return new Promise<boolean>(resolve => {
       try {
         if (typeof chrome === 'undefined' || !chrome.permissions || typeof chrome.permissions.getAll !== 'function') {
+          // 环境确定性事实:无该 API 即视为授予,属于成功的探测结果,可写缓存
+          probed = true;
           resolve(true);
           return;
         }
@@ -122,6 +134,7 @@ export default defineBackground(() => {
             resolve(true);
             return;
           }
+          probed = true;
           resolve(isDataCollectionGrantedFromGetAll(result));
         });
       } catch (error) {
@@ -129,7 +142,9 @@ export default defineBackground(() => {
         resolve(true);
       }
     }).then(granted => {
-      dataCollectionConsentCache = granted;
+      if (probed && seq === dataCollectionProbeSeq) {
+        dataCollectionConsentCache = granted;
+      }
       return granted;
     });
   }
