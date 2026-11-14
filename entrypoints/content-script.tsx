@@ -128,11 +128,14 @@ function App() {
   // 书签变化后拉取其所在目录路径（breadcrumb 消息返回 父目录 -> 书签栏 的祖先链，
   // background 已反转为根优先顺序），传给通知组件在标题上方小字展示
   useEffect(() => {
+    // 无条件递增守卫序号（含 !parentId 早退分支）：让任何在途的旧 breadcrumb
+    // 响应立即失效，堵住"早退时旧响应穿透守卫"的盲区
+    breadcrumbRequestIdRef.current += 1;
     if (!bookmark?.parentId) {
       setBreadcrumb([]);
       return;
     }
-    const requestId = ++breadcrumbRequestIdRef.current;
+    const requestId = breadcrumbRequestIdRef.current;
     chrome.runtime.sendMessage({ ctype: 'getbookmark_breadcrumb', cdata: bookmark.parentId }, response => {
       // 竞态守卫：书签变化后旧响应晚到时直接丢弃
       if (breadcrumbRequestIdRef.current !== requestId) return;

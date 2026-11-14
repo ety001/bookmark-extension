@@ -41,18 +41,21 @@ export default function App() {
       const topHeight = topRef.current.offsetHeight;
       setIframeHeight(totalHeight - topHeight);
     }
-  }, [bookmark]);
+    // breadcrumb 也在依赖里：路径行异步出现/清空会改变顶栏高度（±约一行），
+    // 不重算会导致 iframe 底部裁切或留缝
+  }, [bookmark, breadcrumb]);
 
   // 书签变化后拉取其所在目录路径（breadcrumb 消息返回 父目录 -> 书签栏 的祖先链，
   // background 已反转为根优先顺序）
   useEffect(() => {
+    // 无条件递增守卫序号（含 !parentId 早退分支）：让任何在途的旧 breadcrumb
+    // 响应立即失效，堵住"早退时旧响应穿透守卫"的盲区
+    breadcrumbRequestIdRef.current += 1;
     if (!bookmark?.parentId) {
       setBreadcrumb([]);
       return;
     }
-    // 先清空旧路径，避免换书签后短暂显示上一条书签的路径
-    setBreadcrumb([]);
-    const requestId = ++breadcrumbRequestIdRef.current;
+    const requestId = breadcrumbRequestIdRef.current;
     chrome.runtime.sendMessage({ ctype: 'getbookmark_breadcrumb', cdata: bookmark.parentId }, response => {
       // 竞态守卫：换书签后旧响应晚到时直接丢弃
       if (breadcrumbRequestIdRef.current !== requestId) return;
@@ -68,7 +71,10 @@ export default function App() {
     setLoading(true);
     chrome.runtime.sendMessage({ ctype: 'getbookmark_from_full', cdata: false }, response => {
       if (response && response.cdata) {
+        // 旧路径清空与守卫失效和新书签同批提交：消除"新标题+旧路径"闪帧
+        breadcrumbRequestIdRef.current += 1;
         setBookmark(response.cdata);
+        setBreadcrumb([]);
         setLoading(false);
       } else {
         setLoading(false);
@@ -136,10 +142,10 @@ export default function App() {
     .filter(title => title && title.trim() !== '')
     .join(' / ');
 
-  // 点击路径打开书签管理页并定位到该目录
+  // 点击路径打开书签管理页并定位到该目录，附带 bid 精确定位到这条书签（与 handleEdit 一致）
   const handleBreadcrumbClick = () => {
     if (!bookmark?.parentId) return;
-    const url = `${chrome.runtime.getURL('bookmark.html#/')}?pid=${bookmark.parentId}`;
+    const url = `${chrome.runtime.getURL('bookmark.html#/')}?pid=${bookmark.parentId}&bid=${bookmark.id}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
