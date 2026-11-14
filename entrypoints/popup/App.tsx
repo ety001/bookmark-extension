@@ -16,6 +16,7 @@ import {
 } from '../../components/ui/alert-dialog';
 import { useToast } from '../../components/ui/use-toast';
 import { getMessage } from '../../utils/i18n';
+import { isBuiltInDataConsentAvailable, requestBuiltInDataConsent } from '../../utils/ff-data-consent';
 
 interface FormData {
   status: boolean;
@@ -187,11 +188,35 @@ export default function App() {
     // 宽松模式：征询屏上没有可见输入框，严格模式会困住用户；gaPrompted 落盘为 true
     const newFormData = buildValidatedConfig({ ...formData, ga: true, gaPrompted: true }, true);
     if (!newFormData) return;
-    setFormData(newFormData);
-    chrome.runtime.sendMessage({ ctype: 'save_config', cdata: newFormData }, response => {
-      if (response && response.cdata) {
-        setDisplayGaReminder('hidden');
+
+    // 持久化 ga=true（仅在 Firefox 内置数据同意已授予后才会走到这里）
+    const persistEnabledGa = () => {
+      setFormData(newFormData);
+      chrome.runtime.sendMessage({ ctype: 'save_config', cdata: newFormData }, response => {
+        if (response && response.cdata) {
+          setDisplayGaReminder('hidden');
+        }
+      });
+    };
+
+    // Firefox 140+ 联动：开启 GA 前必须先取得浏览器内置的数据同意
+    // （technicalAndInteraction，已在 about:addons 授予时不会重复弹窗）；用户在内置
+    // 弹窗拒绝则阻止保存 —— 否则 popup 允许后数据照发，而浏览器官方 UI 显示"不收集"，
+    // 声明与行为矛盾。非 Firefox / FF<140 无内置机制，走原路径，由 popup 自建开关管理。
+    // 探测为同步 UA 判定（见 ff-data-consent.ts），确保 permissions.request 在用户手势
+    // 调用栈内触发
+    const needsBuiltInConsent = isBuiltInDataConsentAvailable();
+    const builtinConsentReady = needsBuiltInConsent ? requestBuiltInDataConsent() : Promise.resolve(true);
+    builtinConsentReady.then(consentGranted => {
+      if (!consentGranted) {
+        toast({
+          variant: 'warning',
+          title: getMessage('save_failed'),
+          description: getMessage('ff_data_consent_required'),
+        });
+        return;
       }
+      persistEnabledGa();
     });
   };
 

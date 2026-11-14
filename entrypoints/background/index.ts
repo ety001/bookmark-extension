@@ -2,6 +2,7 @@ import { defineBackground } from 'wxt/utils/define-background';
 import { useStore, waitForStoreRehydration, type Bookmark } from '../../store';
 import * as BookmarkLib from '../../libs/BookmarkLib';
 import { gtag } from '../../utils/google-analytics';
+import { isDataCollectionGrantedFromGetAll } from '../../utils/ff-data-consent';
 
 export default defineBackground(() => {
   /**
@@ -94,27 +95,123 @@ export default defineBackground(() => {
   } else if (isEdge()) {
     currentVersion = `edge_${currentVersion}`;
   }
+
+  // ===== Firefox 内置数据同意门控 =====
+  // Firefox 140+ 基于 manifest 的 data_collection_permissions 声明,在安装流程与
+  // about:addons 的"权限和数据"中提供 technicalAndInteraction 开关,用户可随时开关。
+  // 该开关必须与 GA 实际发送联动:popup 自建的 GA 开关(ga)是开发者自建同意体验,
+  // 浏览器内置开关是额外的系统级门控,两者都同意才发送。否则内置开关关闭时数据照发、
+  // 官方 UI 显示"不收集",构成声明与行为矛盾(AMO 人审红线)。
+  // 探测方式为纯字段特性探测:permissions.getAll() 结果含 data_collection 字段即代表
+  // 内置机制存在(仅 Firefox 140+;Chrome/Edge 无该 API 字段),字段不存在视为授予,
+  // 维持现状由 popup 自建开关管理,Chrome/Edge 行为不变。
+  let dataCollectionConsentCache: boolean | null = null; // null = 尚未探测完成
+
+  // 实际查询一次内置同意状态并写入缓存(getAll 回调含 data_collection 字段时按
+  // 是否包含 technicalAndInteraction 判定;查询失败视为授予,与字段不存在同策略)
+  function queryDataCollectionConsent(): Promise<boolean> {
+    return new Promise<boolean>(resolve => {
+      try {
+        if (typeof chrome === 'undefined' || !chrome.permissions || typeof chrome.permissions.getAll !== 'function') {
+          resolve(true);
+          return;
+        }
+        chrome.permissions.getAll(result => {
+          if (chrome.runtime.lastError) {
+            console.error('[Background] permissions.getAll failed:', chrome.runtime.lastError.message);
+            resolve(true);
+            return;
+          }
+          resolve(isDataCollectionGrantedFromGetAll(result));
+        });
+      } catch (error) {
+        console.error('[Background] queryDataCollectionConsent failed:', error);
+        resolve(true);
+      }
+    }).then(granted => {
+      dataCollectionConsentCache = granted;
+      return granted;
+    });
+  }
+
+  function isDataCollectionConsentGranted(): Promise<boolean> {
+    // 缓存命中直接返回,sendEvent/sendPageview 的同步入口不增加额外延迟;
+    // 未命中(冷启动首批事件)时实际查询一次,结果写入缓存
+    if (dataCollectionConsentCache !== null) {
+      return Promise.resolve(dataCollectionConsentCache);
+    }
+    return queryDataCollectionConsent();
+  }
+
+  // 内置开关随时可能变化:监听权限增删事件刷新缓存。
+  // 仅当事件负载携带 data_collection 字段时才刷新(普通 api/origin 权限变化与此无关);
+  // 刷新走重新 getAll 而非直接采信事件负载,保证缓存与真实状态一致
+  if (typeof chrome !== 'undefined' && chrome.permissions) {
+    const onConsentPermissionChanged = (permissions: chrome.permissions.Permissions): void => {
+      const hasDataCollection = !!permissions && Array.isArray((permissions as unknown as { data_collection?: unknown }).data_collection);
+      if (hasDataCollection) {
+        queryDataCollectionConsent();
+      }
+    };
+    chrome.permissions.onAdded.addListener(onConsentPermissionChanged);
+    chrome.permissions.onRemoved.addListener(onConsentPermissionChanged);
+    // 启动即预热缓存,尽量缩小冷启动下"缓存尚未就绪"的窗口
+    queryDataCollectionConsent();
+  }
+
+  // DEV-only 计数器:供 E2E(Playwright --load-extension 的开发构建)在
+  // Service Worker 内注入断言门控行为;生产构建 debug=false 常量折叠后不生效
+  const gaDebug = {
+    counters: {
+      eventAttempts: 0,
+      eventSent: 0,
+      eventBlockedByConsent: 0,
+      pageviewAttempts: 0,
+      pageviewSent: 0,
+      pageviewBlockedByConsent: 0,
+    },
+  };
+
   function sendEvent(eventCategory: string, eventAction: string, eventLabel: string = '', eventValue: number = 1): void {
     const store = useStore.getState();
-    if (store.config.ga === false) return;
+    // !== true 而非 === false:fail closed,undefined 等异常值一律不发,
+    // 与 manifest 声明的 required ['none'] 承诺一致
+    if (store.config.ga !== true) return;
+    if (debug) gaDebug.counters.eventAttempts++;
 
-    getUid().then(uid => {
-      gtag('event', eventAction, {
-        event_category: eventCategory,
-        event_label: eventLabel || uid,
-        value: eventValue,
+    // ga=true 之外,还需 Firefox 内置数据同意开启才发送(见上方门控说明)
+    isDataCollectionConsentGranted().then(consentGranted => {
+      if (!consentGranted) {
+        if (debug) gaDebug.counters.eventBlockedByConsent++;
+        return;
+      }
+      if (debug) gaDebug.counters.eventSent++;
+      getUid().then(uid => {
+        gtag('event', eventAction, {
+          event_category: eventCategory,
+          event_label: eventLabel || uid,
+          value: eventValue,
+        });
       });
     });
   }
 
   function sendPageview(dp: string, dh: string = '', dt: string = ''): void {
     const store = useStore.getState();
-    if (store.config.ga === false) return;
+    if (store.config.ga !== true) return;
+    if (debug) gaDebug.counters.pageviewAttempts++;
 
-    gtag('event', 'page_view', {
-      page_path: dp || '/',
-      page_title: dt || dp || '/',
-      page_location: dh || dp || '/',
+    isDataCollectionConsentGranted().then(consentGranted => {
+      if (!consentGranted) {
+        if (debug) gaDebug.counters.pageviewBlockedByConsent++;
+        return;
+      }
+      if (debug) gaDebug.counters.pageviewSent++;
+      gtag('event', 'page_view', {
+        page_path: dp || '/',
+        page_title: dt || dp || '/',
+        page_location: dh || dp || '/',
+      });
     });
   }
 
@@ -678,5 +775,19 @@ export default defineBackground(() => {
         }
       );
     });
+  }
+
+  // DEV-only 验证钩子:E2E 测试(Playwright --load-extension 加载开发构建)在
+  // Service Worker 上下文注入执行,断言内置同意门控的缓存与计数行为。
+  // 生产构建 debug=false,常量折叠后不会暴露任何全局
+  if (debug && typeof globalThis !== 'undefined') {
+    (globalThis as unknown as { __gaConsentDebug?: object }).__gaConsentDebug = {
+      getCache: () => dataCollectionConsentCache,
+      refresh: queryDataCollectionConsent,
+      setCache: (value: boolean) => {
+        dataCollectionConsentCache = value;
+      },
+      counters: gaDebug.counters,
+    };
   }
 });

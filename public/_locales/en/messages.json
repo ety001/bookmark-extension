@@ -149,6 +149,9 @@
   "privacy_policy": {
     "message": "Review Bookmarks will collect anonymously how freqency to display/block/manage bookmarks, if you have agreed. These data will help author to improve the extension's experience."
   },
+  "ff_data_consent_required": {
+    "message": "Firefox data-collection consent is required to enable analytics."
+  },
   "reset_config": {
     "message": "Reset Config"
   },

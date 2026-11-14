@@ -149,6 +149,9 @@
   "privacy_policy": {
     "message": "如果同意，温故知新将会匿名地收集用户的展示/屏蔽/整理书签的频率，这将帮助作者提升扩展的使用体验。"
   },
+  "ff_data_consent_required": {
+    "message": "开启统计需要先允许 Firefox 的数据收集权限。"
+  },
   "reset_config": {
     "message": "重置配置"
   },
