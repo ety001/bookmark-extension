@@ -4,6 +4,8 @@ import { getMessage } from '../utils/i18n';
 
 interface ContentNotificationProps {
   bookmark: Bookmark;
+  /** 书签所在目录路径（祖先链，根优先顺序）；获取失败/为空时不显示路径行 */
+  breadcrumb?: chrome.bookmarks.BookmarkTreeNode[];
   position: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
   countdown: number;
   onClose: () => void;
@@ -12,12 +14,24 @@ interface ContentNotificationProps {
   onRemove: () => void;
 }
 
-export function ContentNotification({ bookmark, position, countdown, onClose, onBlock, onEdit, onRemove }: ContentNotificationProps) {
+export function ContentNotification({ bookmark, breadcrumb, position, countdown, onClose, onBlock, onEdit, onRemove }: ContentNotificationProps) {
   const positionClass = `rb-notification-${position}`;
+
+  // 目录路径展示文本：过滤空 title 段（Chrome/Firefox 的书签栏等根级节点 title 可能为空），
+  // 过滤后为空则不渲染该行
+  const breadcrumbText = (breadcrumb ?? [])
+    .map(node => node.title)
+    .filter(title => title && title.trim() !== '')
+    .join(' / ');
 
   return (
     <div className={`rb-notification ${positionClass}`}>
       <div className="rb-notification-content">
+        {breadcrumbText && (
+          <div className="rb-notification-breadcrumb" title={getMessage('folder_path')}>
+            {breadcrumbText}
+          </div>
+        )}
         <div className="rb-notification-title">{bookmark.title}</div>
         <div className="rb-notification-url">
           <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="rb-notification-url-link">

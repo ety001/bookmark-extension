@@ -188,6 +188,9 @@
   "remove": {
     "message": "Delete"
   },
+  "folder_path": {
+    "message": "Folder path"
+  },
   "seconds_to_close": {
     "message": "Closing in $COUNTDOWN$s",
     "placeholders": {
